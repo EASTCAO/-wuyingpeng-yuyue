@@ -33,14 +33,14 @@ body {
 
 /* 头部 */
 .header {
-    background: linear-gradient(135deg, #4C7DFF 0%, #6B9AFF 100%);
-    backdrop-filter: blur(20px);
-    color: white;
-    padding: 20px 48px;
+    background: white;
+    color: #1F2937;
+    padding: 16px 48px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid #E5E7EB;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .header-left h1 {
@@ -48,7 +48,19 @@ body {
     margin: 0;
     font-weight: 600;
     letter-spacing: -0.3px;
-    color: white;
+    color: #1F2937;
+}
+
+.header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
 }
 
 .header-left .subtitle {
@@ -66,14 +78,14 @@ body {
 
 .user-info span {
     font-size: 14px;
-    color: white;
+    color: #1F2937;
     font-weight: 500;
 }
 
 .btn-user {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: #F3F4F6;
+    color: #374151;
+    border: 1px solid #E5E7EB;
     padding: 10px 24px;
     border-radius: 12px;
     cursor: pointer;
@@ -83,8 +95,7 @@ body {
 }
 
 .btn-user:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
+    background: #E5E7EB;
 }
 
 /* 登录页面 */
@@ -93,8 +104,183 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    background: #F5F7FA;
 }
 
+.login-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+}
+
+.login-card {
+    background: white;
+    padding: 48px 40px;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    text-align: center;
+}
+
+.login-icon {
+    margin-bottom: 24px;
+}
+
+.login-icon svg {
+    width: 64px;
+    height: 64px;
+}
+
+.login-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+}
+
+.login-subtitle {
+    font-size: 14px;
+    color: #9CA3AF;
+    margin: 0 0 32px 0;
+}
+
+.login-form {
+    text-align: left;
+}
+
+.form-field {
+    margin-bottom: 20px;
+}
+
+.field-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.field-label .required {
+    color: #EF4444;
+    margin-right: 4px;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 12px 12px 12px 42px;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1F2937;
+    transition: all 0.2s;
+    background: white;
+}
+
+.login-form input[type="password"] {
+    padding-right: 42px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-password:hover svg {
+    stroke: #6B7280;
+}
+
+.login-form input::placeholder {
+    color: #9CA3AF;
+}
+
+.login-form input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.remember-me {
+    margin-bottom: 16px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #6B7280;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #2563EB;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 14px;
+    background: #2563EB;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 12px;
+}
+
+.login-btn:hover {
+    background: #1D4ED8;
+}
+
+.login-btn:active {
+    transform: scale(0.98);
+}
+
+.guest-btn {
+    width: 100%;
+    padding: 14px;
+    background: white;
+    color: #374151;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.guest-btn:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+}
+
+/* 旧的登录样式保留兼容 */
 .login-box {
     background: white;
     padding: 48px;
@@ -335,6 +521,24 @@ body {
 .booking-card.booking-completed .booking-photographer,
 .booking-card.booking-completed .booking-note {
     color: #6b7280;
+}
+
+/* 已过期标签 */
+.expired-label {
+    position: absolute;
+    top: -8px;
+    right: 8px;
+    background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
+}
+
+.booking-card {
+    position: relative;
 }
 
 .booking-info {
@@ -1218,71 +1422,106 @@ body {
 
 /* 侧边栏 */
 .sidebar {
-    width: 240px;
+    width: 160px;
     background: #ffffff;
-    backdrop-filter: blur(20px);
-    padding: 20px 16px;
+    padding: 16px;
     overflow-y: auto;
     border-right: 1px solid #F0F0F0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    justify-content: space-between;
 }
 
-.quota-section h3 {
-    font-size: 11px;
-    font-weight: 600;
-    color: #8C8C8C;
-    margin-bottom: 12px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+.sidebar-top {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sidebar-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sidebar-link {
+    color: #999;
+    font-size: 13px;
+    text-decoration: none;
+    padding: 4px 0;
+    transition: color 0.2s;
+}
+
+.sidebar-link:hover {
+    color: #4C7DFF;
 }
 
 .search-input {
     width: 100%;
     padding: 8px 10px;
-    border: 1px solid #F0F0F0;
+    border: 1px solid #E5E7EB;
     border-radius: 6px;
-    font-size: 11px;
-    margin-bottom: 10px;
-    background: white;
+    font-size: 13px;
+    background: #F9FAFB;
     color: #262626;
-    transition: all 0.3s;
+    transition: all 0.2s;
 }
 
 .search-input::placeholder {
-    color: #8C8C8C;
+    color: #999;
 }
 
 .search-input:focus {
     outline: none;
     border-color: #4C7DFF;
-    box-shadow: 0 0 0 4px rgba(76, 125, 255, 0.1);
-}
-
-.filter-section {
-    padding: 10px 12px;
     background: white;
-    border-radius: 8px;
-    border: 1px solid #F0F0F0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.filter-section h3 {
-    font-size: 10px;
-    font-weight: 600;
-    color: #8C8C8C;
-    margin-bottom: 10px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+.switch-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-size: 13px;
+    color: #666;
 }
 
-.filter-option {
-    margin-bottom: 6px;
+.switch-row input[type="checkbox"] {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #D1D5DB;
+    outline: none;
+    border-radius: 18px;
+    transition: 0.2s;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
-.filter-option:last-child {
-    margin-bottom: 0;
+.switch-row input[type="checkbox"]:checked {
+    background: #4C7DFF;
+}
+
+.switch-row input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    background: white;
+    transition: 0.2s;
+}
+
+.switch-row input[type="checkbox"]:checked::before {
+    left: 16px;
+}
+
+.switch-row .switch-slider {
+    display: none;
 }
 
 .switch-label {
@@ -1290,8 +1529,8 @@ body {
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    font-size: 11px;
-    color: #262626;
+    font-size: 13px;
+    color: #666;
     font-weight: 400;
     padding: 5px 0;
 }
@@ -1391,71 +1630,76 @@ body {
 
 /* 工具栏 */
 .toolbar {
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(20px);
-    padding: 20px 40px;
+    background: white;
+    padding: 12px 24px;
     border-bottom: 1px solid #F0F0F0;
     display: flex;
     align-items: center;
-    gap: 24px;
-    flex-wrap: wrap;
+    justify-content: flex-start;
 }
 
 .date-nav {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    gap: 4px;
+}
+
+.nav-divider {
+    width: 1px;
+    height: 16px;
+    background: #E5E7EB;
+    margin: 0 12px;
 }
 
 .date-btn {
-    padding: 8px 18px;
-    background: white;
-    border: 1.5px solid #F0F0F0;
-    border-radius: 10px;
+    padding: 6px 12px;
+    background: transparent;
+    border: none;
+    outline: none;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
-    font-weight: 500;
-    color: #8C8C8C;
+    font-weight: 400;
+    color: #666;
+}
+
+.date-btn:focus {
+    outline: none;
 }
 
 .date-btn:hover {
-    background: #F7F9FC;
-    border-color: #BFBFBF;
+    color: #4C7DFF;
 }
 
 .date-btn.active {
-    background: #4C7DFF;
-    color: white;
-    border-color: #4C7DFF;
+    color: #4C7DFF;
+    font-weight: 500;
 }
 
 .view-controls {
     display: flex;
-    background: #F7F9FC;
-    border-radius: 12px;
-    padding: 4px;
+    align-items: center;
+    gap: 4px;
 }
 
 .view-btn {
-    padding: 10px 24px;
+    padding: 6px 12px;
     background: transparent;
     border: none;
-    border-radius: 10px;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 400;
     cursor: pointer;
-    transition: all 0.3s;
-    color: #8C8C8C;
+    transition: all 0.2s;
+    color: #666;
 }
 
 .view-btn.active {
-    background: linear-gradient(135deg, #4C7DFF 0%, #6B9AFF 100%);
-    color: white;
+    color: #4C7DFF;
+    font-weight: 600;
 }
 
 .view-btn:hover:not(.active) {
-    background: rgba(76, 125, 255, 0.05);
-    color: #262626;
+    color: #4C7DFF;
 }
 
 .time-settings {
@@ -1555,8 +1799,24 @@ body {
 }
 
 .timeline-body {
-    display: grid;
-    grid-template-columns: 60px 1fr 1fr;
+    display: flex;
+    flex-direction: row;
+}
+
+.timeline-time-column-container {
+    width: 60px;
+    flex-shrink: 0;
+}
+
+.timeline-studio-column-container {
+    flex: 1;
+    position: relative;
+    border-left: 1px solid #F0F0F0;
+}
+
+.timeline-hour-cell {
+    border-bottom: 1px solid #F0F0F0;
+    background: #F7F9FC;
 }
 
 .timeline-row {
@@ -1572,6 +1832,9 @@ body {
     font-weight: 600;
     color: #8C8C8C;
     background: white;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
 }
 
 .timeline-booking-cell {
@@ -1590,12 +1853,16 @@ body {
 .timeline-booking-item {
     background: white;
     border-left: 3px solid #BFBFBF;
-    padding: 8px 10px;
-    margin: 2px 0;
-    border-radius: 10px;
+    padding: 6px 8px;
+    margin: 0;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .timeline-booking-item:hover {
@@ -1641,6 +1908,23 @@ body {
 .timeline-booking-item.booking-completed .timeline-booking-user,
 .timeline-booking-item.booking-completed .timeline-booking-note {
     color: #6b7280;
+}
+
+.timeline-booking-item {
+    position: relative;
+}
+
+.timeline-booking-item .expired-label {
+    position: absolute;
+    top: -6px;
+    right: 4px;
+    background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+    color: white;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(239, 68, 68, 0.3);
 }
 
 .timeline-booking-time {
@@ -1945,6 +2229,45 @@ body {
     font-size: 9px;
     line-height: 1.4;
     font-weight: 400;
+}
+
+/* 账户设置 */
+.account-settings {
+    padding: 10px 12px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #F0F0F0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    margin-top: 12px;
+}
+
+.account-settings h3 {
+    font-size: 10px;
+    font-weight: 600;
+    color: #8C8C8C;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-text-link {
+    background: none;
+    border: none;
+    color: #667eea;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 6px 0;
+    display: block;
+    text-align: left;
+    transition: color 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.btn-text-link:hover {
+    color: #5a67d8;
+    text-decoration: underline;
 }
 
 /* 提醒弹窗 */

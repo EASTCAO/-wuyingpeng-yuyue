@@ -2,7 +2,7 @@
 let currentUser = null;
 let allBookings = [];
 let selectedBookingId = null;
-let currentView = 'timeline'; // 'timeline' or 'list'
+let currentView = 'list'; // 'timeline' or 'list'
 let currentDateRange = 'today'; // 'today', 'tomorrow', 'week'
 let selectedDate = null;
 let reminderInterval = null;
@@ -97,6 +97,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (savedUser) {
         currentUser = savedUser;
         showMainPage();
+    } else {
+        // 检查是否有保存的登录信息，自动登录
+        const rememberMe = localStorage.getItem('rememberMe');
+        const savedUsername = localStorage.getItem('savedUsername');
+        const savedPassword = localStorage.getItem('savedPassword');
+
+        if (rememberMe === 'true' && savedUsername && savedPassword) {
+            document.getElementById('photographerName').value = savedUsername;
+            document.getElementById('loginPassword').value = savedPassword;
+            document.getElementById('rememberMe').checked = true;
+            // 自动登录
+            login();
+        }
     }
 
     // 设置今天的日期为默认值
@@ -121,17 +134,165 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
+// ============ 用户账户配置 ============
+// 在这里设置允许登录的用户名和密码
+const USERS = {
+    '周旭欣': '123456',
+    '曹东': '123456',
+    '曹玉': '123456',
+    '程维跃': '123456',
+    '付国俊': '123456',
+    '何雨涵': '123456',
+    '李冬梅': '123456',
+    '卢圣林': '123456',
+    '吕书悦': '123456',
+    '阮静': '123456',
+    '沈磊': '123456',
+    '涂萱': '123456',
+    '王斐雯': '123456',
+    '王思琪': '123456',
+    '王羽': '123456',
+    '魏钰涵': '123456',
+    '於佳莹': '123456',
+    '夏驰': '123456',
+    '向芷琪': '123456',
+    '杨丽': '123456',
+    '鄢军': '123456',
+    '张阳洋': '123456',
+    'admin': '123456'
+};
+
 // 登录
 function login() {
     const name = document.getElementById('photographerName').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const rememberMe = document.getElementById('rememberMe').checked;
+
     if (!name) {
-        showToast('请输入您的姓名', 'error');
+        showToast('请输入用户名', 'error');
         return;
     }
 
-    currentUser = name;
-    localStorage.setItem('currentUser', name);
+    if (!password) {
+        showToast('请输入密码', 'error');
+        return;
+    }
+
+    // 先检查是否有自定义密码（存储在 localStorage 中）
+    const customPasswords = JSON.parse(localStorage.getItem('customPasswords') || '{}');
+
+    // 验证用户名和密码
+    // 优先使用自定义密码，如果没有则使用默认密码
+    const correctPassword = customPasswords[name] || USERS[name];
+
+    if (USERS[name] && correctPassword === password) {
+        currentUser = name;
+        localStorage.setItem('currentUser', name);
+
+        // 记住密码功能
+        if (rememberMe) {
+            localStorage.setItem('savedUsername', name);
+            localStorage.setItem('savedPassword', password);
+            localStorage.setItem('rememberMe', 'true');
+        } else {
+            localStorage.removeItem('savedUsername');
+            localStorage.removeItem('savedPassword');
+            localStorage.removeItem('rememberMe');
+        }
+
+        showMainPage();
+        showToast('登录成功', 'success');
+    } else {
+        showToast('用户名或密码错误', 'error');
+    }
+}
+
+// 游客登录
+function guestLogin() {
+    currentUser = '游客' + Math.floor(Math.random() * 10000);
+    localStorage.setItem('currentUser', currentUser);
     showMainPage();
+}
+
+// 切换密码可见性
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('loginPassword');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+        passwordInput.type = 'password';
+        eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+}
+
+// ============ 修改密码功能 ============
+
+// 显示修改密码弹窗
+function showChangePasswordModal() {
+    document.getElementById('changePasswordModal').classList.remove('hidden');
+    // 清空输入框
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+}
+
+// 关闭修改密码弹窗
+function closeChangePasswordModal() {
+    document.getElementById('changePasswordModal').classList.add('hidden');
+}
+
+// 获取用户当前密码
+function getCurrentUserPassword() {
+    const customPasswords = JSON.parse(localStorage.getItem('customPasswords') || '{}');
+    // 优先返回自定义密码，否则返回默认密码
+    return customPasswords[currentUser] || USERS[currentUser];
+}
+
+// 修改密码
+function changePassword() {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    // 验证当前密码
+    if (!currentPassword) {
+        showToast('请输入当前密码', 'error');
+        return;
+    }
+
+    const correctPassword = getCurrentUserPassword();
+    if (currentPassword !== correctPassword) {
+        showToast('当前密码错误', 'error');
+        return;
+    }
+
+    // 验证新密码
+    if (!newPassword) {
+        showToast('请输入新密码', 'error');
+        return;
+    }
+
+    if (newPassword.length < 4) {
+        showToast('新密码至少需要4位', 'error');
+        return;
+    }
+
+    // 验证确认密码
+    if (newPassword !== confirmPassword) {
+        showToast('两次输入的密码不一致', 'error');
+        return;
+    }
+
+    // 保存新密码到 localStorage
+    const customPasswords = JSON.parse(localStorage.getItem('customPasswords') || '{}');
+    customPasswords[currentUser] = newPassword;
+    localStorage.setItem('customPasswords', JSON.stringify(customPasswords));
+
+    showToast('密码修改成功', 'success');
+    closeChangePasswordModal();
 }
 
 // 退出登录
@@ -267,20 +428,20 @@ function renderAllViews() {
 }
 
 // 渲染预约列表（列表视图）
-// 注意：只显示今天及以后的预约
+// 根据日期筛选器显示预约
 function renderBookings() {
     const studio1List = document.getElementById('studio1List');
     const studio2List = document.getElementById('studio2List');
 
-    // 获取今天的日期
-    const today = formatDateToString(new Date());
+    // 获取要显示的日期范围
+    const displayDates = getDisplayDates();
 
-    // 按影棚分组，并过滤掉过去的预约（只显示今天及以后的）
+    // 按影棚分组，并根据日期筛选
     const studio1Bookings = allBookings.filter(b =>
-        b.studio === '无影棚1号' && b.date >= today
+        b.studio === '无影棚1号' && displayDates.includes(getDateOnly(b.date))
     );
     const studio2Bookings = allBookings.filter(b =>
-        b.studio === '无影棚2号' && b.date >= today
+        b.studio === '无影棚2号' && displayDates.includes(getDateOnly(b.date))
     );
 
     // 渲染无影棚1号
@@ -306,9 +467,11 @@ function createBookingCard(booking) {
     // 判断预约状态
     const status = getBookingStatus(booking);
     const statusClass = status === 'completed' ? 'booking-completed' : '';
+    const expiredLabel = status === 'completed' ? '<div class="expired-label">已过期</div>' : '';
 
     return `
         <div class="booking-card ${myBookingClass} ${statusClass}" onclick="showBookingDetail('${booking.id}')">
+            ${expiredLabel}
             <div class="booking-info">
                 <div class="booking-time">${booking.startTime} - ${booking.endTime}</div>
                 <div class="booking-date">${formatDate(booking.date)}</div>
@@ -321,7 +484,9 @@ function createBookingCard(booking) {
 
 // 格式化日期
 function formatDate(dateStr) {
-    const date = new Date(dateStr);
+    // 处理 ISO 格式日期，只取日期部分
+    const dateOnly = dateStr.split('T')[0];
+    const date = new Date(dateOnly + 'T00:00:00');
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -332,12 +497,12 @@ function formatDate(dateStr) {
     date.setHours(0, 0, 0, 0);
 
     if (date.getTime() === today.getTime()) {
-        return '今天 ' + dateStr;
+        return '今天 ' + dateOnly;
     } else if (date.getTime() === tomorrow.getTime()) {
-        return '明天 ' + dateStr;
+        return '明天 ' + dateOnly;
     } else {
         const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-        return `${dateStr} ${weekdays[date.getDay()]}`;
+        return `${dateOnly} ${weekdays[date.getDay()]}`;
     }
 }
 
@@ -353,8 +518,10 @@ function showAddBookingForm(defaultStudio) {
         studioSelect.value = '无影棚1号';
     }
 
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('bookingDate').value = today;
+    // 根据当前日期筛选器设置默认日期
+    const displayDates = getDisplayDates();
+    const defaultDate = displayDates[0]; // 使用筛选器的第一个日期
+    document.getElementById('bookingDate').value = defaultDate;
     document.getElementById('startTime').value = '';
     document.getElementById('endTime').value = '';
     document.getElementById('bookingNote').value = '';
@@ -585,6 +752,8 @@ window.addEventListener('click', (e) => {
             closeDetailModal();
         } else if (e.target.id === 'reminderModal') {
             closeReminderModal();
+        } else if (e.target.id === 'changePasswordModal') {
+            closeChangePasswordModal();
         }
     }
 });
@@ -631,14 +800,16 @@ function switchView(view) {
 }
 
 // 选择日期范围
-function selectDateRange(range) {
+function selectDateRange(range, btn) {
     currentDateRange = range;
 
     // 更新按钮状态
-    document.querySelectorAll('.date-btn').forEach(btn => {
-        btn.classList.remove('active');
+    document.querySelectorAll('.date-btn').forEach(b => {
+        b.classList.remove('active');
     });
-    event.target.classList.add('active');
+    if (btn) {
+        btn.classList.add('active');
+    }
 
     // 重新渲染视图
     if (currentView === 'timeline') {
@@ -658,9 +829,18 @@ function selectDateRange(range) {
 function showDatePicker() {
     const input = document.createElement('input');
     input.type = 'date';
-    input.style.position = 'absolute';
+    input.style.position = 'fixed';
+    input.style.top = '-100px';
+    input.style.left = '-100px';
     input.style.opacity = '0';
+    input.style.pointerEvents = 'none';
     document.body.appendChild(input);
+
+    const cleanup = () => {
+        if (input.parentNode) {
+            document.body.removeChild(input);
+        }
+    };
 
     input.addEventListener('change', () => {
         selectedDate = input.value;
@@ -675,11 +855,16 @@ function showDatePicker() {
         // 重新渲染
         if (currentView === 'timeline') {
             renderTimelineView();
-        } else {
+        } else if (currentView === 'list') {
             renderBookings();
         }
 
-        document.body.removeChild(input);
+        cleanup();
+    });
+
+    // 如果用户取消选择，也要清理
+    input.addEventListener('blur', () => {
+        setTimeout(cleanup, 200);
     });
 
     input.click();
@@ -696,77 +881,75 @@ function renderTimelineView() {
     // 获取筛选后的预约
     const filteredBookings = getFilteredBookings();
 
-    // 检查是否开启"只显示空闲时段"
-    const showAvailableOnly = document.getElementById('showAvailableOnly');
-    const isShowAvailableOnly = showAvailableOnly && showAvailableOnly.checked;
+    // 时间轴配置
+    const startHour = 9;
+    const endHour = 18;
+    const hourHeight = 50; // 每小时的高度（像素）
 
-    // 简化的时间轴 - 只显示整点，从09:00到18:00
-    const timeSlots = [];
-    for (let hour = 9; hour <= 18; hour++) {
-        timeSlots.push({
-            hour: hour,
-            minute: 0,
-            label: `${String(hour).padStart(2, '0')}:00`
-        });
-    }
+    // 创建时间列
+    const timeColumn = document.createElement('div');
+    timeColumn.className = 'timeline-time-column-container';
 
-    timeSlots.forEach(slot => {
-        // 如果开启"只显示空闲时段"，需要额外检查时间是否已过
-        if (isShowAvailableOnly) {
-            // 检查时间段是否已经过去（仅对今天有效）
-            const now = new Date();
-            const todayStr = formatDateToString(now);
-            const currentHour = now.getHours();
-
-            // 如果显示的是今天，且该时间段已经过去
-            if (dates.length === 1 && dates[0] === todayStr) {
-                if (slot.hour < currentHour) {
-                    return; // 跳过已经过去的时段
-                }
-            }
-        }
-
-        // 检查该时间段是否有预约（使用过滤后的预约列表）
-        const studio1HasBooking = getBookingsForHourSlot('无影棚1号', dates, slot.hour, filteredBookings).length > 0;
-        const studio2HasBooking = getBookingsForHourSlot('无影棚2号', dates, slot.hour, filteredBookings).length > 0;
-
-        // 如果开启"只显示空闲时段"，且两个棚都有预约，则跳过这行
-        if (isShowAvailableOnly && studio1HasBooking && studio2HasBooking) {
-            return;
-        }
-
-        // 创建时间行
+    for (let hour = startHour; hour <= endHour; hour++) {
         const timeCell = document.createElement('div');
         timeCell.className = 'timeline-time-cell';
-        timeCell.textContent = slot.label;
-        timelineBody.appendChild(timeCell);
+        timeCell.style.height = hourHeight + 'px';
+        timeCell.textContent = `${String(hour).padStart(2, '0')}:00`;
+        timeColumn.appendChild(timeCell);
+    }
+    timelineBody.appendChild(timeColumn);
 
-        // 为每个影棚创建单元格
-        ['无影棚1号', '无影棚2号'].forEach((studio, index) => {
-            const bookingCell = document.createElement('div');
-            bookingCell.className = 'timeline-booking-cell';
+    // 为每个影棚创建列
+    ['无影棚1号', '无影棚2号'].forEach(studio => {
+        const studioColumn = document.createElement('div');
+        studioColumn.className = 'timeline-studio-column-container';
+        studioColumn.style.position = 'relative';
+        studioColumn.style.height = ((endHour - startHour + 1) * hourHeight) + 'px';
 
-            // 查找该小时内的预约
-            const bookingsInHour = getBookingsForHourSlot(studio, dates, slot.hour, filteredBookings);
+        // 创建小时格子背景
+        for (let hour = startHour; hour <= endHour; hour++) {
+            const hourCell = document.createElement('div');
+            hourCell.className = 'timeline-hour-cell';
+            hourCell.style.height = hourHeight + 'px';
+            studioColumn.appendChild(hourCell);
+        }
 
-            if (bookingsInHour.length === 0) {
-                // 空闲时段，显示可预约提示
-                if (isShowAvailableOnly) {
-                    const availableHint = document.createElement('div');
-                    availableHint.className = 'available-slot';
-                    availableHint.textContent = '可预约';
-                    availableHint.onclick = () => showAddBookingFormWithTime(studio, slot.hour);
-                    bookingCell.appendChild(availableHint);
-                }
-            } else {
-                bookingsInHour.forEach(booking => {
-                    const bookingItem = createTimelineBookingItem(booking);
-                    bookingCell.appendChild(bookingItem);
-                });
-            }
-
-            timelineBody.appendChild(bookingCell);
+        // 获取该影棚在选定日期的预约
+        const studioBookings = filteredBookings.filter(b => {
+            const bookingDate = getDateOnly(b.date);
+            return b.studio === studio && dates.includes(bookingDate);
         });
+
+        // 渲染预约（使用绝对定位）
+        studioBookings.forEach(booking => {
+            const startParts = booking.startTime.split(':');
+            const endParts = booking.endTime.split(':');
+
+            const startMinutes = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+            const endMinutes = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+
+            // 计算位置和高度
+            const startFromTop = startMinutes - (startHour * 60); // 从09:00开始的分钟数
+            const duration = endMinutes - startMinutes;
+
+            // 只显示在时间轴范围内的预约
+            if (startMinutes >= startHour * 60 && startMinutes < (endHour + 1) * 60) {
+                const top = (startFromTop / 60) * hourHeight;
+                const height = Math.max((duration / 60) * hourHeight, 30); // 最小高度30px
+
+                const bookingItem = createTimelineBookingItem(booking);
+                bookingItem.style.position = 'absolute';
+                bookingItem.style.top = top + 'px';
+                bookingItem.style.left = '4px';
+                bookingItem.style.right = '4px';
+                bookingItem.style.height = height + 'px';
+                bookingItem.style.zIndex = '10';
+
+                studioColumn.appendChild(bookingItem);
+            }
+        });
+
+        timelineBody.appendChild(studioColumn);
     });
 }
 
@@ -782,29 +965,21 @@ function showAddBookingFormWithTime(studio, startHour) {
     document.getElementById('endTime').value = endTime;
 }
 
-// 获取指定小时内的预约
+// 获取指定小时内的预约（只返回在该小时开始的预约，避免重复显示）
 function getBookingsForHourSlot(studio, dates, hour, bookingsToUse = allBookings) {
     return bookingsToUse.filter(booking => {
         if (booking.studio !== studio) return false;
-        if (!dates.includes(booking.date)) return false;
 
-        // 解析预约的开始和结束时间
+        // 处理 ISO 格式日期
+        const bookingDate = getDateOnly(booking.date);
+        if (!dates.includes(bookingDate)) return false;
+
+        // 解析预约的开始时间
         const startTimeParts = booking.startTime.split(':');
         const bookingStartHour = parseInt(startTimeParts[0]);
-        const bookingStartMinute = parseInt(startTimeParts[1]);
 
-        const endTimeParts = booking.endTime.split(':');
-        const bookingEndHour = parseInt(endTimeParts[0]);
-        const bookingEndMinute = parseInt(endTimeParts[1]);
-
-        // 检查当前小时是否在预约时间范围内
-        // 预约从 bookingStartHour 开始，到 bookingEndHour 结束
-        // 如果结束分钟为0，则不包括结束小时；否则包括结束小时
-        if (hour < bookingStartHour) return false;
-        if (hour > bookingEndHour) return false;
-        if (hour === bookingEndHour && bookingEndMinute === 0) return false;
-
-        return true;
+        // 只在预约开始时间所在的小时格子显示
+        return hour === bookingStartHour;
     });
 }
 
@@ -843,6 +1018,12 @@ function formatDateToString(date) {
     return `${year}-${month}-${day}`;
 }
 
+// 从日期字符串中提取日期部分（处理 ISO 格式）
+function getDateOnly(dateStr) {
+    if (!dateStr) return '';
+    return dateStr.split('T')[0];
+}
+
 // 创建时间轴预约项
 function createTimelineBookingItem(booking) {
     const item = document.createElement('div');
@@ -854,6 +1035,14 @@ function createTimelineBookingItem(booking) {
 
     item.className = `timeline-booking-item ${isMyBooking ? 'my-booking' : ''} ${statusClass}`;
     item.onclick = () => showBookingDetail(booking.id);
+
+    // 添加已过期标签
+    if (status === 'completed') {
+        const expiredLabel = document.createElement('div');
+        expiredLabel.className = 'expired-label';
+        expiredLabel.textContent = '已过期';
+        item.appendChild(expiredLabel);
+    }
 
     const timeDiv = document.createElement('div');
     timeDiv.className = 'timeline-booking-time';
@@ -881,10 +1070,13 @@ function getBookingStatus(booking) {
     const todayStr = formatDateToString(now);
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
+    // 提取日期部分（处理 ISO 格式）
+    const bookingDate = getDateOnly(booking.date);
+
     // 不是今天的预约
-    if (booking.date < todayStr) {
+    if (bookingDate < todayStr) {
         return 'completed'; // 过去的日期
-    } else if (booking.date > todayStr) {
+    } else if (bookingDate > todayStr) {
         return 'upcoming'; // 未来的日期
     }
 
@@ -919,7 +1111,7 @@ function getFilteredBookings() {
 
     // 首先过滤掉昨天及之前的预约（只保留今天及以后的）
     const today = formatDateToString(new Date());
-    filtered = filtered.filter(b => b.date >= today);
+    filtered = filtered.filter(b => getDateOnly(b.date) >= today);
 
     // 只看我的预约
     const filterMyBookings = document.getElementById('filterMyBookings');
