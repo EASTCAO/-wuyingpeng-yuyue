@@ -1,0 +1,7 @@
+{
+  "build": false,
+  "output": ".",
+  "routes": [
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}
