@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- PWA 配置 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4C7DFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1042/1042339.png">
+    
+    <title>无影棚预约系统</title>
+    <link rel="stylesheet" href="style.css?v=20260122-1">
+</head>
+<body>
+    <!-- 登录页面 -->
+    <div id="loginPage" class="page">
+        <div class="container">
+            <h1>📷 无影棚预约系统</h1>
+            <div class="login-box">
+                <h2>摄影师登录</h2>
+                <input type="text" id="photographerName" placeholder="请输入您的姓名" maxlength="20">
+                <button onclick="login()" class="btn btn-primary">进入系统</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主页面 -->
+    <div id="mainPage" class="page hidden">
+        <div class="header">
+            <div class="header-left">
+                <!-- 移动端菜单按钮 -->
+                <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="打开菜单">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <h1>无影棚预约系统</h1>
+                <div class="subtitle">预约调度</div>
+            </div>
+            <div class="user-info">
+                <span id="currentUser"></span>
+                <button onclick="logout()" class="btn btn-small btn-user">退出</button>
+            </div>
+        </div>
+
+        <!-- 遮罩层（移动端用） -->
+        <div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+        <!-- 提醒条 -->
+        <div id="reminderBar" class="reminder-bar hidden">
+            <div class="reminder-content">
+                <span class="reminder-icon">🔔</span>
+                <span id="reminderText"></span>
+            </div>
+            <button onclick="closeReminder()" class="reminder-close">&times;</button>
+        </div>
+
+        <div class="main-container">
+            <!-- 左侧筛选区域 -->
+            <div class="sidebar">
+                <div class="filter-section">
+                    <h3>筛选</h3>
+                    <input type="text" id="searchInput" class="search-input" placeholder="搜索（人/用途/备注）">
+
+                    <div class="filter-option">
+                        <label class="switch-label">
+                            <span>只看我的预约</span>
+                            <input type="checkbox" id="filterMyBookings" onchange="applyFilters()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="filter-option">
+                        <label class="switch-label">
+                            <span>只显示空闲时段</span>
+                            <input type="checkbox" id="showAvailableOnly" onchange="applyFilters()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="quota-section">
+                    <h3>我的状态</h3>
+                    <div class="quota-info">
+                        <div class="quota-label">今日已用</div>
+                        <div class="quota-value" id="todayUsage">0.0h</div>
+                    </div>
+                </div>
+
+                <div class="reminder-settings">
+                    <h3>提醒设置</h3>
+                    <div class="filter-option">
+                        <label class="switch-label">
+                            <span>开启提醒通知</span>
+                            <input type="checkbox" id="enableReminder" onchange="toggleReminder()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="filter-option">
+                        <label class="switch-label">
+                            <span>声音提示</span>
+                            <input type="checkbox" id="enableSound" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="reminder-note">
+                        <small>提前5分钟和开始时提醒</small>
+                    </div>
+                    <div class="filter-option" style="margin-top: 10px;">
+                        <button onclick="testReminder()" class="btn btn-small btn-secondary" style="width: 100%;">🔊 测试提醒声音与弹窗</button>
+                    </div>
+                    <div class="reminder-note" style="color: #ff4d4f; margin-top: 8px; border-top: 1px dashed #eee; padding-top: 8px;">
+                        <strong>⚠️ 手机端必读：</strong><br>
+                        由于手机系统限制，<strong>请保持当前网页在屏幕前台运行</strong>，否则无法收到声音和弹窗提醒。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧主内容区域 -->
+            <div class="content-area">
+                <!-- 顶部工具栏 -->
+                <div class="toolbar">
+                    <div class="view-controls">
+                        <button class="view-btn active" onclick="switchView('timeline')">时间轴</button>
+                        <button class="view-btn" onclick="switchView('list')">列表</button>
+                        <button class="view-btn" onclick="switchView('stats')">统计</button>
+                    </div>
+
+                    <div class="time-settings">
+                        <span>时段：08:30-18:30</span>
+                        <span class="status-indicator">● 实时</span>
+                    </div>
+                </div>
+
+                <!-- 时间轴视图 -->
+                <div id="timelineView" class="timeline-view">
+                    <div class="timeline-header">
+                        <div class="timeline-time-column">时间</div>
+                        <div class="timeline-studio-column">
+                            <div class="studio-header-wrapper">
+                                <span class="studio-header">无影棚 1号</span>
+                                <button onclick="showAddBookingForm('无影棚1号')" class="btn-add-inline">+ 新建预约</button>
+                            </div>
+                        </div>
+                        <div class="timeline-studio-column">
+                            <div class="studio-header-wrapper">
+                                <span class="studio-header">无影棚 2号</span>
+                                <button onclick="showAddBookingForm('无影棚2号')" class="btn-add-inline">+ 新建预约</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-body" id="timelineBody">
+                        <!-- 时间轴内容将通过 JavaScript 动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 列表视图 -->
+                <div id="listView" class="list-view hidden">
+                    <!-- 无影棚1号 -->
+                    <div class="studio-section">
+                        <div class="studio-section-header">
+                            <h2>🎬 无影棚1号</h2>
+                            <button onclick="showAddBookingForm('无影棚1号')" class="btn btn-primary btn-small">+ 新建预约</button>
+                        </div>
+                        <div id="studio1List" class="booking-list">
+                            <p class="empty-message">暂无预约</p>
+                        </div>
+                    </div>
+
+                    <!-- 无影棚2号 -->
+                    <div class="studio-section">
+                        <div class="studio-section-header">
+                            <h2>🎬 无影棚2号</h2>
+                            <button onclick="showAddBookingForm('无影棚2号')" class="btn btn-primary btn-small">+ 新建预约</button>
+                        </div>
+                        <div id="studio2List" class="booking-list">
+                            <p class="empty-message">暂无预约</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 统计视图 -->
+                <div id="statsView" class="stats-view hidden">
+                    <div class="stats-header">
+                        <h2>📊 使用时长统计</h2>
+                        <div class="stats-filters">
+                            <select id="statsMonth" onchange="renderStatsView()">
+                                <option value="all">所有时间</option>
+                            </select>
+                            <select id="statsStudio" onchange="renderStatsView()">
+                                <option value="all">所有影棚</option>
+                                <option value="无影棚1号">无影棚1号</option>
+                                <option value="无影棚2号">无影棚2号</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="stats-summary">
+                        <div class="stats-card">
+                            <div class="stats-card-label">总预约次数</div>
+                            <div class="stats-card-value" id="totalBookings">0</div>
+                        </div>
+                        <div class="stats-card">
+                            <div class="stats-card-label">总使用时长</div>
+                            <div class="stats-card-value" id="totalHours">0h</div>
+                        </div>
+                        <div class="stats-card">
+                            <div class="stats-card-label">摄影师人数</div>
+                            <div class="stats-card-value" id="totalPhotographers">0</div>
+                        </div>
+                    </div>
+
+                    <div class="stats-table-container">
+                        <table class="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>摄影师</th>
+                                    <th>预约次数</th>
+                                    <th>总时长</th>
+                                    <th>平均时长</th>
+                                    <th>占比</th>
+                                </tr>
+                            </thead>
+                            <tbody id="statsTableBody">
+                                <tr>
+                                    <td colspan="6" class="empty-message">暂无数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 移动端悬浮添加按钮 -->
+        <button class="mobile-fab" onclick="showAddBookingForm()" aria-label="新建预约">
+            <span>+</span>
+        </button>
+
+        <!-- 移动端底部导航栏 -->
+        <div class="mobile-bottom-nav">
+            <button class="nav-item active" onclick="switchView('timeline')" data-view="timeline">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">时间轴</span>
+            </button>
+            <button class="nav-item" onclick="switchView('list')" data-view="list">
+                <span class="nav-icon">📝</span>
+                <span class="nav-label">列表</span>
+            </button>
+            <button class="nav-item" onclick="switchView('stats')" data-view="stats">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">统计</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 新建预约弹窗 -->
+    <div id="addBookingModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>新建预约</h2>
+                <button onclick="closeAddBookingForm()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>选择影棚</label>
+                    <select id="studioSelect">
+                        <option value="无影棚1号">无影棚1号</option>
+                        <option value="无影棚2号">无影棚2号</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="date" id="bookingDate" required>
+                </div>
+                <div class="form-group">
+                    <label>开始时间</label>
+                    <input type="time" id="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label>结束时间</label>
+                    <input type="time" id="endTime" required>
+                </div>
+                <div class="form-group">
+                    <label>拍摄内容备注</label>
+                    <textarea id="bookingNote" placeholder="例如：拍摄大型家具，预计2小时" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeAddBookingForm()" class="btn btn-secondary">取消</button>
+                    <button type="button" onclick="addBooking()" class="btn btn-primary">确认预约</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预约详情弹窗 -->
+    <div id="bookingDetailModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>预约详情</h2>
+                <button onclick="closeDetailModal()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="bookingDetailContent"></div>
+                <div class="form-actions" id="detailActions"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提醒弹窗 -->
+    <div id="reminderModal" class="modal reminder-modal hidden">
+        <div class="modal-content reminder-modal-content">
+            <div class="reminder-modal-icon">
+                <span class="reminder-bell">🔔</span>
+            </div>
+            <div class="reminder-modal-body">
+                <h2 id="reminderModalTitle">预约提醒</h2>
+                <p id="reminderModalMessage"></p>
+                <div class="reminder-modal-time" id="reminderModalTime"></div>
+            </div>
+            <div class="reminder-modal-actions">
+                <button onclick="closeReminderModal()" class="btn btn-primary btn-large">我知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=20260123-4"></script>
+
+    <!-- PWA Service Worker 注册 -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
