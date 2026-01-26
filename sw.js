@@ -1,11 +1,12 @@
 // Service Worker：用于缓存资源，让应用即使在断网情况下也能打开（PWA 必须组件）
-const CACHE_NAME = 'studio-booking-v4';
+const CACHE_NAME = 'studio-booking-v5';
 const urlsToCache = [
   './',
   './index.html',
   './style.css',
   './app.js',
-  './manifest.json'
+  './manifest.json',
+  './favicon.svg'
 ];
 
 self.addEventListener('install', event => {
