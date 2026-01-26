@@ -2608,26 +2608,26 @@ body {
 .timeline-group {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
 .timeline-group-title {
     grid-column: 1 / -1;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #1F2937;
-    margin-bottom: 8px;
-    padding: 4px 10px;
+    margin-bottom: 6px;
+    padding: 3px 8px;
     background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
-    border-radius: 6px;
+    border-radius: 4px;
     display: inline-block;
 }
 
 /* 时间轴卡片 */
 .timeline-card {
     background: white;
-    border-radius: 12px;
+    border-radius: 10px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     border: 1px solid #F0F0F0;
     overflow: hidden;
@@ -2639,14 +2639,14 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-bottom: 1px solid #F3F4F6;
     background: #FAFAFA;
     flex-shrink: 0;
 }
 
 .timeline-card-header h2 {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     margin: 0;
     color: #262626;
@@ -2665,7 +2665,7 @@ body {
 }
 
 .timeline-time-col {
-    width: 45px;
+    width: 40px;
     flex-shrink: 0;
     border-right: 1px solid #F0F0F0;
     background: #FAFAFA;
@@ -2678,17 +2678,17 @@ body {
 }
 
 .timeline-time-slot {
-    height: 35px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 9px;
     color: #6B7280;
     border-bottom: 1px solid #F0F0F0;
 }
 
 .timeline-booking-slot {
-    height: 35px;
+    height: 28px;
     border-bottom: 1px solid #F0F0F0;
     position: relative;
     padding: 2px;
@@ -2699,18 +2699,18 @@ body {
     left: 2px;
     right: 2px;
     background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
-    border-left: 3px solid #4C7DFF;
-    border-radius: 4px;
-    padding: 4px;
+    border-left: 2px solid #4C7DFF;
+    border-radius: 3px;
+    padding: 3px;
     cursor: pointer;
     transition: all 0.2s ease;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .timeline-booking-block:hover {
     transform: translateX(2px);
-    box-shadow: 0 3px 6px rgba(76, 125, 255, 0.2);
+    box-shadow: 0 2px 4px rgba(76, 125, 255, 0.2);
 }
 
 .timeline-booking-block.my-booking {
@@ -2725,27 +2725,27 @@ body {
 }
 
 .timeline-booking-time {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 600;
     color: #262626;
-    margin-bottom: 2px;
-    line-height: 1.2;
+    margin-bottom: 1px;
+    line-height: 1.1;
 }
 
 .timeline-booking-user {
-    font-size: 9px;
+    font-size: 8px;
     color: #6B7280;
-    line-height: 1.2;
+    line-height: 1.1;
 }
 
 .timeline-booking-note {
-    font-size: 8px;
+    font-size: 7px;
     color: #9CA3AF;
-    margin-top: 2px;
+    margin-top: 1px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    line-height: 1.2;
+    line-height: 1.1;
 }
 
 /* 移动端适配 */
@@ -2755,10 +2755,10 @@ body {
     }
 
     .timeline-time-slot {
-        height: 40px;
+        height: 35px;
     }
 
     .timeline-booking-slot {
-        height: 40px;
+        height: 35px;
     }
 }
