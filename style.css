@@ -2444,12 +2444,12 @@ body {
 }
 
 .studio-section-header h2 {
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 600;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     color: #262626;
 }
 
@@ -2464,7 +2464,7 @@ body {
 
 .studio-section-large .studio-section-header h2::before {
     content: "🎬";
-    font-size: 18px;
+    font-size: 22px;
 }
 
 /* 小棚样式 */
@@ -2477,8 +2477,8 @@ body {
 }
 
 .studio-section-small .studio-section-header h2::before {
-    content: "📷";
-    font-size: 18px;
+    content: "🎬";
+    font-size: 22px;
 }
 
 /* 预约列表容器 - 更紧凑 */
