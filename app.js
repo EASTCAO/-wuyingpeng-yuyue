@@ -373,6 +373,13 @@ async function loadBookings() {
             const response = await fetch(`${API_BASE_URL}/api/bookings`);
             if (!response.ok) throw new Error('加载失败');
             allBookings = await response.json();
+
+            // 标准化字段名：后端使用 notes，前端使用 note
+            allBookings = allBookings.map(booking => ({
+                ...booking,
+                note: booking.notes || booking.note || ''
+            }));
+
             sortBookings();
             renderAllViews();
             console.log('✅ 从云端加载了', allBookings.length, '条预约');
@@ -607,8 +614,9 @@ async function addBooking() {
         startTime: startTime,
         endTime: endTime,
         photographer: currentUser,
-        note: note,
-        createdAt: Date.now()
+        contact: currentUser, // 使用用户名作为联系方式
+        notes: note, // 后端字段名是 notes
+        createdAt: new Date().toISOString() // 使用 ISO 格式
     };
 
     try {
