@@ -30,12 +30,12 @@ pool.connect((err, client, release) => {
       id TEXT PRIMARY KEY,
       studio TEXT NOT NULL,
       date TEXT NOT NULL,
-      startTime TEXT NOT NULL,
-      endTime TEXT NOT NULL,
+      "startTime" TEXT NOT NULL,
+      "endTime" TEXT NOT NULL,
       photographer TEXT NOT NULL,
       contact TEXT NOT NULL,
       notes TEXT,
-      createdAt TEXT NOT NULL
+      "createdAt" TEXT NOT NULL
     )
   `, (err) => {
     release();
@@ -50,7 +50,7 @@ pool.connect((err, client, release) => {
 // 获取所有预约
 app.get('/api/bookings', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM bookings ORDER BY date, startTime');
+    const result = await pool.query('SELECT * FROM bookings ORDER BY date, "startTime"');
     res.json(result.rows);
   } catch (error) {
     console.error('获取预约失败:', error);
@@ -73,9 +73,9 @@ app.post('/api/bookings', async (req, res) => {
       WHERE studio = $1
       AND date = $2
       AND (
-        (startTime < $3 AND endTime > $4) OR
-        (startTime < $5 AND endTime > $6) OR
-        (startTime >= $7 AND endTime <= $8)
+        ("startTime" < $3 AND "endTime" > $4) OR
+        ("startTime" < $5 AND "endTime" > $6) OR
+        ("startTime" >= $7 AND "endTime" <= $8)
       )
     `;
 
@@ -91,7 +91,7 @@ app.post('/api/bookings', async (req, res) => {
 
     // 插入新预约
     const insertQuery = `
-      INSERT INTO bookings (id, studio, date, startTime, endTime, photographer, contact, notes, createdAt)
+      INSERT INTO bookings (id, studio, date, "startTime", "endTime", photographer, contact, notes, "createdAt")
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
