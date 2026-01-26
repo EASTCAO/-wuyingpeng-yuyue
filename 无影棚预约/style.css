@@ -734,22 +734,26 @@ body {
 /* 移动端菜单按钮（默认隐藏） */
 .mobile-menu-btn {
     display: none;
-    background: none;
-    border: none;
-    color: white; /* 修改为白色，确保在蓝色背景上可见 */
+    background: rgba(0, 0, 0, 0.08);
+    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    color: #262626; /* 深色，确保在白色背景上可见 */
     cursor: pointer;
-    padding: 8px;
+    padding: 10px;
     margin-right: 12px;
     border-radius: 8px;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    min-width: 40px;
+    min-height: 40px;
 }
 
 .mobile-menu-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.12);
+    border-color: rgba(0, 0, 0, 0.25);
 }
 
 .mobile-menu-btn:active {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.18);
+    transform: scale(0.95);
 }
 
 /* 移动端专属元素（默认隐藏） */
