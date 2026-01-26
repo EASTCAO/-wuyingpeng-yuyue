@@ -1,0 +1,8 @@
+name: studio-booking-api
+
+services:
+  - name: api
+    path: ./api
+    buildCommand: npm install
+    startCommand: npm start
+    port: 3000
