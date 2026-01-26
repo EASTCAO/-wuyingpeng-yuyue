@@ -432,6 +432,8 @@ function renderAllViews() {
 function renderBookings() {
     const studio1List = document.getElementById('studio1List');
     const studio2List = document.getElementById('studio2List');
+    const studio3List = document.getElementById('studio3List');
+    const studio4List = document.getElementById('studio4List');
 
     // 获取要显示的日期范围
     const displayDates = getDisplayDates();
@@ -442,6 +444,12 @@ function renderBookings() {
     );
     const studio2Bookings = allBookings.filter(b =>
         b.studio === '无影棚2号' && displayDates.includes(getDateOnly(b.date))
+    );
+    const studio3Bookings = allBookings.filter(b =>
+        b.studio === '无影棚3号' && displayDates.includes(getDateOnly(b.date))
+    );
+    const studio4Bookings = allBookings.filter(b =>
+        b.studio === '无影棚4号' && displayDates.includes(getDateOnly(b.date))
     );
 
     // 渲染无影棚1号
@@ -457,6 +465,20 @@ function renderBookings() {
     } else {
         studio2List.innerHTML = studio2Bookings.map(booking => createBookingCard(booking)).join('');
     }
+
+    // 渲染无影棚3号
+    if (studio3Bookings.length === 0) {
+        studio3List.innerHTML = '<p class="empty-message">暂无预约</p>';
+    } else {
+        studio3List.innerHTML = studio3Bookings.map(booking => createBookingCard(booking)).join('');
+    }
+
+    // 渲染无影棚4号
+    if (studio4Bookings.length === 0) {
+        studio4List.innerHTML = '<p class="empty-message">暂无预约</p>';
+    } else {
+        studio4List.innerHTML = studio4Bookings.map(booking => createBookingCard(booking)).join('');
+    }
 }
 
 // 创建预约卡片
@@ -470,7 +492,7 @@ function createBookingCard(booking) {
     const expiredLabel = status === 'completed' ? '<div class="expired-label">已过期</div>' : '';
 
     return `
-        <div class="booking-card ${myBookingClass} ${statusClass}" onclick="showBookingDetail('${booking.id}')">
+        <div class="booking-card ${myBookingClass} ${statusClass}" data-studio="${booking.studio}" onclick="showBookingDetail('${booking.id}')">
             ${expiredLabel}
             <div class="booking-info">
                 <div class="booking-time">${booking.startTime} - ${booking.endTime}</div>
@@ -478,6 +500,7 @@ function createBookingCard(booking) {
                 <div class="booking-photographer">📷 ${booking.photographer}</div>
             </div>
             ${booking.note ? `<div class="booking-note">${booking.note}</div>` : ''}
+        </div>
         </div>
     `;
 }
@@ -900,7 +923,7 @@ function renderTimelineView() {
     timelineBody.appendChild(timeColumn);
 
     // 为每个影棚创建列
-    ['无影棚1号', '无影棚2号'].forEach(studio => {
+    ['无影棚1号', '无影棚2号', '无影棚3号', '无影棚4号'].forEach(studio => {
         const studioColumn = document.createElement('div');
         studioColumn.className = 'timeline-studio-column-container';
         studioColumn.style.position = 'relative';
@@ -1034,6 +1057,7 @@ function createTimelineBookingItem(booking) {
     const statusClass = status === 'completed' ? 'booking-completed' : '';
 
     item.className = `timeline-booking-item ${isMyBooking ? 'my-booking' : ''} ${statusClass}`;
+    item.setAttribute('data-studio', booking.studio);
     item.onclick = () => showBookingDetail(booking.id);
 
     // 添加已过期标签
