@@ -898,7 +898,7 @@ function renderTimelineView() {
     // 时间轴配置
     const startHour = 9;
     const endHour = 18;
-    const hourHeight = 60;
+    const hourHeight = 50; // 与 CSS 中的 timeline-time-slot 高度一致
 
     // 获取要显示的日期列表
     const dates = getDisplayDates();
@@ -963,7 +963,7 @@ function renderTimelineView() {
             // 只显示在时间轴范围内的预约
             if (startMinutes >= startHour * 60 && startMinutes < (endHour + 1) * 60) {
                 const top = (startFromTop / 60) * hourHeight;
-                const height = Math.max((duration / 60) * hourHeight - 8, 30);
+                const height = Math.max((duration / 60) * hourHeight - 8, 25); // 最小高度25px
 
                 const bookingBlock = createTimelineBookingBlock(booking);
                 bookingBlock.style.position = 'absolute';

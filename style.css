@@ -2389,15 +2389,15 @@ body {
 
 /* 影棚分组容器 */
 .studio-group {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .studio-group-title {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: #1F2937;
-    margin-bottom: 12px;
-    padding: 6px 12px;
+    margin-bottom: 8px;
+    padding: 4px 10px;
     background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
     border-radius: 6px;
     display: inline-block;
@@ -2407,8 +2407,8 @@ body {
 .studio-group {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-bottom: 16px;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 /* 标题占据整行 */
@@ -2419,14 +2419,14 @@ body {
 /* 影棚卡片基础样式 - 更紧凑 */
 .studio-section {
     background: white;
-    padding: 16px;
+    padding: 12px;
     border-radius: 12px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     border: 1px solid #F0F0F0;
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
-    min-height: 220px;
+    min-height: 180px;
 }
 
 .studio-section:hover {
@@ -2438,18 +2438,18 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
     border-bottom: 1px solid #F3F4F6;
 }
 
 .studio-section-header h2 {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     color: #262626;
 }
 
@@ -2464,7 +2464,7 @@ body {
 
 .studio-section-large .studio-section-header h2::before {
     content: "🎬";
-    font-size: 22px;
+    font-size: 20px;
 }
 
 /* 小棚样式 */
@@ -2478,14 +2478,14 @@ body {
 
 .studio-section-small .studio-section-header h2::before {
     content: "🎬";
-    font-size: 22px;
+    font-size: 20px;
 }
 
-/* 预约列表容器 - 更紧凑 */
+/* 预约列表容器 - 增大高度 */
 .booking-list {
     flex: 1;
     overflow-y: auto;
-    max-height: 280px;
+    max-height: 500px;
 }
 
 .booking-list::-webkit-scrollbar {
@@ -2608,17 +2608,17 @@ body {
 .timeline-group {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-bottom: 16px;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .timeline-group-title {
     grid-column: 1 / -1;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: #1F2937;
-    margin-bottom: 12px;
-    padding: 6px 12px;
+    margin-bottom: 8px;
+    padding: 4px 10px;
     background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
     border-radius: 6px;
     display: inline-block;
@@ -2633,19 +2633,21 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    max-height: 350px;
 }
 
 .timeline-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px;
+    padding: 12px;
     border-bottom: 1px solid #F3F4F6;
     background: #FAFAFA;
+    flex-shrink: 0;
 }
 
 .timeline-card-header h2 {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     margin: 0;
     color: #262626;
@@ -2654,8 +2656,8 @@ body {
 .timeline-card-body {
     flex: 1;
     overflow-y: auto;
-    max-height: 400px;
     position: relative;
+    min-height: 0;
 }
 
 /* 时间轴内容 */
@@ -2665,7 +2667,7 @@ body {
 }
 
 .timeline-time-col {
-    width: 60px;
+    width: 50px;
     flex-shrink: 0;
     border-right: 1px solid #F0F0F0;
     background: #FAFAFA;
@@ -2678,17 +2680,17 @@ body {
 }
 
 .timeline-time-slot {
-    height: 60px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
     color: #6B7280;
     border-bottom: 1px solid #F0F0F0;
 }
 
 .timeline-booking-slot {
-    height: 60px;
+    height: 50px;
     border-bottom: 1px solid #F0F0F0;
     position: relative;
     padding: 4px;
@@ -2701,7 +2703,7 @@ body {
     background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
     border-left: 3px solid #4C7DFF;
     border-radius: 6px;
-    padding: 8px;
+    padding: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
     overflow: hidden;
@@ -2725,21 +2727,21 @@ body {
 }
 
 .timeline-booking-time {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #262626;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .timeline-booking-user {
-    font-size: 11px;
+    font-size: 10px;
     color: #6B7280;
 }
 
 .timeline-booking-note {
-    font-size: 10px;
+    font-size: 9px;
     color: #9CA3AF;
-    margin-top: 4px;
+    margin-top: 2px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2751,7 +2753,7 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .timeline-card-body {
+    .timeline-card {
         max-height: 300px;
     }
 }
