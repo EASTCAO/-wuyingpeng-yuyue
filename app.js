@@ -556,6 +556,50 @@ function showAddBookingForm(defaultStudio) {
     document.getElementById('startTime').value = '';
     document.getElementById('endTime').value = '';
     document.getElementById('bookingNote').value = '';
+
+    // 添加开始时间变化监听，自动更新结束时间选项
+    const startTimeSelect = document.getElementById('startTime');
+    const endTimeSelect = document.getElementById('endTime');
+
+    startTimeSelect.onchange = function() {
+        const startTime = this.value;
+        if (!startTime) return;
+
+        // 获取所有结束时间选项
+        const endOptions = endTimeSelect.querySelectorAll('option');
+
+        // 重置所有选项
+        endOptions.forEach(option => {
+            if (option.value === '') {
+                option.disabled = false;
+                return;
+            }
+            // 禁用早于或等于开始时间的选项
+            option.disabled = option.value <= startTime;
+        });
+
+        // 如果当前选择的结束时间无效，自动选择下一个有效时间
+        if (endTimeSelect.value && endTimeSelect.value <= startTime) {
+            // 找到第一个有效的结束时间（比开始时间晚30分钟）
+            const startHour = parseInt(startTime.split(':')[0]);
+            const startMinute = parseInt(startTime.split(':')[1]);
+            let suggestedEndTime = '';
+
+            if (startMinute === 0) {
+                suggestedEndTime = `${String(startHour).padStart(2, '0')}:30`;
+            } else {
+                suggestedEndTime = `${String(startHour + 1).padStart(2, '0')}:00`;
+            }
+
+            // 检查建议时间是否在选项中
+            const hasOption = Array.from(endOptions).some(opt => opt.value === suggestedEndTime);
+            if (hasOption) {
+                endTimeSelect.value = suggestedEndTime;
+            } else {
+                endTimeSelect.value = '';
+            }
+        }
+    };
 }
 
 // 关闭新建预约表单
