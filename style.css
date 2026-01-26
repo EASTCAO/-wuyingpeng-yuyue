@@ -531,7 +531,7 @@ body {
 /* 已过期标签 */
 .expired-label {
     position: absolute;
-    top: -8px;
+    top: 4px;
     right: 8px;
     background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
     color: white;
@@ -540,10 +540,12 @@ body {
     padding: 2px 8px;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
+    z-index: 10;
 }
 
 .booking-card {
     position: relative;
+    overflow: visible;
 }
 
 .booking-info {
