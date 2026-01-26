@@ -943,7 +943,7 @@ body {
 
     /* 底部导航栏 */
     .mobile-bottom-nav {
-        display: flex;
+        display: none; /* 隐藏移动端底部导航栏 */
         position: fixed;
         bottom: 0;
         left: 0;
