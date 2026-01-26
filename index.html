@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- PWA 配置 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4C7DFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1042/1042339.png">
+    
+    <title>无影棚预约系统</title>
+    <link rel="stylesheet" href="style.css?v=20260122-1">
+</head>
+<body>
+    <!-- 登录页面 -->
+    <div id="loginPage" class="page">
+        <div class="login-container">
+            <div class="login-card">
+                <!-- 图标 -->
+                <div class="login-icon">
+                    <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bodyGradient" x1="8" y1="18" x2="64" y2="58" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#22D3EE"/>
+                                <stop offset="0.5" stop-color="#38BDF8"/>
+                                <stop offset="1" stop-color="#818CF8"/>
+                            </linearGradient>
+                            <linearGradient id="lensGradient" x1="24" y1="28" x2="48" y2="52" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#06B6D4"/>
+                                <stop offset="0.5" stop-color="#3B82F6"/>
+                                <stop offset="1" stop-color="#8B5CF6"/>
+                            </linearGradient>
+                            <linearGradient id="innerLensGradient" x1="28" y1="32" x2="44" y2="48" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#67E8F9"/>
+                                <stop offset="1" stop-color="#A5B4FC"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- 相机机身 -->
+                        <rect x="8" y="20" width="56" height="40" rx="8" fill="url(#bodyGradient)"/>
+                        <!-- 取景器凸起 -->
+                        <rect x="26" y="12" width="20" height="12" rx="4" fill="url(#bodyGradient)"/>
+                        <!-- 镜头外圈 -->
+                        <circle cx="36" cy="40" r="16" fill="url(#lensGradient)"/>
+                        <!-- 镜头内圈 -->
+                        <circle cx="36" cy="40" r="10" fill="url(#innerLensGradient)"/>
+                        <!-- 镜头中心 -->
+                        <circle cx="36" cy="40" r="5" fill="white" fill-opacity="0.3"/>
+                        <!-- 闪光灯 -->
+                        <circle cx="54" cy="28" r="4" fill="white" fill-opacity="0.6"/>
+                    </svg>
+                </div>
+
+                <!-- 标题 -->
+                <h1 class="login-title">无影棚预约系统</h1>
+                <p class="login-subtitle">登录您的工作账户</p>
+
+                <!-- 表单 -->
+                <div class="login-form">
+                    <div class="form-field">
+                        <label class="field-label"><span class="required">*</span> 用户名</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            <input type="text" id="photographerName" placeholder="请输入用户名" maxlength="20">
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="field-label"><span class="required">*</span> 密码</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                            <input type="password" id="loginPassword" placeholder="请输入密码" maxlength="20">
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">
+                                <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="remember-me">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="rememberMe">
+                            <span>记住密码</span>
+                        </label>
+                    </div>
+
+                    <button onclick="login()" class="login-btn">登 录</button>
+                    <button onclick="guestLogin()" class="guest-btn">游客模式</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主页面 -->
+    <div id="mainPage" class="page hidden">
+        <div class="header">
+            <div class="header-left">
+                <!-- 移动端菜单按钮 -->
+                <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="打开菜单">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <!-- 相机图标 -->
+                <div class="header-icon">
+                    <svg width="24" height="24" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="headerBodyGradient" x1="8" y1="18" x2="64" y2="58" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#22D3EE"/>
+                                <stop offset="0.5" stop-color="#38BDF8"/>
+                                <stop offset="1" stop-color="#818CF8"/>
+                            </linearGradient>
+                            <linearGradient id="headerLensGradient" x1="24" y1="28" x2="48" y2="52" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#06B6D4"/>
+                                <stop offset="0.5" stop-color="#3B82F6"/>
+                                <stop offset="1" stop-color="#8B5CF6"/>
+                            </linearGradient>
+                            <linearGradient id="headerInnerLensGradient" x1="28" y1="32" x2="44" y2="48" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#67E8F9"/>
+                                <stop offset="1" stop-color="#A5B4FC"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="8" y="20" width="56" height="40" rx="8" fill="url(#headerBodyGradient)"/>
+                        <rect x="26" y="12" width="20" height="12" rx="4" fill="url(#headerBodyGradient)"/>
+                        <circle cx="36" cy="40" r="16" fill="url(#headerLensGradient)"/>
+                        <circle cx="36" cy="40" r="10" fill="url(#headerInnerLensGradient)"/>
+                        <circle cx="36" cy="40" r="5" fill="white" fill-opacity="0.3"/>
+                        <circle cx="54" cy="28" r="4" fill="white" fill-opacity="0.6"/>
+                    </svg>
+                </div>
+                <h1>无影棚预约系统</h1>
+            </div>
+            <div class="user-info">
+                <span id="currentUser"></span>
+                <button onclick="logout()" class="btn btn-small btn-user">退出</button>
+            </div>
+        </div>
+
+        <!-- 遮罩层（移动端用） -->
+        <div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+        <!-- 提醒条 -->
+        <div id="reminderBar" class="reminder-bar hidden">
+            <div class="reminder-content">
+                <span class="reminder-icon">🔔</span>
+                <span id="reminderText"></span>
+            </div>
+            <button onclick="closeReminder()" class="reminder-close">&times;</button>
+        </div>
+
+        <div class="main-container">
+            <!-- 左侧筛选区域 -->
+            <div class="sidebar">
+                <div class="sidebar-top">
+                    <input type="text" id="searchInput" class="search-input" placeholder="搜索">
+                    <label class="switch-row">
+                        <span>只看我的</span>
+                        <input type="checkbox" id="filterMyBookings" onchange="applyFilters()">
+                        <span class="switch-slider"></span>
+                    </label>
+                    <label class="switch-row">
+                        <span>提醒</span>
+                        <input type="checkbox" id="enableReminder" onchange="toggleReminder()">
+                        <span class="switch-slider"></span>
+                    </label>
+                    <a href="javascript:void(0)" onclick="switchView('stats')" class="sidebar-link">统计</a>
+                    <a href="javascript:void(0)" onclick="showChangePasswordModal()" class="sidebar-link">修改密码</a>
+                </div>
+            </div>
+
+            <!-- 右侧主内容区域 -->
+            <div class="content-area">
+                <!-- 顶部工具栏 -->
+                <div class="toolbar">
+                    <!-- 日期筛选 -->
+                    <div class="date-nav">
+                        <button class="date-btn active" onclick="selectDateRange('today', this)">今天</button>
+                        <button class="date-btn" onclick="selectDateRange('tomorrow', this)">明天</button>
+                        <span class="nav-divider"></span>
+                        <button class="view-btn active" onclick="switchView('list')">列表</button>
+                        <button class="view-btn" onclick="switchView('timeline')">时间轴</button>
+                    </div>
+                </div>
+
+                <!-- 时间轴视图 -->
+                <div id="timelineView" class="timeline-view hidden">
+                    <div class="timeline-header">
+                        <div class="timeline-time-column">时间</div>
+                        <div class="timeline-studio-column">
+                            <div class="studio-header-wrapper">
+                                <span class="studio-header">无影棚 1号</span>
+                                <button onclick="showAddBookingForm('无影棚1号')" class="btn-add-inline">+ 新建预约</button>
+                            </div>
+                        </div>
+                        <div class="timeline-studio-column">
+                            <div class="studio-header-wrapper">
+                                <span class="studio-header">无影棚 2号</span>
+                                <button onclick="showAddBookingForm('无影棚2号')" class="btn-add-inline">+ 新建预约</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-body" id="timelineBody">
+                        <!-- 时间轴内容将通过 JavaScript 动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 列表视图 -->
+                <div id="listView" class="list-view">
+                    <!-- 无影棚1号 -->
+                    <div class="studio-section">
+                        <div class="studio-section-header">
+                            <h2>🎬 无影棚1号</h2>
+                            <button onclick="showAddBookingForm('无影棚1号')" class="btn btn-primary btn-small">+ 新建预约</button>
+                        </div>
+                        <div id="studio1List" class="booking-list">
+                            <p class="empty-message">暂无预约</p>
+                        </div>
+                    </div>
+
+                    <!-- 无影棚2号 -->
+                    <div class="studio-section">
+                        <div class="studio-section-header">
+                            <h2>🎬 无影棚2号</h2>
+                            <button onclick="showAddBookingForm('无影棚2号')" class="btn btn-primary btn-small">+ 新建预约</button>
+                        </div>
+                        <div id="studio2List" class="booking-list">
+                            <p class="empty-message">暂无预约</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 统计视图 -->
+                <div id="statsView" class="stats-view hidden">
+                    <div class="stats-header">
+                        <h2>📊 使用时长统计</h2>
+                        <div class="stats-filters">
+                            <select id="statsMonth" onchange="renderStatsView()">
+                                <option value="all">所有时间</option>
+                            </select>
+                            <select id="statsStudio" onchange="renderStatsView()">
+                                <option value="all">所有影棚</option>
+                                <option value="无影棚1号">无影棚1号</option>
+                                <option value="无影棚2号">无影棚2号</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="stats-summary">
+                        <div class="stats-card">
+                            <div class="stats-card-label">总预约次数</div>
+                            <div class="stats-card-value" id="totalBookings">0</div>
+                        </div>
+                        <div class="stats-card">
+                            <div class="stats-card-label">总使用时长</div>
+                            <div class="stats-card-value" id="totalHours">0h</div>
+                        </div>
+                        <div class="stats-card">
+                            <div class="stats-card-label">摄影师人数</div>
+                            <div class="stats-card-value" id="totalPhotographers">0</div>
+                        </div>
+                    </div>
+
+                    <div class="stats-table-container">
+                        <table class="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>摄影师</th>
+                                    <th>预约次数</th>
+                                    <th>总时长</th>
+                                    <th>平均时长</th>
+                                    <th>占比</th>
+                                </tr>
+                            </thead>
+                            <tbody id="statsTableBody">
+                                <tr>
+                                    <td colspan="6" class="empty-message">暂无数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 移动端悬浮添加按钮 -->
+        <button class="mobile-fab" onclick="showAddBookingForm()" aria-label="新建预约">
+            <span>+</span>
+        </button>
+
+        <!-- 移动端底部导航栏 -->
+        <div class="mobile-bottom-nav">
+            <button class="nav-item active" onclick="switchView('timeline')" data-view="timeline">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">时间轴</span>
+            </button>
+            <button class="nav-item" onclick="switchView('list')" data-view="list">
+                <span class="nav-icon">📝</span>
+                <span class="nav-label">列表</span>
+            </button>
+            <button class="nav-item" onclick="switchView('stats')" data-view="stats">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">统计</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 新建预约弹窗 -->
+    <div id="addBookingModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>新建预约</h2>
+                <button onclick="closeAddBookingForm()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>选择影棚</label>
+                    <select id="studioSelect">
+                        <option value="无影棚1号">无影棚1号</option>
+                        <option value="无影棚2号">无影棚2号</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="date" id="bookingDate" required>
+                </div>
+                <div class="form-group">
+                    <label>开始时间</label>
+                    <input type="time" id="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label>结束时间</label>
+                    <input type="time" id="endTime" required>
+                </div>
+                <div class="form-group">
+                    <label>拍摄内容备注</label>
+                    <textarea id="bookingNote" placeholder="例如：拍摄大型家具，预计2小时" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeAddBookingForm()" class="btn btn-secondary">取消</button>
+                    <button type="button" onclick="addBooking()" class="btn btn-primary">确认预约</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预约详情弹窗 -->
+    <div id="bookingDetailModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>预约详情</h2>
+                <button onclick="closeDetailModal()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="bookingDetailContent"></div>
+                <div class="form-actions" id="detailActions"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提醒弹窗 -->
+    <div id="reminderModal" class="modal reminder-modal hidden">
+        <div class="modal-content reminder-modal-content">
+            <div class="reminder-modal-icon">
+                <span class="reminder-bell">🔔</span>
+            </div>
+            <div class="reminder-modal-body">
+                <h2 id="reminderModalTitle">预约提醒</h2>
+                <p id="reminderModalMessage"></p>
+                <div class="reminder-modal-time" id="reminderModalTime"></div>
+            </div>
+            <div class="reminder-modal-actions">
+                <button onclick="closeReminderModal()" class="btn btn-primary btn-large">我知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码弹窗 -->
+    <div id="changePasswordModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>修改密码</h2>
+                <button onclick="closeChangePasswordModal()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>当前密码</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="currentPassword" placeholder="请输入当前密码" maxlength="20">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>新密码</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="newPassword" placeholder="请输入新密码（至少4位）" maxlength="20">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>确认新密码</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="confirmPassword" placeholder="请再次输入新密码" maxlength="20">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeChangePasswordModal()" class="btn btn-secondary">取消</button>
+                    <button type="button" onclick="changePassword()" class="btn btn-primary">确认修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=20260123-4"></script>
+
+    <!-- PWA Service Worker 注册 -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
