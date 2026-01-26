@@ -1,0 +1,5 @@
+{
+  "build_command": "echo 'No build needed for static site'",
+  "start_command": "npx http-server -p ${PORT:-8080}",
+  "install_command": "npm install -g http-server"
+}
