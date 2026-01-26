@@ -1134,6 +1134,9 @@ function getFilteredBookings() {
 
 // 更新今日使用情况
 function updateTodayUsage() {
+    const todayUsageElement = document.getElementById('todayUsage');
+    if (!todayUsageElement) return; // 如果元素不存在，直接返回
+
     const today = formatDateToString(new Date());
     const todayBookings = allBookings.filter(b =>
         b.photographer === currentUser && b.date === today
@@ -1149,7 +1152,7 @@ function updateTodayUsage() {
         totalHours += durationMinutes / 60;
     });
 
-    document.getElementById('todayUsage').textContent = `${totalHours.toFixed(1)}h`;
+    todayUsageElement.textContent = `${totalHours.toFixed(1)}h`;
 }
 
 // 修改 showMainPage 函数以初始化新UI
