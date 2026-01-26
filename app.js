@@ -895,8 +895,10 @@ function showDatePicker() {
 
 // 渲染时间轴视图
 function renderTimelineView() {
-    const timelineBody = document.getElementById('timelineBody');
-    timelineBody.innerHTML = '';
+    // 时间轴配置
+    const startHour = 9;
+    const endHour = 18;
+    const hourHeight = 60;
 
     // 获取要显示的日期列表
     const dates = getDisplayDates();
@@ -904,46 +906,49 @@ function renderTimelineView() {
     // 获取筛选后的预约
     const filteredBookings = getFilteredBookings();
 
-    // 时间轴配置
-    const startHour = 9;
-    const endHour = 18;
-    const hourHeight = 50; // 每小时的高度（像素）
+    // 为每个影棚渲染时间轴
+    ['无影棚1号', '无影棚2号', '无影棚3号', '无影棚4号'].forEach((studio, index) => {
+        const timelineBody = document.getElementById(`timeline${index + 1}Body`);
+        if (!timelineBody) return;
 
-    // 创建时间列
-    const timeColumn = document.createElement('div');
-    timeColumn.className = 'timeline-time-column-container';
+        timelineBody.innerHTML = '';
 
-    for (let hour = startHour; hour <= endHour; hour++) {
-        const timeCell = document.createElement('div');
-        timeCell.className = 'timeline-time-cell';
-        timeCell.style.height = hourHeight + 'px';
-        timeCell.textContent = `${String(hour).padStart(2, '0')}:00`;
-        timeColumn.appendChild(timeCell);
-    }
-    timelineBody.appendChild(timeColumn);
+        // 创建时间轴内容容器
+        const timelineContent = document.createElement('div');
+        timelineContent.className = 'timeline-content';
 
-    // 为每个影棚创建列
-    ['无影棚1号', '无影棚2号', '无影棚3号', '无影棚4号'].forEach(studio => {
-        const studioColumn = document.createElement('div');
-        studioColumn.className = 'timeline-studio-column-container';
-        studioColumn.style.position = 'relative';
-        studioColumn.style.height = ((endHour - startHour + 1) * hourHeight) + 'px';
+        // 创建时间列
+        const timeCol = document.createElement('div');
+        timeCol.className = 'timeline-time-col';
 
-        // 创建小时格子背景
         for (let hour = startHour; hour <= endHour; hour++) {
-            const hourCell = document.createElement('div');
-            hourCell.className = 'timeline-hour-cell';
-            hourCell.style.height = hourHeight + 'px';
-            studioColumn.appendChild(hourCell);
+            const timeSlot = document.createElement('div');
+            timeSlot.className = 'timeline-time-slot';
+            timeSlot.textContent = `${String(hour).padStart(2, '0')}:00`;
+            timeCol.appendChild(timeSlot);
+        }
+        timelineContent.appendChild(timeCol);
+
+        // 创建预约列
+        const bookingCol = document.createElement('div');
+        bookingCol.className = 'timeline-booking-col';
+        bookingCol.style.position = 'relative';
+        bookingCol.style.height = ((endHour - startHour + 1) * hourHeight) + 'px';
+
+        // 创建时间槽背景
+        for (let hour = startHour; hour <= endHour; hour++) {
+            const slot = document.createElement('div');
+            slot.className = 'timeline-booking-slot';
+            bookingCol.appendChild(slot);
         }
 
-        // 获取该影棚在选定日期的预约
+        // 获取该影棚的预约
         const studioBookings = filteredBookings.filter(b => {
             const bookingDate = getDateOnly(b.date);
             return b.studio === studio && dates.includes(bookingDate);
         });
 
-        // 渲染预约（使用绝对定位）
+        // 渲染预约块
         studioBookings.forEach(booking => {
             const startParts = booking.startTime.split(':');
             const endParts = booking.endTime.split(':');
@@ -952,28 +957,56 @@ function renderTimelineView() {
             const endMinutes = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
 
             // 计算位置和高度
-            const startFromTop = startMinutes - (startHour * 60); // 从09:00开始的分钟数
+            const startFromTop = startMinutes - (startHour * 60);
             const duration = endMinutes - startMinutes;
 
             // 只显示在时间轴范围内的预约
             if (startMinutes >= startHour * 60 && startMinutes < (endHour + 1) * 60) {
                 const top = (startFromTop / 60) * hourHeight;
-                const height = Math.max((duration / 60) * hourHeight, 30); // 最小高度30px
+                const height = Math.max((duration / 60) * hourHeight - 8, 30);
 
-                const bookingItem = createTimelineBookingItem(booking);
-                bookingItem.style.position = 'absolute';
-                bookingItem.style.top = top + 'px';
-                bookingItem.style.left = '4px';
-                bookingItem.style.right = '4px';
-                bookingItem.style.height = height + 'px';
-                bookingItem.style.zIndex = '10';
+                const bookingBlock = createTimelineBookingBlock(booking);
+                bookingBlock.style.position = 'absolute';
+                bookingBlock.style.top = top + 'px';
+                bookingBlock.style.height = height + 'px';
 
-                studioColumn.appendChild(bookingItem);
+                bookingCol.appendChild(bookingBlock);
             }
         });
 
-        timelineBody.appendChild(studioColumn);
+        timelineContent.appendChild(bookingCol);
+        timelineBody.appendChild(timelineContent);
     });
+}
+
+// 创建时间轴预约块
+function createTimelineBookingBlock(booking) {
+    const block = document.createElement('div');
+    const isMyBooking = booking.photographer === currentUser;
+    const status = getBookingStatus(booking);
+    const statusClass = status === 'completed' ? 'booking-completed' : '';
+
+    block.className = `timeline-booking-block ${isMyBooking ? 'my-booking' : ''} ${statusClass}`;
+    block.onclick = () => showBookingDetail(booking.id);
+
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'timeline-booking-time';
+    timeDiv.textContent = `${booking.startTime}-${booking.endTime}`;
+    block.appendChild(timeDiv);
+
+    const userDiv = document.createElement('div');
+    userDiv.className = 'timeline-booking-user';
+    userDiv.textContent = booking.photographer;
+    block.appendChild(userDiv);
+
+    if (booking.note) {
+        const noteDiv = document.createElement('div');
+        noteDiv.className = 'timeline-booking-note';
+        noteDiv.textContent = booking.note;
+        block.appendChild(noteDiv);
+    }
+
+    return block;
 }
 
 // 显示新建预约表单并预填时间

@@ -2601,3 +2601,157 @@ body {
         width: 60px;
     }
 }
+
+/* ========== 时间轴卡片样式 ========== */
+
+/* 时间轴分组 */
+.timeline-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.timeline-group-title {
+    grid-column: 1 / -1;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 12px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+    border-radius: 6px;
+    display: inline-block;
+}
+
+/* 时间轴卡片 */
+.timeline-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #F0F0F0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.timeline-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #F3F4F6;
+    background: #FAFAFA;
+}
+
+.timeline-card-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    color: #262626;
+}
+
+.timeline-card-body {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 400px;
+    position: relative;
+}
+
+/* 时间轴内容 */
+.timeline-content {
+    display: flex;
+    position: relative;
+}
+
+.timeline-time-col {
+    width: 60px;
+    flex-shrink: 0;
+    border-right: 1px solid #F0F0F0;
+    background: #FAFAFA;
+}
+
+.timeline-booking-col {
+    flex: 1;
+    position: relative;
+    background: white;
+}
+
+.timeline-time-slot {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #6B7280;
+    border-bottom: 1px solid #F0F0F0;
+}
+
+.timeline-booking-slot {
+    height: 60px;
+    border-bottom: 1px solid #F0F0F0;
+    position: relative;
+    padding: 4px;
+}
+
+.timeline-booking-block {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+    border-left: 3px solid #4C7DFF;
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.timeline-booking-block:hover {
+    transform: translateX(2px);
+    box-shadow: 0 4px 8px rgba(76, 125, 255, 0.2);
+}
+
+.timeline-booking-block.my-booking {
+    background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+    border-left-color: #10B981;
+}
+
+.timeline-booking-block.booking-completed {
+    background: #F3F4F6;
+    border-left-color: #9CA3AF;
+    opacity: 0.6;
+}
+
+.timeline-booking-time {
+    font-size: 12px;
+    font-weight: 600;
+    color: #262626;
+    margin-bottom: 4px;
+}
+
+.timeline-booking-user {
+    font-size: 11px;
+    color: #6B7280;
+}
+
+.timeline-booking-note {
+    font-size: 10px;
+    color: #9CA3AF;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .timeline-group {
+        grid-template-columns: 1fr;
+    }
+
+    .timeline-card-body {
+        max-height: 300px;
+    }
+}

@@ -199,50 +199,59 @@
                 </div>
 
                 <!-- 时间轴视图 -->
-<div id="timelineView" class="timeline-view hidden">
-                    <div class="timeline-header">
-                        <div class="timeline-time-column">时间</div>
-                        <!-- 大棚区域 -->
-                        <div class="timeline-studio-column">
-                            <div class="studio-header-wrapper">
-                                <span class="studio-header">
-                                    <span class="studio-badge studio-badge-large">大棚</span>
-                                    无影棚 1号
-                                </span>
-                                <button onclick="showAddBookingForm('无影棚1号')" class="btn-add-inline">+ 新建预约</button>
+                <div id="timelineView" class="timeline-view hidden">
+                    <!-- 大棚区域 -->
+                    <div class="timeline-group">
+                        <h3 class="timeline-group-title">大棚区域</h3>
+
+                        <!-- 无影棚1号 -->
+                        <div class="timeline-card">
+                            <div class="timeline-card-header">
+                                <h2>🎬 1号</h2>
+                                <button onclick="showAddBookingForm('无影棚1号')" class="btn btn-primary btn-small">+ 新建预约</button>
+                            </div>
+                            <div class="timeline-card-body" id="timeline1Body">
+                                <!-- 时间轴内容 -->
                             </div>
                         </div>
-                        <div class="timeline-studio-column">
-                            <div class="studio-header-wrapper">
-                                <span class="studio-header">
-                                    <span class="studio-badge studio-badge-large">大棚</span>
-                                    无影棚 2号
-                                </span>
-                                <button onclick="showAddBookingForm('无影棚2号')" class="btn-add-inline">+ 新建预约</button>
+
+                        <!-- 无影棚2号 -->
+                        <div class="timeline-card">
+                            <div class="timeline-card-header">
+                                <h2>🎬 2号</h2>
+                                <button onclick="showAddBookingForm('无影棚2号')" class="btn btn-primary btn-small">+ 新建预约</button>
                             </div>
-                        </div>
-                        <!-- 小棚区域 -->
-                        <div class="timeline-studio-column timeline-studio-small">
-                            <div class="studio-header-wrapper">
-                                <span class="studio-header">
-                                    <span class="studio-badge studio-badge-small">小棚</span>
-                                    无影棚 3号
-                                </span>
-                                <button onclick="showAddBookingForm('无影棚3号')" class="btn-add-inline btn-add-small">+ 新建预约</button>
-                            </div>
-                        </div>
-                        <div class="timeline-studio-column timeline-studio-small">
-                            <div class="studio-header-wrapper">
-                                <span class="studio-header">
-                                    <span class="studio-badge studio-badge-small">小棚</span>
-                                    无影棚 4号
-                                </span>
-                                <button onclick="showAddBookingForm('无影棚4号')" class="btn-add-inline btn-add-small">+ 新建预约</button>
+                            <div class="timeline-card-body" id="timeline2Body">
+                                <!-- 时间轴内容 -->
                             </div>
                         </div>
                     </div>
-                    <div class="timeline-body" id="timelineBody">
-                        <!-- 时间轴内容将通过 JavaScript 动态生成 -->
+
+                    <!-- 小棚区域 -->
+                    <div class="timeline-group">
+                        <h3 class="timeline-group-title">小棚区域</h3>
+
+                        <!-- 无影棚3号 -->
+                        <div class="timeline-card">
+                            <div class="timeline-card-header">
+                                <h2>🎬 3号</h2>
+                                <button onclick="showAddBookingForm('无影棚3号')" class="btn btn-primary btn-small">+ 新建预约</button>
+                            </div>
+                            <div class="timeline-card-body" id="timeline3Body">
+                                <!-- 时间轴内容 -->
+                            </div>
+                        </div>
+
+                        <!-- 无影棚4号 -->
+                        <div class="timeline-card">
+                            <div class="timeline-card-header">
+                                <h2>🎬 4号</h2>
+                                <button onclick="showAddBookingForm('无影棚4号')" class="btn btn-primary btn-small">+ 新建预约</button>
+                            </div>
+                            <div class="timeline-card-body" id="timeline4Body">
+                                <!-- 时间轴内容 -->
+                            </div>
+                        </div>
                     </div>
                 </div>
 
