@@ -2633,21 +2633,20 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    max-height: 350px;
 }
 
 .timeline-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px;
+    padding: 10px 12px;
     border-bottom: 1px solid #F3F4F6;
     background: #FAFAFA;
     flex-shrink: 0;
 }
 
 .timeline-card-header h2 {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     margin: 0;
     color: #262626;
@@ -2655,9 +2654,8 @@ body {
 
 .timeline-card-body {
     flex: 1;
-    overflow-y: auto;
+    overflow: visible;
     position: relative;
-    min-height: 0;
 }
 
 /* 时间轴内容 */
@@ -2667,7 +2665,7 @@ body {
 }
 
 .timeline-time-col {
-    width: 50px;
+    width: 45px;
     flex-shrink: 0;
     border-right: 1px solid #F0F0F0;
     background: #FAFAFA;
@@ -2680,39 +2678,39 @@ body {
 }
 
 .timeline-time-slot {
-    height: 50px;
+    height: 35px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 10px;
     color: #6B7280;
     border-bottom: 1px solid #F0F0F0;
 }
 
 .timeline-booking-slot {
-    height: 50px;
+    height: 35px;
     border-bottom: 1px solid #F0F0F0;
     position: relative;
-    padding: 4px;
+    padding: 2px;
 }
 
 .timeline-booking-block {
     position: absolute;
-    left: 4px;
-    right: 4px;
+    left: 2px;
+    right: 2px;
     background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
     border-left: 3px solid #4C7DFF;
-    border-radius: 6px;
-    padding: 6px;
+    border-radius: 4px;
+    padding: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
     overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .timeline-booking-block:hover {
     transform: translateX(2px);
-    box-shadow: 0 4px 8px rgba(76, 125, 255, 0.2);
+    box-shadow: 0 3px 6px rgba(76, 125, 255, 0.2);
 }
 
 .timeline-booking-block.my-booking {
@@ -2727,24 +2725,27 @@ body {
 }
 
 .timeline-booking-time {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     color: #262626;
     margin-bottom: 2px;
+    line-height: 1.2;
 }
 
 .timeline-booking-user {
-    font-size: 10px;
+    font-size: 9px;
     color: #6B7280;
+    line-height: 1.2;
 }
 
 .timeline-booking-note {
-    font-size: 9px;
+    font-size: 8px;
     color: #9CA3AF;
     margin-top: 2px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1.2;
 }
 
 /* 移动端适配 */
@@ -2753,7 +2754,11 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .timeline-card {
-        max-height: 300px;
+    .timeline-time-slot {
+        height: 40px;
+    }
+
+    .timeline-booking-slot {
+        height: 40px;
     }
 }
