@@ -1,0 +1,7 @@
+{
+  "build": false,
+  "output": "无影棚预约",
+  "routes": [
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}
