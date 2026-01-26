@@ -14,7 +14,7 @@ let globalAudioContext = null; // 全局 AudioContext
 // 部署后端后，将此 URL 改为你的后端地址
 // 例如：'https://your-backend.zeabur.app'
 // 设置为空字符串则使用本地 localStorage（单机模式，无法多用户同步）
-const API_BASE_URL = 'https://your-backend.zeabur.app'; // 请替换为实际的后端地址
+const API_BASE_URL = 'http://localhost:3000'; // 本地测试使用
 
 // 检查是否使用云端同步
 function isCloudMode() {
