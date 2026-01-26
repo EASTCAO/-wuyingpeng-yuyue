@@ -2389,7 +2389,7 @@ body {
 
 /* 影棚分组容器 */
 .studio-group {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .studio-group-title {
@@ -2407,8 +2407,8 @@ body {
 .studio-group {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
 /* 标题占据整行 */
@@ -2416,17 +2416,17 @@ body {
     grid-column: 1 / -1;
 }
 
-/* 影棚卡片基础样式 - 更紧凑 */
+/* 影棚卡片基础样式 - 增大显示区域 */
 .studio-section {
     background: white;
-    padding: 12px;
+    padding: 14px;
     border-radius: 12px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     border: 1px solid #F0F0F0;
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
-    min-height: 180px;
+    min-height: 320px;
 }
 
 .studio-section:hover {
@@ -2438,8 +2438,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
     border-bottom: 1px solid #F3F4F6;
 }
 
@@ -2481,11 +2481,11 @@ body {
     font-size: 20px;
 }
 
-/* 预约列表容器 - 增大高度 */
+/* 预约列表容器 - 大幅增加高度 */
 .booking-list {
     flex: 1;
     overflow-y: auto;
-    max-height: 500px;
+    max-height: 600px;
 }
 
 .booking-list::-webkit-scrollbar {
