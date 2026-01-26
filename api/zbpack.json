@@ -1,0 +1,5 @@
+{
+  "build_command": "npm install",
+  "start_command": "npm start",
+  "install_command": "npm install"
+}
