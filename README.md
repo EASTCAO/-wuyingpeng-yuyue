@@ -20,9 +20,9 @@
 - PWA 技术支持离线访问
 - 响应式设计，支持移动端
 
-**后端（可选）**
+**后端**
 - Node.js + Express
-- SQLite 数据库
+- PostgreSQL 数据库
 - RESTful API
 - CORS 跨域支持
 
@@ -35,19 +35,99 @@
 ├── style.css          # 样式文件
 ├── sw.js              # Service Worker
 ├── manifest.json      # PWA 配置
-├── favicon.svg        # 网站图标
-├── api/               # 后端 API（可选）
+├── api/               # 后端 API
 │   ├── server.js      # Express 服务器
+│   ├── migrate.js     # 数据库迁移脚本
+│   ├── test.js        # API 测试脚本
 │   ├── package.json   # 依赖配置
-│   └── README.md      # 后端文档
-├── zeabur.yaml        # Zeabur 部署配置
+│   └── zbpack.json    # Zeabur 构建配置
+├── CLAUDE.md          # Claude Code 项目指导
 └── README.md          # 项目说明
 ```
 
 ## 本地运行
 
+### 前端
+
 ```bash
 # 使用 Python 启动本地服务器
+python -m http.server 8000
+
+# 或使用 Node.js
+npx http-server -p 8000
+
+# 访问 http://localhost:8000
+```
+
+### 后端（可选）
+
+```bash
+cd api
+npm install
+npm start
+
+# 后端运行在 http://localhost:3000
+```
+
+## 部署
+
+### 前端部署
+
+**Vercel / Netlify / GitHub Pages**
+- 直接上传项目根目录
+- 无需构建步骤
+
+### 后端部署到 Zeabur
+
+1. **创建 PostgreSQL 服务**
+   - 在 Zeabur 控制台创建 PostgreSQL 服务
+
+2. **部署后端服务**
+   - 连接 GitHub 仓库
+   - 设置根目录为 `api`
+   - 配置环境变量：
+     ```
+     DATABASE_URL=postgresql://user:password@host:port/database
+     NODE_ENV=development
+     PORT=${WEB_PORT}
+     ```
+
+3. **更新前端配置**
+   - 修改 `app.js` 中的 `API_BASE_URL` 为后端地址
+   - 重新部署前端
+
+详细部署指南请查看 `zeabur-env-config-guide.html`
+
+## API 文档
+
+### 端点
+
+- `GET /health` - 健康检查
+- `GET /api/bookings` - 获取所有预约
+- `POST /api/bookings` - 创建新预约
+- `DELETE /api/bookings/:id` - 删除预约
+
+### 测试
+
+```bash
+cd api
+node test.js https://your-backend-url.zeabur.app
+```
+
+## 开发
+
+### 数据库迁移
+
+如果需要重建数据库表结构：
+
+```bash
+cd api
+node migrate.js "postgresql://connection-string"
+```
+
+## License
+
+MIT
 python -m http.server 8000
 
 # 或使用 Node.js

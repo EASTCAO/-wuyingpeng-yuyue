@@ -9,6 +9,12 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// 请求日志中间件
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
+  next();
+});
+
 // 数据库连接配置
 // Zeabur 会自动注入这些环境变量
 const pool = new Pool({
@@ -127,6 +133,33 @@ app.delete('/api/bookings/:id', async (req, res) => {
 // 健康检查
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// 根路径
+app.get('/', (req, res) => {
+  res.json({
+    name: '无影棚预约系统 API',
+    version: '1.0.0',
+    endpoints: {
+      health: 'GET /health',
+      bookings: {
+        list: 'GET /api/bookings',
+        create: 'POST /api/bookings',
+        delete: 'DELETE /api/bookings/:id'
+      }
+    }
+  });
+});
+
+// 404 处理
+app.use((req, res) => {
+  res.status(404).json({ error: '接口不存在' });
+});
+
+// 错误处理中间件
+app.use((err, req, res, next) => {
+  console.error('服务器错误:', err);
+  res.status(500).json({ error: '服务器内部错误' });
 });
 
 // 优雅关闭

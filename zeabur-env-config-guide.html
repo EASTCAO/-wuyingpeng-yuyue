@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeabur 环境变量配置指南 - 无影棚预约系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .section h3 {
+            color: #764ba2;
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-danger {
+            background: #fee;
+            border-color: #e74c3c;
+            color: #c0392b;
+        }
+
+        .alert-success {
+            background: #efe;
+            border-color: #27ae60;
+            color: #1e8449;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            color: #1565c0;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .code-inline {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #e74c3c;
+            font-size: 0.9em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .step {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .checklist {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .checklist li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .checklist li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .faq {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .faq-question {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .faq-answer {
+            color: #555;
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+            margin: 10px 5px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #ddd;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .content {
+                padding: 20px 15px;
+            }
+
+            .section h2 {
+                font-size: 1.4em;
+            }
+
+            table {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Zeabur 环境变量配置指南</h1>
+            <p>无影棚预约系统后端部署配置</p>
+        </div>
+
+        <div class="content">
+            <!-- 问题分析 -->
+            <div class="section">
+                <h2>📋 问题分析</h2>
+                <div class="alert alert-danger">
+                    <strong>当前配置存在问题：</strong>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>配置了 <code class="code-inline">PASSWORD=7cq18Nmx2ZCQ5Dvj0kVnL6aiAWd4w9I3</code>（代码中未使用）</li>
+                        <li>配置了 <code class="code-inline">PORT=${WEB_PORT}</code>（正确）</li>
+                        <li><strong>缺少关键变量：</strong><code class="code-inline">DATABASE_URL</code>（后端代码必需）</li>
+                    </ul>
+                </div>
+                <p>后端代码在 <code class="code-inline">api/server.js:15</code> 中使用 <code class="code-inline">process.env.DATABASE_URL</code> 连接数据库，如果缺少此变量，服务将无法启动。</p>
+            </div>
+
+            <!-- 正确配置 -->
+            <div class="section">
+                <h2>✅ 正确的环境变量配置</h2>
+                <p>在 Zeabur 的 "Edit Raw Variables" 界面中，应配置为：</p>
+                <div class="code-block">DATABASE_URL=${POSTGRES_CONNECTION_STRING}
+NODE_ENV=production
+PORT=${WEB_PORT}</div>
+
+                <h3>配置说明</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>变量名</th>
+                            <th>值</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="code-inline">DATABASE_URL</code></td>
+                            <td><code class="code-inline">${POSTGRES_CONNECTION_STRING}</code></td>
+                            <td>Zeabur 自动注入的 PostgreSQL 连接字符串变量引用</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">NODE_ENV</code></td>
+                            <td><code class="code-inline">production</code></td>
+                            <td>设置为生产环境，启用 SSL 数据库连接（见 server.js:16）</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">PORT</code></td>
+                            <td><code class="code-inline">${WEB_PORT}</code></td>
+                            <td>Zeabur 提供的端口变量引用</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert alert-info">
+                    <strong>重要提示：</strong>保持 <code class="code-inline">${}</code> 格式不变，Zeabur 会在运行时自动替换为实际值。不要手动替换这些变量！
+                </div>
+            </div>
+
+            <!-- 操作步骤 -->
+            <div class="section">
+                <h2>🚀 操作步骤</h2>
+
+                <div class="step">
+                    <h3><span class="step-number">1</span>修改环境变量</h3>
+                    <ol style="padding-left: 20px; margin-top: 10px;">
+                        <li>在 Zeabur 控制台，进入您的后端服务</li>
+                        <li>点击 <strong>"Variable"</strong> 标签</li>
+                        <li>点击 <strong>"Edit Raw Variables"</strong></li>
+                        <li><strong>删除所有现有内容</strong></li>
+                        <li><strong>粘贴以下内容：</strong></li>
+                    </ol>
+                    <div class="code-block">DATABASE_URL=${POSTGRES_CONNECTION_STRING}
+NODE_ENV=production
+PORT=${WEB_PORT}</div>
+                    <ol start="6" style="padding-left: 20px;">
+                        <li>点击 <strong>"Save"</strong> 按钮</li>
+                    </ol>
+                </div>
+
+                <div class="step">
+                    <h3><span class="step-number">2</span>确认 PostgreSQL 服务连接</h3>
+                    <p>确保在 Zeabur 项目中：</p>
+                    <ul class="checklist">
+                        <li>PostgreSQL 服务已添加</li>
+                        <li>PostgreSQL 服务与后端服务在同一个项目中</li>
+                        <li>Zeabur 会自动将 <code class="code-inline">POSTGRES_CONNECTION_STRING</code> 注入到后端服务</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h3><span class="step-number">3</span>等待重新部署</h3>
+                    <p>保存环境变量后，Zeabur 会自动触发重新部署。等待部署完成（通常 1-2 分钟）。</p>
+                </div>
+            </div>
+
+            <!-- 验证方案 -->
+            <div class="section">
+                <h2>🔍 验证方案</h2>
+
+                <h3>方法 1：检查部署日志</h3>
+                <p>在 Zeabur 控制台查看后端服务的日志，应该看到：</p>
+                <div class="code-block">数据库连接成功
+数据表已就绪
+Server running on port XXXX</div>
+
+                <h3>方法 2：访问健康检查端点</h3>
+                <p>访问：<code class="code-inline">https://your-service-name.zeabur.app/health</code></p>
+                <p>预期响应：</p>
+                <div class="code-block">{"status": "ok"}</div>
+
+                <h3>方法 3：运行测试脚本</h3>
+                <p>本地运行测试脚本验证所有 API 端点：</p>
+                <div class="code-block">cd api
+node test.js https://your-service-name.zeabur.app</div>
+                <p>预期输出：</p>
+                <div class="code-block">✅ 测试: 健康检查
+✅ 测试: 获取空预约列表
+✅ 测试: 创建预约
+✅ 测试: 获取预约列表（应有1条）
+✅ 测试: 测试时间冲突
+📊 测试结果: 5 通过, 0 失败</div>
+
+                <div class="alert alert-success">
+                    <strong>成功标志：</strong>如果所有测试通过，说明环境变量配置正确，后端服务正常运行！
+                </div>
+            </div>
+
+            <!-- 技术细节 -->
+            <div class="section">
+                <h2>🔬 技术细节</h2>
+
+                <h3>数据库连接逻辑（server.js:14-17）</h3>
+                <div class="code-block">const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});</div>
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    <li>使用 <code class="code-inline">DATABASE_URL</code> 环境变量连接数据库</li>
+                    <li>生产环境自动启用 SSL 连接</li>
+                    <li>使用连接池管理数据库连接</li>
+                </ul>
+
+                <h3>自动表创建（server.js:20-48）</h3>
+                <p>服务器启动时自动执行：</p>
+                <ul class="checklist">
+                    <li>连接数据库</li>
+                    <li>创建 <code class="code-inline">bookings</code> 表（如果不存在）</li>
+                    <li>无需手动运行迁移脚本</li>
+                </ul>
+
+                <h3>Zeabur 变量引用机制</h3>
+                <ul style="padding-left: 20px;">
+                    <li><code class="code-inline">${POSTGRES_CONNECTION_STRING}</code> - Zeabur 在运行时替换为实际的数据库连接字符串</li>
+                    <li><code class="code-inline">${WEB_PORT}</code> - Zeabur 在运行时替换为分配的端口号</li>
+                    <li><strong>不要手动替换这些变量，保持 <code class="code-inline">${}</code> 格式</strong></li>
+                </ul>
+            </div>
+
+            <!-- 常见问题 -->
+            <div class="section">
+                <h2>❓ 常见问题</h2>
+
+                <div class="faq">
+                    <div class="faq-question">Q: 为什么要删除 PASSWORD 变量？</div>
+                    <div class="faq-answer">A: 后端代码中没有使用 <code class="code-inline">process.env.PASSWORD</code>，这个变量是多余的。保留它不会造成问题，但删除可以保持配置清晰。</div>
+                </div>
+
+                <div class="faq">
+                    <div class="faq-question">Q: 如果看到 "数据库连接失败" 错误？</div>
+                    <div class="faq-answer">A: 检查以下几点：
+                        <ul style="margin-top: 5px; padding-left: 20px;">
+                            <li>PostgreSQL 服务是否正常运行</li>
+                            <li>环境变量是否正确配置</li>
+                            <li>PostgreSQL 服务是否与后端服务在同一个 Zeabur 项目中</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq">
+                    <div class="faq-question">Q: 可以使用外部数据库吗？</div>
+                    <div class="faq-answer">A: 可以，直接将 <code class="code-inline">DATABASE_URL</code> 设置为完整的连接字符串：
+                        <div class="code-block" style="margin-top: 10px;">DATABASE_URL=postgresql://username:password@host:5432/database</div>
+                    </div>
+                </div>
+
+                <div class="faq">
+                    <div class="faq-question">Q: 修改环境变量后需要重启服务吗？</div>
+                    <div class="faq-answer">A: Zeabur 会自动触发重新部署，无需手动重启。等待部署完成即可。</div>
+                </div>
+
+                <div class="faq">
+                    <div class="faq-question">Q: 如何查看环境变量是否生效？</div>
+                    <div class="faq-answer">A: 查看部署日志，如果看到 "数据库连接成功" 和 "数据表已就绪"，说明环境变量配置正确。</div>
+                </div>
+            </div>
+
+            <!-- 预期结果 -->
+            <div class="section">
+                <h2>🎯 预期结果</h2>
+                <div class="alert alert-success">
+                    <strong>配置完成后，您应该看到：</strong>
+                    <ul class="checklist" style="margin-top: 10px;">
+                        <li>后端服务成功连接到 PostgreSQL 数据库</li>
+                        <li><code class="code-inline">bookings</code> 表自动创建</li>
+                        <li>所有 API 端点正常工作</li>
+                        <li>前端可以通过 API 进行预约管理</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 相关文件 -->
+            <div class="section">
+                <h2>📁 相关文件</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>文件</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="code-inline">api/server.js</code></td>
+                            <td>后端主文件，使用环境变量（第 6, 15-16 行）</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">api/zbpack.json</code></td>
+                            <td>Zeabur 构建配置</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">api/package.json</code></td>
+                            <td>Node.js 项目配置和启动脚本</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">api/test.js</code></td>
+                            <td>API 测试脚本</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 快速链接 -->
+            <div class="section" style="text-align: center;">
+                <h2>🔗 快速链接</h2>
+                <a href="https://zeabur.com" class="button" target="_blank">Zeabur 控制台</a>
+                <a href="deploy-guide.html" class="button">部署指南</a>
+                <a href="index.html" class="button">返回应用</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>无影棚预约系统 - Zeabur 环境变量配置指南</p>
+            <p style="margin-top: 5px; font-size: 0.9em;">如有问题，请检查部署日志或参考常见问题部分</p>
+        </div>
+    </div>
+</body>
+</html>
