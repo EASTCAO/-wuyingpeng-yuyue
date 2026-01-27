@@ -554,15 +554,53 @@ function showAddBookingForm(defaultStudio) {
     // 根据当前日期筛选器设置默认日期
     const displayDates = getDisplayDates();
     const defaultDate = displayDates[0]; // 使用筛选器的第一个日期
-    document.getElementById('bookingDate').value = defaultDate;
+    const dateInput = document.getElementById('bookingDate');
+    dateInput.value = defaultDate;
     document.getElementById('startTime').value = '';
     document.getElementById('endTime').value = '';
     document.getElementById('bookingNote').value = '';
 
-    // 添加开始时间变化监听，自动更新结束时间选项
     const startTimeSelect = document.getElementById('startTime');
     const endTimeSelect = document.getElementById('endTime');
 
+    // 根据选择的日期和当前时间，禁用已过去的开始时间
+    function updateStartTimeOptions() {
+        const selectedDate = dateInput.value;
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        const startOptions = startTimeSelect.querySelectorAll('option');
+
+        startOptions.forEach(option => {
+            if (option.value === '') {
+                option.disabled = false;
+                return;
+            }
+
+            // 如果选择的是今天，禁用已过去的时间
+            if (selectedDate === today) {
+                option.disabled = option.value < currentTime;
+            } else {
+                // 如果选择的是未来日期，所有时间都可选
+                option.disabled = false;
+            }
+        });
+
+        // 如果当前选择的开始时间被禁用了，清空选择
+        if (startTimeSelect.value && startOptions[startTimeSelect.selectedIndex]?.disabled) {
+            startTimeSelect.value = '';
+            endTimeSelect.value = '';
+        }
+    }
+
+    // 日期变化时更新开始时间选项
+    dateInput.onchange = updateStartTimeOptions;
+
+    // 初始化时更新一次
+    updateStartTimeOptions();
+
+    // 添加开始时间变化监听，自动更新结束时间选项
     startTimeSelect.onchange = function() {
         const startTime = this.value;
         if (!startTime) return;
@@ -582,16 +620,17 @@ function showAddBookingForm(defaultStudio) {
 
         // 如果当前选择的结束时间无效，自动选择下一个有效时间
         if (endTimeSelect.value && endTimeSelect.value <= startTime) {
-            // 找到第一个有效的结束时间（比开始时间晚30分钟）
-            const startHour = parseInt(startTime.split(':')[0]);
-            const startMinute = parseInt(startTime.split(':')[1]);
-            let suggestedEndTime = '';
+            // 找到第一个有效的结束时间（比开始时间晚15分钟）
+            const [startHour, startMinute] = startTime.split(':').map(Number);
+            let suggestedMinute = startMinute + 15;
+            let suggestedHour = startHour;
 
-            if (startMinute === 0) {
-                suggestedEndTime = `${String(startHour).padStart(2, '0')}:30`;
-            } else {
-                suggestedEndTime = `${String(startHour + 1).padStart(2, '0')}:00`;
+            if (suggestedMinute >= 60) {
+                suggestedMinute -= 60;
+                suggestedHour += 1;
             }
+
+            const suggestedEndTime = `${String(suggestedHour).padStart(2, '0')}:${String(suggestedMinute).padStart(2, '0')}`;
 
             // 检查建议时间是否在选项中
             const hasOption = Array.from(endOptions).some(opt => opt.value === suggestedEndTime);
