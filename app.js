@@ -371,7 +371,9 @@ async function loadBookings() {
         // 云端模式：从 API 加载
         try {
             const response = await fetch(`${API_BASE_URL}/api/bookings`);
-            if (!response.ok) throw new Error('加载失败');
+            if (!response.ok) {
+                throw new Error(`加载失败: ${response.status}`);
+            }
             allBookings = await response.json();
 
             // 标准化字段名：后端使用 notes，前端使用 note
@@ -673,7 +675,10 @@ async function addBooking() {
                 body: JSON.stringify(newBooking)
             });
 
-            if (!response.ok) throw new Error('保存失败');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `服务器错误: ${response.status}`);
+            }
 
             // 重新加载数据以获取最新状态
             await loadBookings();
@@ -764,7 +769,10 @@ async function deleteBooking() {
                 method: 'DELETE'
             });
 
-            if (!response.ok) throw new Error('删除失败');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `删除失败: ${response.status}`);
+            }
 
             // 重新加载数据
             await loadBookings();
