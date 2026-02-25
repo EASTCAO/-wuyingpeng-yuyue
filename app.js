@@ -2,7 +2,7 @@
 let currentUser = null;
 let allBookings = [];
 let selectedBookingId = null;
-let currentView = 'list'; // 'timeline' or 'list'
+let currentView = 'list'; // 'list' or 'stats'
 let currentDateRange = 'today'; // 'today', 'tomorrow', 'week'
 let selectedDate = null;
 let reminderInterval = null;
@@ -431,8 +431,7 @@ function sortBookings() {
 
 // 统一渲染所有视图
 function renderAllViews() {
-    if (currentView === 'timeline') renderTimelineView();
-    else if (currentView === 'list') renderBookings();
+    if (currentView === 'list') renderBookings();
     else if (currentView === 'stats') { initStatsView(); renderStatsView(); }
     updateTodayUsage();
 }
@@ -448,17 +447,20 @@ function renderBookings() {
     // 获取要显示的日期范围
     const displayDates = getDisplayDates();
 
+    // 使用 getFilteredBookings 应用"只看我的"和搜索过滤
+    const filtered = getFilteredBookings();
+
     // 按影棚分组，并根据日期筛选
-    const studio1Bookings = allBookings.filter(b =>
+    const studio1Bookings = filtered.filter(b =>
         b.studio === '无影棚1号' && displayDates.includes(getDateOnly(b.date))
     );
-    const studio2Bookings = allBookings.filter(b =>
+    const studio2Bookings = filtered.filter(b =>
         b.studio === '无影棚2号' && displayDates.includes(getDateOnly(b.date))
     );
-    const studio3Bookings = allBookings.filter(b =>
+    const studio3Bookings = filtered.filter(b =>
         b.studio === '无影棚3号' && displayDates.includes(getDateOnly(b.date))
     );
-    const studio4Bookings = allBookings.filter(b =>
+    const studio4Bookings = filtered.filter(b =>
         b.studio === '无影棚4号' && displayDates.includes(getDateOnly(b.date))
     );
 
@@ -541,6 +543,10 @@ function formatDate(dateStr) {
 
 // 显示新建预约表单
 function showAddBookingForm(defaultStudio) {
+    if (currentUser && currentUser.startsWith('游客')) {
+        alert('游客模式不能预约，请登录后操作。');
+        return;
+    }
     document.getElementById('addBookingModal').classList.remove('hidden');
 
     // 重置表单
@@ -570,6 +576,13 @@ function showAddBookingForm(defaultStudio) {
         const now = new Date();
         const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
+        const studio = document.getElementById('studioSelect').value;
+
+        // 获取该影棚该日期的已有预约
+        const existingBookings = allBookings.filter(b =>
+            b.studio === studio && getDateOnly(b.date) === selectedDate
+        );
+
         const startOptions = startTimeSelect.querySelectorAll('option');
 
         startOptions.forEach(option => {
@@ -578,13 +591,17 @@ function showAddBookingForm(defaultStudio) {
                 return;
             }
 
-            // 如果选择的是今天，禁用已过去的时间
-            if (selectedDate === today) {
-                option.disabled = option.value < currentTime;
-            } else {
-                // 如果选择的是未来日期，所有时间都可选
-                option.disabled = false;
+            // 禁用已过去的时间（今天）
+            let disabled = selectedDate === today && option.value < currentTime;
+
+            // 禁用已被占用的时间段内的开始时间
+            if (!disabled) {
+                disabled = existingBookings.some(b =>
+                    option.value >= b.startTime && option.value < b.endTime
+                );
             }
+
+            option.disabled = disabled;
         });
 
         // 如果当前选择的开始时间被禁用了，清空选择
@@ -594,8 +611,9 @@ function showAddBookingForm(defaultStudio) {
         }
     }
 
-    // 日期变化时更新开始时间选项
+    // 日期或影棚变化时更新开始时间选项
     dateInput.onchange = updateStartTimeOptions;
+    document.getElementById('studioSelect').onchange = updateStartTimeOptions;
 
     // 初始化时更新一次
     updateStartTimeOptions();
@@ -605,22 +623,45 @@ function showAddBookingForm(defaultStudio) {
         const startTime = this.value;
         if (!startTime) return;
 
+        const studio = document.getElementById('studioSelect').value;
+        const date = dateInput.value;
+
+        // 获取该影棚该日期的已有预约
+        const existingBookings = allBookings.filter(b =>
+            b.studio === studio && getDateOnly(b.date) === date
+        );
+
+        // 找到选择开始时间后第一个被占用的时间点
+        let blockedFrom = null;
+        for (const b of existingBookings) {
+            if (b.startTime > startTime) {
+                if (blockedFrom === null || b.startTime < blockedFrom) {
+                    blockedFrom = b.startTime;
+                }
+            }
+            // 如果开始时间落在某个预约内，也要限制
+            if (startTime >= b.startTime && startTime < b.endTime) {
+                blockedFrom = b.startTime;
+            }
+        }
+
         // 获取所有结束时间选项
         const endOptions = endTimeSelect.querySelectorAll('option');
 
-        // 重置所有选项
         endOptions.forEach(option => {
             if (option.value === '') {
                 option.disabled = false;
                 return;
             }
             // 禁用早于或等于开始时间的选项
-            option.disabled = option.value <= startTime;
+            // 禁用超过下一个已占用预约开始时间的选项
+            const tooEarly = option.value <= startTime;
+            const tooLate = blockedFrom !== null && option.value > blockedFrom;
+            option.disabled = tooEarly || tooLate;
         });
 
         // 如果当前选择的结束时间无效，自动选择下一个有效时间
         if (endTimeSelect.value && endTimeSelect.value <= startTime) {
-            // 找到第一个有效的结束时间（比开始时间晚15分钟）
             const [startHour, startMinute] = startTime.split(':').map(Number);
             let suggestedMinute = startMinute + 15;
             let suggestedHour = startHour;
@@ -631,9 +672,7 @@ function showAddBookingForm(defaultStudio) {
             }
 
             const suggestedEndTime = `${String(suggestedHour).padStart(2, '0')}:${String(suggestedMinute).padStart(2, '0')}`;
-
-            // 检查建议时间是否在选项中
-            const hasOption = Array.from(endOptions).some(opt => opt.value === suggestedEndTime);
+            const hasOption = Array.from(endOptions).some(opt => opt.value === suggestedEndTime && !opt.disabled);
             if (hasOption) {
                 endTimeSelect.value = suggestedEndTime;
             } else {
@@ -677,7 +716,7 @@ async function addBooking() {
 
     // 检查时间冲突
     const hasConflict = allBookings.some(booking => {
-        if (booking.studio !== studio || booking.date !== date) {
+        if (booking.studio !== studio || getDateOnly(booking.date) !== date) {
             return false;
         }
 
@@ -891,7 +930,7 @@ function switchView(view) {
     document.querySelectorAll('.view-btn').forEach(btn => {
         btn.classList.remove('active');
         // 简单的文本匹配检查
-        if (btn.textContent.includes(view === 'timeline' ? '时间轴' : view === 'list' ? '列表' : '统计')) {
+        if (btn.textContent.includes(view === 'list' ? '大厅' : '统计')) {
             btn.classList.add('active');
         }
     });
@@ -905,14 +944,10 @@ function switchView(view) {
     });
 
     // 切换视图显示
-    document.getElementById('timelineView').classList.add('hidden');
     document.getElementById('listView').classList.add('hidden');
     document.getElementById('statsView').classList.add('hidden');
 
-    if (view === 'timeline') {
-        document.getElementById('timelineView').classList.remove('hidden');
-        renderTimelineView();
-    } else if (view === 'list') {
+    if (view === 'list') {
         document.getElementById('listView').classList.remove('hidden');
         renderBookings();
     } else if (view === 'stats') {
@@ -935,9 +970,7 @@ function selectDateRange(range, btn) {
     }
 
     // 重新渲染视图
-    if (currentView === 'timeline') {
-        renderTimelineView();
-    } else if (currentView === 'list') {
+    if (currentView === 'list') {
         renderBookings();
     } else if (currentView === 'stats') {
         // 统计视图不需要日期范围切换，因为它有自己的月份筛选器
@@ -976,9 +1009,7 @@ function showDatePicker() {
         document.querySelector('.date-picker-btn').classList.add('active');
 
         // 重新渲染
-        if (currentView === 'timeline') {
-            renderTimelineView();
-        } else if (currentView === 'list') {
+        if (currentView === 'list') {
             renderBookings();
         }
 
@@ -1254,11 +1285,7 @@ function getBookingStatus(booking) {
 
 // 应用筛选
 function applyFilters() {
-    if (currentView === 'timeline') {
-        renderTimelineView();
-    } else {
-        renderBookings();
-    }
+    renderBookings();
 }
 
 // 获取筛选后的预约列表（仅用于时间轴和列表视图）

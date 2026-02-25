@@ -2466,7 +2466,7 @@ body {
 
 .studio-section-large .studio-section-header h2::before {
     content: "🎬";
-    font-size: 19px;
+    font-size: 22px;
 }
 
 /* 小棚样式 */
@@ -2480,7 +2480,7 @@ body {
 
 .studio-section-small .studio-section-header h2::before {
     content: "🎬";
-    font-size: 19px;
+    font-size: 22px;
 }
 
 /* 预约列表容器 - 适中高度 */
