@@ -136,8 +136,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ============ 用户账户配置 ============
-// 在这里设置允许登录的用户名和密码
-const USERS = {
+// 初始用户列表（首次使用时写入 localStorage，之后通过前端管理）
+const DEFAULT_USERS = {
     '周旭欣': '123456',
     '曹东': '123456',
     '曹玉': '123456',
@@ -162,8 +162,114 @@ const USERS = {
     '张阳洋': '123456',
     '刘欣悦': '123456',
     '吕文祎': '123456',
+    '叶雨婷': '123456',
+    '程思盈': '123456',
     'admin': '123456'
 };
+
+// 从 localStorage 加载用户列表，首次使用时用默认列表初始化
+function loadUsers() {
+    const stored = localStorage.getItem('userList');
+    if (stored) {
+        return JSON.parse(stored);
+    }
+    // 首次使用，写入默认用户
+    localStorage.setItem('userList', JSON.stringify(DEFAULT_USERS));
+    return { ...DEFAULT_USERS };
+}
+
+function saveUsers(users) {
+    localStorage.setItem('userList', JSON.stringify(users));
+}
+
+// 动态用户列表
+let USERS = loadUsers();
+
+// ============ 用户管理（仅 admin） ============
+function addNewUser(name) {
+    name = name.trim();
+    if (!name) return false;
+    if (USERS[name]) {
+        showToast(`用户 "${name}" 已存在`, 'error');
+        return false;
+    }
+    USERS[name] = '123456';
+    saveUsers(USERS);
+    return true;
+}
+
+function removeUser(name) {
+    if (name === 'admin') {
+        showToast('不能删除管理员账户', 'error');
+        return false;
+    }
+    if (!USERS[name]) {
+        showToast(`用户 "${name}" 不存在`, 'error');
+        return false;
+    }
+    delete USERS[name];
+    saveUsers(USERS);
+    return true;
+}
+
+function renderUserManagement() {
+    const container = document.getElementById('userManagementContent');
+    if (!container) return;
+
+    const userNames = Object.keys(USERS).filter(n => n !== 'admin').sort();
+
+    container.innerHTML = `
+        <div class="user-mgmt-add">
+            <input type="text" id="newUserInput" placeholder="输入用户名（多个用逗号分隔）" maxlength="100">
+            <button onclick="handleAddUsers()" class="btn btn-primary btn-small">添加</button>
+        </div>
+        <div class="user-mgmt-count">共 ${userNames.length} 个用户</div>
+        <div class="user-mgmt-list">
+            ${userNames.map(name => `
+                <div class="user-mgmt-item">
+                    <span class="user-mgmt-name">${name}</span>
+                    <button onclick="handleRemoveUser('${name}')" class="btn btn-danger btn-small">删除</button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // 回车添加
+    setTimeout(() => {
+        const input = document.getElementById('newUserInput');
+        if (input) {
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter') handleAddUsers();
+            });
+        }
+    }, 0);
+}
+
+function handleAddUsers() {
+    const input = document.getElementById('newUserInput');
+    if (!input) return;
+    const raw = input.value.trim();
+    if (!raw) return;
+
+    // 支持逗号、顿号、空格分隔
+    const names = raw.split(/[,，、\s]+/).filter(n => n.trim());
+    let added = 0;
+    for (const name of names) {
+        if (addNewUser(name)) added++;
+    }
+    if (added > 0) {
+        showToast(`成功添加 ${added} 个用户`, 'success');
+        renderUserManagement();
+    }
+}
+
+function handleRemoveUser(name) {
+    if (!confirm(`确定要删除用户 "${name}" 吗？`)) return;
+    if (removeUser(name)) {
+        showToast(`已删除用户 "${name}"`, 'success');
+        renderUserManagement();
+    }
+}
 
 // 登录
 function login() {
@@ -315,6 +421,11 @@ function showMainPage() {
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('mainPage').classList.remove('hidden');
     document.getElementById('currentUser').textContent = currentUser;
+
+    // admin 用户显示用户管理入口
+    document.querySelectorAll('.admin-only').forEach(el => {
+        el.style.display = currentUser === 'admin' ? '' : 'none';
+    });
 
     // 确保移动端侧边栏初始状态为隐藏
     initMobileSidebar();
@@ -948,6 +1059,8 @@ function switchView(view) {
     // 切换视图显示
     document.getElementById('listView').classList.add('hidden');
     document.getElementById('statsView').classList.add('hidden');
+    const userMgmtView = document.getElementById('userManagementView');
+    if (userMgmtView) userMgmtView.classList.add('hidden');
 
     if (view === 'list') {
         document.getElementById('listView').classList.remove('hidden');
@@ -956,6 +1069,11 @@ function switchView(view) {
         document.getElementById('statsView').classList.remove('hidden');
         initStatsView();
         renderStatsView();
+    } else if (view === 'users') {
+        if (userMgmtView) {
+            userMgmtView.classList.remove('hidden');
+            renderUserManagement();
+        }
     }
 }
 

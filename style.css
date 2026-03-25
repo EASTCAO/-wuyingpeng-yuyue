@@ -2764,3 +2764,65 @@ body {
         height: 35px;
     }
 }
+
+/* ============ 用户管理 ============ */
+.user-mgmt-add {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.user-mgmt-add input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+}
+
+.user-mgmt-add input:focus {
+    border-color: #4C7DFF;
+    box-shadow: 0 0 0 3px rgba(76, 125, 255, 0.1);
+}
+
+.user-mgmt-count {
+    font-size: 13px;
+    color: #6B7280;
+    margin-bottom: 12px;
+}
+
+.user-mgmt-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+}
+
+.user-mgmt-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+}
+
+.user-mgmt-name {
+    font-size: 14px;
+    color: #262626;
+}
+
+.btn-danger {
+    background: #EF4444;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    background: #DC2626;
+}
