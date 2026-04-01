@@ -164,6 +164,7 @@ const DEFAULT_USERS = {
     '吕文祎': '123456',
     '叶雨婷': '123456',
     '程思盈': '123456',
+    '魏伟': '123456',
     'admin': '123456'
 };
 
@@ -171,7 +172,19 @@ const DEFAULT_USERS = {
 function loadUsers() {
     const stored = localStorage.getItem('userList');
     if (stored) {
-        return JSON.parse(stored);
+        const users = JSON.parse(stored);
+        // 自动合并 DEFAULT_USERS 中新增的用户（不覆盖已有用户的密码）
+        let updated = false;
+        for (const name in DEFAULT_USERS) {
+            if (!(name in users)) {
+                users[name] = DEFAULT_USERS[name];
+                updated = true;
+            }
+        }
+        if (updated) {
+            localStorage.setItem('userList', JSON.stringify(users));
+        }
+        return users;
     }
     // 首次使用，写入默认用户
     localStorage.setItem('userList', JSON.stringify(DEFAULT_USERS));
