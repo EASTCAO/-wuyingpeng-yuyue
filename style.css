@@ -2546,7 +2546,7 @@ body {
 }
 
 .booking-card[data-studio="无影棚3号"],
-.booking-card[data-studio="无影棚4号"] {
+.booking-card[data-studio="5楼无影棚"] {
     border-left: 4px solid #10B981;
 }
 
@@ -2558,7 +2558,7 @@ body {
 }
 
 .timeline-booking[data-studio="无影棚3号"],
-.timeline-booking[data-studio="无影棚4号"] {
+.timeline-booking[data-studio="5楼无影棚"] {
     background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
     border-left: 3px solid #10B981;
 }

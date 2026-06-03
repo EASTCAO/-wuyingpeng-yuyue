@@ -491,6 +491,26 @@ function showTab(tabName) {
 }
 
 // 加载预约数据（支持云端和本地）
+// 迁移旧影棚名称：「无影棚4号」→「5楼无影棚」
+// 旧预约数据里存的是「无影棚4号」，重命名后需要同步更新，否则旧预约不再显示
+function migrateStudioNames() {
+    let changed = false;
+    allBookings.forEach(booking => {
+        if (booking.studio === '无影棚4号') {
+            booking.studio = '5楼无影棚';
+            changed = true;
+        }
+    });
+    if (changed) {
+        try {
+            localStorage.setItem('bookings', JSON.stringify(allBookings));
+            console.log('✅ 已将旧「无影棚4号」预约迁移为「5楼无影棚」');
+        } catch (error) {
+            console.error('迁移影棚名称保存失败:', error);
+        }
+    }
+}
+
 async function loadBookings() {
     console.log('开始加载预约数据...');
 
@@ -522,6 +542,8 @@ async function loadBookings() {
         try {
             const stored = localStorage.getItem('bookings');
             allBookings = stored ? JSON.parse(stored) : [];
+            // 迁移：旧影棚名「无影棚4号」改为「5楼无影棚」
+            migrateStudioNames();
             sortBookings();
             renderAllViews();
             console.log('✅ 从本地加载了', allBookings.length, '条预约');
@@ -588,7 +610,7 @@ function renderBookings() {
         b.studio === '无影棚3号' && displayDates.includes(getDateOnly(b.date))
     );
     const studio4Bookings = filtered.filter(b =>
-        b.studio === '无影棚4号' && displayDates.includes(getDateOnly(b.date))
+        b.studio === '5楼无影棚' && displayDates.includes(getDateOnly(b.date))
     );
 
     // 渲染无影棚1号
@@ -612,7 +634,7 @@ function renderBookings() {
         studio3List.innerHTML = studio3Bookings.map(booking => createBookingCard(booking)).join('');
     }
 
-    // 渲染无影棚4号
+    // 渲染5楼无影棚
     if (studio4Bookings.length === 0) {
         studio4List.innerHTML = '<p class="empty-message">暂无预约</p>';
     } else {
@@ -1172,7 +1194,7 @@ function renderTimelineView() {
     const filteredBookings = getFilteredBookings();
 
     // 为每个影棚渲染时间轴
-    ['无影棚1号', '无影棚2号', '无影棚3号', '无影棚4号'].forEach((studio, index) => {
+    ['无影棚1号', '无影棚2号', '无影棚3号', '5楼无影棚'].forEach((studio, index) => {
         const timelineBody = document.getElementById(`timeline${index + 1}Body`);
         if (!timelineBody) return;
 
