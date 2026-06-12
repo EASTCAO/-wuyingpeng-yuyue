@@ -449,6 +449,36 @@ body {
     transform: translateY(-2px);
 }
 
+/* 已冻结的影棚：整体置灰、禁止交互 */
+.studio-section.studio-frozen {
+    background: #F2F3F5;
+    border-color: #E4E6EB;
+    opacity: 0.7;
+    filter: grayscale(1);
+}
+
+.studio-section.studio-frozen:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transform: none;
+}
+
+.studio-section.studio-frozen .empty-message {
+    color: #8A8F99;
+}
+
+.frozen-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    background: #9AA0A6;
+    border-radius: 10px;
+    vertical-align: middle;
+    letter-spacing: 0;
+}
+
 .studio-section-header {
     display: flex;
     justify-content: space-between;

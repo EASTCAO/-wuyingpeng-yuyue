@@ -628,12 +628,8 @@ function renderBookings() {
         studio2List.innerHTML = studio2Bookings.map(booking => createBookingCard(booking)).join('');
     }
 
-    // 渲染无影棚3号
-    if (studio3Bookings.length === 0) {
-        studio3List.innerHTML = '<p class="empty-message">暂无预约</p>';
-    } else {
-        studio3List.innerHTML = studio3Bookings.map(booking => createBookingCard(booking)).join('');
-    }
+    // 无影棚3号已冻结：保留 HTML 里的冻结提示，不渲染预约
+    // （studio3List 在 index.html 中固定显示「该影棚暂停使用，无法预约」）
 
     // 渲染5楼无影棚
     if (studio4Bookings.length === 0) {
@@ -856,6 +852,12 @@ async function addBooking() {
     // 验证
     if (!date || !startTime || !endTime) {
         showToast('请填写完整的预约信息', 'error');
+        return;
+    }
+
+    // 3号无影棚已冻结，禁止预约
+    if (studio === '无影棚3号') {
+        showToast('3号无影棚已冻结，暂停预约', 'error');
         return;
     }
 
