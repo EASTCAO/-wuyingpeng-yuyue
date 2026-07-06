@@ -166,9 +166,12 @@ const DEFAULT_USERS = {
     '程思盈': '123456',
     '魏伟': '123456',
     '谭金林': '123456',
-    '徐天奇': '123456',
+    '徐优': '123456',
     'admin': '123456'
 };
+
+// 已重命名/移除的用户，loadUsers 时从本地存储清理
+const REMOVED_USERS = ['徐天奇'];
 
 // 从 localStorage 加载用户列表，首次使用时用默认列表初始化
 function loadUsers() {
@@ -180,6 +183,13 @@ function loadUsers() {
         for (const name in DEFAULT_USERS) {
             if (!(name in users)) {
                 users[name] = DEFAULT_USERS[name];
+                updated = true;
+            }
+        }
+        // 清理已重命名/移除的遗留用户
+        for (const name of REMOVED_USERS) {
+            if (name in users) {
+                delete users[name];
                 updated = true;
             }
         }
