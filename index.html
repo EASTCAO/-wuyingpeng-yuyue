@@ -231,14 +231,13 @@
                     <div class="studio-group">
                         <h3 class="studio-group-title">小棚区域</h3>
 
-                        <!-- 无影棚3号 -->
-                        <div class="studio-section studio-section-small">
+                        <!-- 无影棚3号（已冻结，暂停预约） -->
+                        <div class="studio-section studio-section-small studio-frozen">
                             <div class="studio-section-header">
-                                <h2>3号</h2>
-                                <button onclick="showAddBookingForm('无影棚3号')" class="btn btn-success btn-small">+ 新建预约</button>
+                                <h2>3号 <span class="frozen-badge">已冻结</span></h2>
                             </div>
                             <div id="studio3List" class="booking-list">
-                                <p class="empty-message">暂无预约</p>
+                                <p class="empty-message">该影棚暂停使用，无法预约</p>
                             </div>
                         </div>
 
@@ -357,7 +356,7 @@
                             <option value="无影棚2号">无影棚2号</option>
                         </optgroup>
                         <optgroup label="小棚">
-                            <option value="无影棚3号">无影棚3号</option>
+                            <option value="无影棚3号" disabled>无影棚3号（已冻结）</option>
                             <option value="5楼无影棚">5楼无影棚</option>
                         </optgroup>
                     </select>

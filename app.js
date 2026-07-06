@@ -512,6 +512,20 @@ function migrateStudioNames() {
     }
 }
 
+// 3号无影棚已冻结：删除所有 3 号预约（含今天已存在的），并在每个客户端本地生效
+function purgeFrozenStudioBookings() {
+    const before = allBookings.length;
+    allBookings = allBookings.filter(booking => booking.studio !== '无影棚3号');
+    if (allBookings.length !== before) {
+        try {
+            localStorage.setItem('bookings', JSON.stringify(allBookings));
+            console.log('✅ 已清理', before - allBookings.length, '条已冻结的「无影棚3号」预约');
+        } catch (error) {
+            console.error('清理冻结影棚预约保存失败:', error);
+        }
+    }
+}
+
 async function loadBookings() {
     console.log('开始加载预约数据...');
 
@@ -545,6 +559,8 @@ async function loadBookings() {
             allBookings = stored ? JSON.parse(stored) : [];
             // 迁移：旧影棚名「无影棚4号」改为「5楼无影棚」
             migrateStudioNames();
+            // 3号无影棚已冻结：清理掉所有 3 号预约（含今天已预约的）
+            purgeFrozenStudioBookings();
             sortBookings();
             renderAllViews();
             console.log('✅ 从本地加载了', allBookings.length, '条预约');
@@ -628,12 +644,8 @@ function renderBookings() {
         studio2List.innerHTML = studio2Bookings.map(booking => createBookingCard(booking)).join('');
     }
 
-    // 渲染无影棚3号
-    if (studio3Bookings.length === 0) {
-        studio3List.innerHTML = '<p class="empty-message">暂无预约</p>';
-    } else {
-        studio3List.innerHTML = studio3Bookings.map(booking => createBookingCard(booking)).join('');
-    }
+    // 无影棚3号已冻结：保留 HTML 里的冻结提示，不渲染预约
+    // （studio3List 在 index.html 中固定显示「该影棚暂停使用，无法预约」）
 
     // 渲染5楼无影棚
     if (studio4Bookings.length === 0) {
@@ -856,6 +868,12 @@ async function addBooking() {
     // 验证
     if (!date || !startTime || !endTime) {
         showToast('请填写完整的预约信息', 'error');
+        return;
+    }
+
+    // 3号无影棚已冻结，禁止预约
+    if (studio === '无影棚3号') {
+        showToast('3号无影棚已冻结，暂停预约', 'error');
         return;
     }
 
