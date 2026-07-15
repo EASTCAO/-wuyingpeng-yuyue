@@ -12,6 +12,7 @@ let notifiedBookings = new Set(); // 记录已通知的预约ID
 let soundEnabled = true;
 let globalAudioContext = null; // 全局 AudioContext
 let authToken = null;
+let editingBookingId = null;
 
 // ============ 影棚配置 ============
 // 所有影棚入口、下拉框、统计筛选和时间轴都从这里生成。
@@ -44,13 +45,24 @@ const STUDIO_GROUPS = [
     },
     {
         key: 'sixth-floor',
-        title: '6楼区域',
+        title: '6F',
         subtitle: '跨楼层备用棚',
-        optionLabel: '6楼',
+        optionLabel: '6F',
         cardClass: 'studio-section-sixth',
         buttonClass: 'btn-primary',
         studios: [
-            { id: '6楼无影棚', title: '6楼无影棚', location: '6楼' }
+            { id: '6F无影棚', title: '6F无影棚', location: '6F' }
+        ]
+    },
+    {
+        key: 'seventh-floor',
+        title: '7F',
+        subtitle: '跨楼层备用棚',
+        optionLabel: '7F',
+        cardClass: 'studio-section-seventh',
+        buttonClass: 'btn-primary',
+        studios: [
+            { id: '7F无影棚', title: '7F无影棚', location: '7F' }
         ]
     }
 ];
@@ -166,7 +178,8 @@ function normalizeStudioName(studioName) {
         '无影棚2号': '大无影棚2（鄢军隔壁）',
         '无影棚3号': '小无影棚1',
         '无影棚4号': '小无影棚2',
-        '5楼无影棚': '小无影棚2'
+        '5楼无影棚': '小无影棚2',
+        '6楼无影棚': '6F无影棚'
     };
 
     return studioNameMap[studioName] || studioName;
@@ -1129,12 +1142,11 @@ function handleSummaryBookingKeydown(event, bookingId) {
 function getAvailabilitySlotState(time, selectedDate, existingBookings) {
     const today = getChinaDate();
     const currentTime = getChinaCurrentTime();
+    const isPeriodEnd = BOOKABLE_PERIODS.some(period => period.end === time);
 
-    if (selectedDate === today && time < currentTime) {
-        return { type: 'past', label: '已过' };
-    }
-
-    const booking = existingBookings.find(item => time >= item.startTime && time < item.endTime);
+    const booking = existingBookings.find(item =>
+        time >= item.startTime && (time < item.endTime || (isPeriodEnd && time === item.endTime))
+    );
     if (booking) {
         return {
             type: 'booked',
@@ -1143,13 +1155,8 @@ function getAvailabilitySlotState(time, selectedDate, existingBookings) {
         };
     }
 
-    const previousBooking = existingBookings.find(item => time === item.endTime);
-    if (previousBooking) {
-        return {
-            type: 'handoff',
-            label: `${previousBooking.startTime}-${previousBooking.endTime} 刚结束，可接下一场`,
-            booking: previousBooking
-        };
+    if (selectedDate === today && time < currentTime) {
+        return { type: 'past', label: '已过' };
     }
 
     return { type: 'free', label: '可约' };
@@ -1221,7 +1228,7 @@ function renderAvailabilityPanel() {
     const renderAvailabilitySlot = time => {
         let state = getAvailabilitySlotState(time, selectedDate, existingBookings);
         const isClosingTime = BOOKABLE_PERIODS.some(period => period.end === time);
-        if (isClosingTime && (state.type === 'free' || state.type === 'handoff')) {
+        if (isClosingTime && state.type === 'free') {
             state = { type: 'closing', label: `${time} 结束时间` };
         }
         const isStart = selectedStartTime === time;
@@ -1232,7 +1239,7 @@ function renderAvailabilityPanel() {
             isRange ? ' selected-range' : '',
             isEnd ? ' selected-end' : ''
         ].join('');
-        const canSelect = state.type === 'free' || state.type === 'handoff' || state.type === 'closing';
+        const canSelect = state.type === 'free' || state.type === 'closing';
         return `
             <button
                 type="button"
@@ -1241,7 +1248,6 @@ function renderAvailabilityPanel() {
                 title="${escapeHtml(state.label)}"
             >
                 <span>${time}</span>
-                ${state.type === 'handoff' ? '<small>可接</small>' : ''}
             </button>
         `;
     };
@@ -1365,11 +1371,14 @@ function formatDate(dateStr) {
 }
 
 // 显示新建预约表单
-function showAddBookingForm(defaultStudio) {
+function showAddBookingForm(defaultStudio, bookingToEdit = null) {
     if (currentUser && currentUser.startsWith('游客')) {
         alert('游客模式不能预约，请登录后操作。');
         return;
     }
+    editingBookingId = bookingToEdit?.id || null;
+    document.getElementById('bookingModalTitle').textContent = editingBookingId ? '修改预约时间' : '预约';
+    document.getElementById('bookingSubmitButton').textContent = editingBookingId ? '保存修改' : '确认预约';
     document.getElementById('addBookingModal').classList.remove('hidden');
 
     // 重置表单
@@ -1383,21 +1392,21 @@ function showAddBookingForm(defaultStudio) {
     // 最多提前一天预约：今天和明天可选，后天及以后不可选。
     const minDate = getBookableStartDate();
     const maxDate = getBookableEndDate();
-    const defaultDate = getDefaultBookingDate();
+    const defaultDate = bookingToEdit ? getDateOnly(bookingToEdit.date) : getDefaultBookingDate();
     const dateInput = document.getElementById('bookingDate');
     dateInput.min = minDate;
     dateInput.max = maxDate;
     dateInput.value = defaultDate;
-    document.getElementById('startTime').value = '';
-    document.getElementById('endTime').value = '';
-    document.getElementById('bookingNote').value = '';
+    document.getElementById('startTime').value = bookingToEdit?.startTime || '';
+    document.getElementById('endTime').value = bookingToEdit?.endTime || '';
+    document.getElementById('bookingNote').value = bookingToEdit ? getBookingNote(bookingToEdit) : '';
 
     const startTimeSelect = document.getElementById('startTime');
     const endTimeSelect = document.getElementById('endTime');
     renderTimeSelectOptions();
 
-    startTimeSelect.value = '';
-    endTimeSelect.value = '';
+    startTimeSelect.value = bookingToEdit?.startTime || '';
+    endTimeSelect.value = bookingToEdit?.endTime || '';
 
     // 根据选择的日期和当前时间，禁用已过去的开始时间
     function updateStartTimeOptions() {
@@ -1413,7 +1422,7 @@ function showAddBookingForm(defaultStudio) {
 
         // 获取该影棚该日期的已有预约
         const existingBookings = allBookings.filter(b =>
-            b.studio === studio && getDateOnly(b.date) === selectedDate
+            b.id !== editingBookingId && b.studio === studio && getDateOnly(b.date) === selectedDate
         );
 
         const startOptions = startTimeSelect.querySelectorAll('option');
@@ -1463,7 +1472,7 @@ function showAddBookingForm(defaultStudio) {
 
         // 获取该影棚该日期的已有预约
         const existingBookings = allBookings.filter(b =>
-            b.studio === studio && getDateOnly(b.date) === date
+            b.id !== editingBookingId && b.studio === studio && getDateOnly(b.date) === date
         );
 
         updateEndTimeOptions(startTime, endTimeSelect, existingBookings);
@@ -1471,6 +1480,9 @@ function showAddBookingForm(defaultStudio) {
         renderAvailabilityPanel();
     };
 
+    if (startTimeSelect.value) {
+        startTimeSelect.dispatchEvent(new Event('change'));
+    }
     endTimeSelect.onchange = renderAvailabilityPanel;
 }
 
@@ -1479,6 +1491,9 @@ function closeAddBookingForm() {
     const modal = document.getElementById('addBookingModal');
     if (modal) {
         modal.classList.add('hidden');
+        editingBookingId = null;
+        document.getElementById('bookingModalTitle').textContent = '预约';
+        document.getElementById('bookingSubmitButton').textContent = '确认预约';
         console.log('弹窗已关闭');
     }
 }
@@ -1523,6 +1538,7 @@ async function addBooking() {
 
     // 检查时间冲突
     const hasConflict = allBookings.some(booking => {
+        if (booking.id === editingBookingId) return false;
         if (booking.studio !== studio || getDateOnly(booking.date) !== date) {
             return false;
         }
@@ -1538,14 +1554,18 @@ async function addBooking() {
     }
 
     // 创建新预约对象
+    const originalBooking = editingBookingId
+        ? allBookings.find(booking => booking.id === editingBookingId)
+        : null;
+    const isEditing = Boolean(editingBookingId);
     const newBooking = {
-        id: String(Date.now()), // 使用时间戳作为 ID
+        id: editingBookingId || String(Date.now()), // 修改时保留原预约 ID
         studio: studio,
         date: date,
         startTime: startTime,
         endTime: endTime,
-        photographer: currentUser,
-        contact: currentUser, // 使用用户名作为联系方式
+        photographer: originalBooking?.photographer || currentUser,
+        contact: originalBooking?.contact || currentUser,
         note: note,
         notes: note, // 后端字段名是 notes
         createdAt: new Date().toISOString() // 使用 ISO 格式
@@ -1555,8 +1575,8 @@ async function addBooking() {
         if (isCloudMode()) {
             // 云端模式：调用 API
             console.log('正在保存预约到云端...');
-            const response = await apiFetch('/api/bookings', {
-                method: 'POST',
+            const response = await apiFetch(editingBookingId ? `/api/bookings/${editingBookingId}` : '/api/bookings', {
+                method: editingBookingId ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newBooking)
             });
@@ -1571,14 +1591,19 @@ async function addBooking() {
         } else {
             // 本地模式：保存到 localStorage
             console.log('正在保存预约到 localStorage...');
-            allBookings.push(newBooking);
+            if (editingBookingId) {
+                const index = allBookings.findIndex(booking => booking.id === editingBookingId);
+                if (index >= 0) allBookings[index] = newBooking;
+            } else {
+                allBookings.push(newBooking);
+            }
             saveBookings();
             sortBookings();
             renderAllViews();
         }
 
         console.log('✅ 预约保存成功');
-        showToast('预约成功', 'success');
+        showToast(isEditing ? '预约时间已修改' : '预约成功', 'success');
         closeAddBookingForm();
 
     } catch (error) {
@@ -1767,6 +1792,7 @@ function showBookingDetail(bookingId) {
 
     // 如果是自己的预约，显示删除按钮
     const actionsHtml = isMyBooking ? `
+        <button onclick="editBooking()" class="btn btn-primary">修改时间</button>
         <button onclick="deleteBooking()" class="btn btn-danger">取消预约</button>
         <button onclick="closeDetailModal()" class="btn btn-secondary">关闭</button>
     ` : `
@@ -1776,6 +1802,23 @@ function showBookingDetail(bookingId) {
     document.getElementById('detailActions').innerHTML = actionsHtml;
 
     document.getElementById('bookingDetailModal').classList.remove('hidden');
+}
+
+function editBooking() {
+    const booking = allBookings.find(item => item.id === selectedBookingId);
+    if (!booking) return;
+    if (!canCancelBooking(booking)) {
+        showToast('只能修改自己的预约', 'error');
+        return;
+    }
+    const bookingDate = getDateOnly(booking.date);
+    if (!isBookableDate(bookingDate)
+        || (bookingDate === getChinaDate() && booking.endTime <= getChinaCurrentTime())) {
+        showToast('已过期预约不能修改', 'error');
+        return;
+    }
+    closeDetailModal();
+    showAddBookingForm(booking.studio, booking);
 }
 
 // 关闭详情弹窗

@@ -815,10 +815,6 @@ body {
     background: #10B981;
 }
 
-.legend-handoff {
-    background: #38BDF8;
-}
-
 .legend-booked {
     background: #EF4444;
 }
@@ -894,18 +890,6 @@ body {
 .availability-free:hover {
     color: white;
     background: #10B981;
-    transform: translateY(-1px);
-}
-
-.availability-handoff {
-    color: #075985;
-    background: #E0F2FE;
-    border-color: #7DD3FC;
-}
-
-.availability-handoff:hover {
-    color: white;
-    background: #38BDF8;
     transform: translateY(-1px);
 }
 
@@ -2745,7 +2729,8 @@ body {
     border-color: #BBF7D0;
 }
 
-.studio-map-zone-sixth-floor {
+.studio-map-zone-sixth-floor,
+.studio-map-zone-seventh-floor {
     background: linear-gradient(180deg, #FFFCF5 0%, #FFF7ED 100%);
     border-color: #FED7AA;
 }
@@ -2775,7 +2760,8 @@ body {
     color: #047857;
 }
 
-.studio-map-zone-sixth-floor .studio-map-zone-header h3 {
+.studio-map-zone-sixth-floor .studio-map-zone-header h3,
+.studio-map-zone-seventh-floor .studio-map-zone-header h3 {
     color: #B45309;
 }
 
@@ -2797,7 +2783,8 @@ body {
     align-content: start;
 }
 
-.studio-map-zone-sixth-floor .studio-map-cards {
+.studio-map-zone-sixth-floor .studio-map-cards,
+.studio-map-zone-seventh-floor .studio-map-cards {
     grid-template-rows: minmax(450px, auto);
     align-content: start;
 }
@@ -3309,7 +3296,8 @@ body {
         grid-template-rows: none;
     }
 
-    .studio-map-zone-sixth-floor .studio-map-cards {
+    .studio-map-zone-sixth-floor .studio-map-cards,
+    .studio-map-zone-seventh-floor .studio-map-cards {
         grid-template-rows: none;
     }
 
@@ -3317,7 +3305,8 @@ body {
         min-height: 180px;
     }
 
-    .studio-map-zone-sixth-floor .studio-overview-card {
+    .studio-map-zone-sixth-floor .studio-overview-card,
+    .studio-map-zone-seventh-floor .studio-overview-card {
         min-height: 215px;
     }
 

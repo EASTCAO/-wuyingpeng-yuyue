@@ -18,7 +18,8 @@ const STUDIO_IDS = [
   '小无影棚2',
   '小无影棚3',
   '小无影棚4',
-  '6楼无影棚'
+  '6F无影棚',
+  '7F无影棚'
 ];
 const DEFAULT_USER_NAMES = [
   '周旭欣', '曹东', '曹玉', '程维跃', '付国俊', '何雨涵', '李冬梅', '卢圣林',
@@ -100,6 +101,13 @@ function isValidBookingDate(date) {
   return date === getChinaDate() || date === getChinaDate(1);
 }
 
+function isEditableBooking(booking) {
+  if (booking.date === getChinaDate(1)) return true;
+  return booking.date === getChinaDate() && booking.endTime > new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(new Date());
+}
+
 function isValidBookingRange(startTime, endTime) {
   if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(startTime)
     || !/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(endTime)) return false;
@@ -153,7 +161,8 @@ async function ensureDatabase() {
       ['无影棚2号', '大无影棚2（鄢军隔壁）'],
       ['无影棚3号', '小无影棚1'],
       ['无影棚4号', '小无影棚2'],
-      ['5楼无影棚', '小无影棚2']
+      ['5楼无影棚', '小无影棚2'],
+      ['6楼无影棚', '6F无影棚']
     ];
     for (const [legacyStudio, studio] of studioMigrations) {
       await client.query('UPDATE bookings SET studio = $1 WHERE studio = $2', [studio, legacyStudio]);
@@ -341,6 +350,69 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
   }
 });
 
+// 修改预约时间
+app.put('/api/bookings/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { studio, date, startTime, endTime, notes } = req.body || {};
+    if (!studio || !date || !startTime || !endTime) {
+      return res.status(400).json({ error: '缺少必填字段' });
+    }
+    if (!STUDIO_IDS.includes(studio)) return res.status(400).json({ error: '影棚无效' });
+    if (!isValidBookingDate(date)) return res.status(400).json({ error: '只能预约今天或明天' });
+    if (!isValidBookingRange(startTime, endTime)) {
+      return res.status(400).json({ error: '时间必须在营业时段内，且按15分钟预约' });
+    }
+
+    const existing = await pool.query('SELECT * FROM bookings WHERE id = $1', [id]);
+    if (existing.rows.length === 0) return res.status(404).json({ error: '预约不存在' });
+    const booking = existing.rows[0];
+    if (req.user.role !== 'admin' && booking.photographer !== req.user.username) {
+      return res.status(403).json({ error: '只能修改自己的预约' });
+    }
+    if (!isEditableBooking(booking)) {
+      return res.status(400).json({ error: '已过期预约不能修改' });
+    }
+
+    const client = await pool.connect();
+    let transactionStarted = false;
+    try {
+      await client.query('BEGIN');
+      transactionStarted = true;
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`${studio}:${date}`]);
+      const conflicts = await client.query(
+        `SELECT id FROM bookings
+         WHERE studio = $1 AND date = $2 AND id <> $3
+         AND NOT ("endTime" <= $4 OR "startTime" >= $5)`,
+        [studio, date, id, startTime, endTime]
+      );
+      if (conflicts.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: '该时间段已被预约' });
+      }
+
+      const result = await client.query(
+        `UPDATE bookings
+         SET studio = $1, date = $2, "startTime" = $3, "endTime" = $4, notes = $5
+         WHERE id = $6
+         RETURNING *`,
+        [studio, date, startTime, endTime, notes || '', id]
+      );
+      await client.query('COMMIT');
+      transactionStarted = false;
+      res.json(result.rows[0]);
+    } catch (error) {
+      if (transactionStarted) await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('修改预约失败:', error);
+    res.status(500).json({ error: '修改预约失败' });
+  }
+});
+
 // 删除预约
 app.delete('/api/bookings/:id', requireAuth, async (req, res) => {
   try {
@@ -379,6 +451,7 @@ app.get('/', (req, res) => {
       bookings: {
         list: 'GET /api/bookings',
         create: 'POST /api/bookings',
+        update: 'PUT /api/bookings/:id',
         delete: 'DELETE /api/bookings/:id'
       }
     }

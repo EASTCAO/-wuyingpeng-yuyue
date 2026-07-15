@@ -53,6 +53,13 @@ Content-Type: application/json
 DELETE /api/bookings/:id
 ```
 
+### 修改预约时间
+```
+PUT /api/bookings/:id
+```
+
+仅预约本人或管理员可以修改；修改时仍校验日期、营业时段、15分钟粒度和时间冲突。
+
 ### 健康检查
 ```
 GET /health
