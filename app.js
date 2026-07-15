@@ -11,6 +11,7 @@ let reminderInterval = null;
 let notifiedBookings = new Set(); // 记录已通知的预约ID
 let soundEnabled = true;
 let globalAudioContext = null; // 全局 AudioContext
+let authToken = null;
 
 // ============ 影棚配置 ============
 // 所有影棚入口、下拉框、统计筛选和时间轴都从这里生成。
@@ -24,7 +25,7 @@ const STUDIO_GROUPS = [
         buttonClass: 'btn-primary',
         studios: [
             { id: '大无影棚1（工位对面）', title: '无影棚1', location: '工位对面' },
-            { id: '大无影棚2（鄢军隔壁）', title: '无影棚2', location: '鄢军对面' }
+            { id: '大无影棚2（鄢军隔壁）', title: '无影棚2', location: '鄢军隔壁' }
         ]
     },
     {
@@ -185,6 +186,10 @@ const API_BASE_URL = IS_LOCAL_PREVIEW ? '' : ONLINE_API_BASE_URL;
 const BOOKING_START_TIME = '08:30';
 const BOOKING_END_TIME = '18:30';
 const BOOKING_INTERVAL_MINUTES = 15;
+const BOOKABLE_PERIODS = [
+    { start: '08:30', end: '12:30' },
+    { start: '14:00', end: '18:30' }
+];
 
 function timeToMinutes(time) {
     const [hour, minute] = time.split(':').map(Number);
@@ -195,6 +200,39 @@ function minutesToTime(minutes) {
     const hour = Math.floor(minutes / 60);
     const minute = minutes % 60;
     return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+function getChinaDate(offsetDays = 0) {
+    const date = new Date(Date.now() + offsetDays * 86400000);
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Shanghai',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(date);
+}
+
+function getChinaCurrentTime() {
+    return new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Shanghai',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).format(new Date());
+}
+
+function getBookablePeriod(time) {
+    return BOOKABLE_PERIODS.find(period => time >= period.start && time <= period.end) || null;
+}
+
+function isValidBookingRange(startTime, endTime) {
+    const period = getBookablePeriod(startTime);
+    if (!period || getBookablePeriod(endTime) !== period) return false;
+    return minutesToTime(timeToMinutes(startTime)) === startTime
+        && minutesToTime(timeToMinutes(endTime)) === endTime
+        && (timeToMinutes(startTime) - timeToMinutes(period.start)) % BOOKING_INTERVAL_MINUTES === 0
+        && (timeToMinutes(endTime) - timeToMinutes(period.start)) % BOOKING_INTERVAL_MINUTES === 0
+        && startTime < endTime;
 }
 
 function getTimeOptions(startTime = BOOKING_START_TIME, endTime = BOOKING_END_TIME, step = BOOKING_INTERVAL_MINUTES) {
@@ -210,16 +248,33 @@ function renderTimeSelectOptions() {
     const endTimeSelect = document.getElementById('endTime');
     if (!startTimeSelect || !endTimeSelect) return;
 
-    const times = getTimeOptions();
+    const startTimes = BOOKABLE_PERIODS.flatMap(period => getTimeOptions(period.start, period.end).slice(0, -1));
+    const endTimes = BOOKABLE_PERIODS.flatMap(period => getTimeOptions(period.start, period.end).slice(1));
     startTimeSelect.innerHTML = '<option value="">请选择开始时间</option>'
-        + times.map(time => `<option value="${time}">${time}</option>`).join('');
+        + startTimes.map(time => `<option value="${time}">${time}</option>`).join('');
     endTimeSelect.innerHTML = '<option value="">请选择结束时间</option>'
-        + times.slice(1).map(time => `<option value="${time}">${time}</option>`).join('');
+        + endTimes.map(time => `<option value="${time}">${time}</option>`).join('');
 }
 
 // 检查是否使用云端同步
 function isCloudMode() {
     return API_BASE_URL && API_BASE_URL.length > 0;
+}
+
+async function apiFetch(path, options = {}) {
+    const headers = new Headers(options.headers || {});
+    if (authToken) headers.set('Authorization', `Bearer ${authToken}`);
+    const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+    if (response.status === 401 && isCloudMode()) {
+        authToken = null;
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        currentUser = null;
+        stopAutoRefresh();
+        document.getElementById('loginPage')?.classList.remove('hidden');
+        document.getElementById('mainPage')?.classList.add('hidden');
+    }
+    return response;
 }
 
 // 自动刷新间隔（云端模式下每30秒刷新一次）
@@ -294,13 +349,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('click', unlockAudio, { once: false });
     document.addEventListener('touchstart', unlockAudio, { once: false });
 
-    // 检查是否已登录
+    // 云端模式必须通过服务端会话恢复登录，本地预览保留原来的本地模式。
+    authToken = localStorage.getItem('authToken');
     const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
+    if (!isCloudMode() && savedUser) {
         currentUser = savedUser;
         showMainPage();
-    } else {
-        // 检查是否有保存的登录信息，自动登录
+    } else if (!isCloudMode()) {
         const rememberMe = localStorage.getItem('rememberMe');
         const savedUsername = localStorage.getItem('savedUsername');
         const savedPassword = localStorage.getItem('savedPassword');
@@ -309,13 +364,27 @@ window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('photographerName').value = savedUsername;
             document.getElementById('loginPassword').value = savedPassword;
             document.getElementById('rememberMe').checked = true;
-            // 自动登录
             login();
+        }
+    } else if (authToken) {
+        try {
+            const response = await apiFetch('/api/auth/me');
+            if (response.ok) {
+                const data = await response.json();
+                currentUser = data.user.username;
+                localStorage.setItem('currentUser', currentUser);
+                showMainPage();
+            } else {
+                authToken = null;
+                localStorage.removeItem('authToken');
+            }
+        } catch (error) {
+            console.error('恢复登录失败:', error);
         }
     }
 
     // 设置今天的日期为默认值
-    const today = new Date().toISOString().split('T')[0];
+    const today = getChinaDate();
     document.getElementById('bookingDate').value = today;
 
     // 监听窗口大小变化，确保移动端侧边栏正确显示
@@ -412,9 +481,22 @@ function saveUsers(users) {
 let USERS = loadUsers();
 
 // ============ 用户管理（仅 admin） ============
-function addNewUser(name) {
+async function addNewUser(name) {
     name = name.trim();
     if (!name) return false;
+    if (isCloudMode()) {
+        const response = await apiFetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: name })
+        });
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            showToast(data.error || '添加用户失败', 'error');
+            return false;
+        }
+        return true;
+    }
     if (USERS[name]) {
         showToast(`用户 "${name}" 已存在`, 'error');
         return false;
@@ -424,25 +506,45 @@ function addNewUser(name) {
     return true;
 }
 
-function removeUser(name) {
+async function removeUser(name) {
     if (name === 'admin') {
         showToast('不能删除管理员账户', 'error');
         return false;
     }
-    if (!USERS[name]) {
+    if (!isCloudMode() && !USERS[name]) {
         showToast(`用户 "${name}" 不存在`, 'error');
         return false;
+    }
+    if (isCloudMode()) {
+        const response = await apiFetch(`/api/users/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            showToast(data.error || '删除用户失败', 'error');
+            return false;
+        }
+        return true;
     }
     delete USERS[name];
     saveUsers(USERS);
     return true;
 }
 
-function renderUserManagement() {
+async function renderUserManagement() {
     const container = document.getElementById('userManagementContent');
     if (!container) return;
 
-    const userNames = Object.keys(USERS).filter(n => n !== 'admin').sort();
+    let userNames;
+    if (isCloudMode()) {
+        try {
+            const response = await apiFetch('/api/users');
+            const users = response.ok ? await response.json() : [];
+            userNames = users.filter(user => user.username !== 'admin').map(user => user.username).sort();
+        } catch {
+            userNames = [];
+        }
+    } else {
+        userNames = Object.keys(USERS).filter(n => n !== 'admin').sort();
+    }
 
     container.innerHTML = `
         <div class="user-mgmt-add">
@@ -453,8 +555,8 @@ function renderUserManagement() {
         <div class="user-mgmt-list">
             ${userNames.map(name => `
                 <div class="user-mgmt-item">
-                    <span class="user-mgmt-name">${name}</span>
-                    <button onclick="handleRemoveUser('${name}')" class="btn btn-danger btn-small">删除</button>
+                    <span class="user-mgmt-name">${escapeHtml(name)}</span>
+                    <button onclick="handleRemoveUser(${inlineJsString(name)})" class="btn btn-danger btn-small">删除</button>
                 </div>
             `).join('')}
         </div>
@@ -471,7 +573,7 @@ function renderUserManagement() {
     }, 0);
 }
 
-function handleAddUsers() {
+async function handleAddUsers() {
     const input = document.getElementById('newUserInput');
     if (!input) return;
     const raw = input.value.trim();
@@ -481,7 +583,7 @@ function handleAddUsers() {
     const names = raw.split(/[,，、\s]+/).filter(n => n.trim());
     let added = 0;
     for (const name of names) {
-        if (addNewUser(name)) added++;
+        if (await addNewUser(name)) added++;
     }
     if (added > 0) {
         showToast(`成功添加 ${added} 个用户`, 'success');
@@ -489,16 +591,16 @@ function handleAddUsers() {
     }
 }
 
-function handleRemoveUser(name) {
+async function handleRemoveUser(name) {
     if (!confirm(`确定要删除用户 "${name}" 吗？`)) return;
-    if (removeUser(name)) {
+    if (await removeUser(name)) {
         showToast(`已删除用户 "${name}"`, 'success');
         renderUserManagement();
     }
 }
 
 // 登录
-function login() {
+async function login() {
     const name = document.getElementById('photographerName').value.trim();
     const password = document.getElementById('loginPassword').value;
     const rememberMe = document.getElementById('rememberMe').checked;
@@ -513,18 +615,41 @@ function login() {
         return;
     }
 
-    // 先检查是否有自定义密码（存储在 localStorage 中）
+    if (isCloudMode()) {
+        try {
+            const response = await apiFetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: name, password })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || '用户名或密码错误');
+            authToken = data.token;
+            currentUser = data.user.username;
+            localStorage.setItem('authToken', authToken);
+            localStorage.setItem('currentUser', currentUser);
+
+            if (rememberMe) {
+            localStorage.setItem('savedUsername', name);
+            localStorage.setItem('rememberMe', 'true');
+            } else {
+            localStorage.removeItem('savedUsername');
+            localStorage.removeItem('savedPassword');
+            localStorage.removeItem('rememberMe');
+            }
+            showMainPage();
+            showToast('登录成功', 'success');
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+        return;
+    }
+
     const customPasswords = JSON.parse(localStorage.getItem('customPasswords') || '{}');
-
-    // 验证用户名和密码
-    // 优先使用自定义密码，如果没有则使用默认密码
     const correctPassword = customPasswords[name] || USERS[name];
-
     if (USERS[name] && correctPassword === password) {
         currentUser = name;
         localStorage.setItem('currentUser', name);
-
-        // 记住密码功能
         if (rememberMe) {
             localStorage.setItem('savedUsername', name);
             localStorage.setItem('savedPassword', password);
@@ -534,7 +659,6 @@ function login() {
             localStorage.removeItem('savedPassword');
             localStorage.removeItem('rememberMe');
         }
-
         showMainPage();
         showToast('登录成功', 'success');
     } else {
@@ -544,6 +668,10 @@ function login() {
 
 // 游客登录
 function guestLogin() {
+    if (isCloudMode()) {
+        showToast('线上模式请使用账号登录', 'error');
+        return;
+    }
     currentUser = '游客' + Math.floor(Math.random() * 10000);
     localStorage.setItem('currentUser', currentUser);
     showMainPage();
@@ -598,6 +726,24 @@ function changePassword() {
         return;
     }
 
+    if (isCloudMode()) {
+        if (newPassword.length < 4 || newPassword !== confirmPassword) {
+            showToast('请检查新密码', 'error');
+            return;
+        }
+        apiFetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword, newPassword })
+        }).then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || '密码修改失败');
+            showToast('密码修改成功', 'success');
+            closeChangePasswordModal();
+        }).catch(error => showToast(error.message, 'error'));
+        return;
+    }
+
     const correctPassword = getCurrentUserPassword();
     if (currentPassword !== correctPassword) {
         showToast('当前密码错误', 'error');
@@ -634,7 +780,9 @@ function changePassword() {
 function logout() {
     if (confirm('确定要退出吗？')) {
         currentUser = null;
+        authToken = null;
         localStorage.removeItem('currentUser');
+        localStorage.removeItem('authToken');
         stopAutoRefresh(); // 停止自动刷新
         document.getElementById('loginPage').classList.remove('hidden');
         document.getElementById('mainPage').classList.add('hidden');
@@ -730,7 +878,7 @@ async function loadBookings() {
     if (isCloudMode()) {
         // 云端模式：从 API 加载
         try {
-            const response = await fetch(`${API_BASE_URL}/api/bookings`);
+            const response = await apiFetch('/api/bookings');
             if (!response.ok) {
                 throw new Error(`加载失败: ${response.status}`);
             }
@@ -834,16 +982,15 @@ function compareBookingsByTime(a, b) {
 }
 
 function getTodayBookingCount(studioId) {
-    const today = formatDateToString(new Date());
+    const today = getChinaDate();
     return allBookings.filter(booking =>
         booking.studio === studioId && getDateOnly(booking.date) === today
     ).length;
 }
 
 function getStudioLiveState(studioBookings) {
-    const now = new Date();
-    const today = formatDateToString(now);
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const today = getChinaDate();
+    const currentTime = getChinaCurrentTime();
 
     const activeBooking = studioBookings.find(booking =>
         getDateOnly(booking.date) === today &&
@@ -883,10 +1030,8 @@ function getStudioLiveState(studioBookings) {
 
 function formatShortDate(dateStr) {
     const dateOnly = getDateOnly(dateStr);
-    const today = formatDateToString(new Date());
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = formatDateToString(tomorrow);
+    const today = getChinaDate();
+    const tomorrowStr = getChinaDate(1);
 
     if (dateOnly === today) return '今天';
     if (dateOnly === tomorrowStr) return '明天';
@@ -894,13 +1039,11 @@ function formatShortDate(dateStr) {
 }
 
 function getBookableStartDate() {
-    return formatDateToString(new Date());
+    return getChinaDate();
 }
 
 function getBookableEndDate() {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return formatDateToString(tomorrow);
+    return getChinaDate(1);
 }
 
 function isBookableDate(date) {
@@ -916,11 +1059,11 @@ function hasAvailableBookingSlot(studioId, date) {
     if (!isBookableDate(date)) return false;
 
     const today = getBookableStartDate();
-    const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const currentTime = getChinaCurrentTime();
     const existingBookings = getStudioBookingsForDates(studioId, [date]);
-    const startTimes = getTimeOptions(BOOKING_START_TIME, BOOKING_END_TIME)
-        .filter(time => time < BOOKING_END_TIME);
+    const startTimes = BOOKABLE_PERIODS.flatMap(period =>
+        getTimeOptions(period.start, period.end).slice(0, -1)
+    );
 
     return startTimes.some(startTime => {
         if (date === today && startTime < currentTime) return false;
@@ -984,9 +1127,8 @@ function handleSummaryBookingKeydown(event, bookingId) {
 }
 
 function getAvailabilitySlotState(time, selectedDate, existingBookings) {
-    const today = formatDateToString(new Date());
-    const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const today = getChinaDate();
+    const currentTime = getChinaCurrentTime();
 
     if (selectedDate === today && time < currentTime) {
         return { type: 'past', label: '已过' };
@@ -1030,6 +1172,7 @@ function findNextBlockedTime(startTime, existingBookings) {
 
 function updateEndTimeOptions(startTime, endTimeSelect, existingBookings) {
     const blockedFrom = findNextBlockedTime(startTime, existingBookings);
+    const selectedPeriod = getBookablePeriod(startTime);
     const endOptions = endTimeSelect.querySelectorAll('option');
 
     endOptions.forEach(option => {
@@ -1040,7 +1183,8 @@ function updateEndTimeOptions(startTime, endTimeSelect, existingBookings) {
 
         const tooEarly = option.value <= startTime;
         const tooLate = option.value > blockedFrom;
-        option.disabled = tooEarly || tooLate;
+        const wrongPeriod = !selectedPeriod || getBookablePeriod(option.value) !== selectedPeriod;
+        option.disabled = tooEarly || tooLate || wrongPeriod;
     });
 
     const selectedEndOption = Array.from(endOptions).find(option => option.value === endTimeSelect.value);
@@ -1076,9 +1220,9 @@ function renderAvailabilityPanel() {
 
     const renderAvailabilitySlot = time => {
         let state = getAvailabilitySlotState(time, selectedDate, existingBookings);
-        const isClosingTime = time === BOOKING_END_TIME;
+        const isClosingTime = BOOKABLE_PERIODS.some(period => period.end === time);
         if (isClosingTime && (state.type === 'free' || state.type === 'handoff')) {
-            state = { type: 'closing', label: `${BOOKING_END_TIME} 结束时间` };
+            state = { type: 'closing', label: `${time} 结束时间` };
         }
         const isStart = selectedStartTime === time;
         const isRange = selectedStartTime && selectedEndTime && time > selectedStartTime && time < selectedEndTime;
@@ -1142,9 +1286,10 @@ function selectAvailabilityTime(time) {
         .filter(booking => booking.studio === studio && getDateOnly(booking.date) === date)
         .sort(compareBookingsByTime);
 
-    if (time === BOOKING_END_TIME && !startTimeSelect.value) {
-        startTimeSelect.value = minutesToTime(timeToMinutes(BOOKING_END_TIME) - BOOKING_INTERVAL_MINUTES);
-        endTimeSelect.value = BOOKING_END_TIME;
+    const periodEndingAtTime = BOOKABLE_PERIODS.find(period => period.end === time);
+    if (periodEndingAtTime && !startTimeSelect.value) {
+        startTimeSelect.value = minutesToTime(timeToMinutes(time) - BOOKING_INTERVAL_MINUTES);
+        endTimeSelect.value = time;
         startTimeSelect.dispatchEvent(new Event('change'));
         renderAvailabilityPanel();
         return;
@@ -1205,22 +1350,16 @@ function createBookingCard(booking) {
 function formatDate(dateStr) {
     // 处理 ISO 格式日期，只取日期部分
     const dateOnly = dateStr.split('T')[0];
-    const date = new Date(dateOnly + 'T00:00:00');
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const today = getChinaDate();
+    const tomorrow = getChinaDate(1);
 
-    // 重置时间为零点，便于比较
-    today.setHours(0, 0, 0, 0);
-    tomorrow.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
-
-    if (date.getTime() === today.getTime()) {
+    if (dateOnly === today) {
         return '今天 ' + dateOnly;
-    } else if (date.getTime() === tomorrow.getTime()) {
+    } else if (dateOnly === tomorrow) {
         return '明天 ' + dateOnly;
     } else {
         const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        const date = new Date(`${dateOnly}T12:00:00+08:00`);
         return `${dateOnly} ${weekdays[date.getDay()]}`;
     }
 }
@@ -1267,9 +1406,8 @@ function showAddBookingForm(defaultStudio) {
         }
 
         const selectedDate = dateInput.value;
-        const today = new Date().toISOString().split('T')[0];
-        const now = new Date();
-        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const today = getChinaDate();
+        const currentTime = getChinaCurrentTime();
 
         const studio = document.getElementById('studioSelect').value;
 
@@ -1378,6 +1516,11 @@ async function addBooking() {
         return;
     }
 
+    if (!isValidBookingRange(startTime, endTime)) {
+        showToast('预约时间必须在上午或下午营业时段内', 'error');
+        return;
+    }
+
     // 检查时间冲突
     const hasConflict = allBookings.some(booking => {
         if (booking.studio !== studio || getDateOnly(booking.date) !== date) {
@@ -1412,7 +1555,7 @@ async function addBooking() {
         if (isCloudMode()) {
             // 云端模式：调用 API
             console.log('正在保存预约到云端...');
-            const response = await fetch(`${API_BASE_URL}/api/bookings`, {
+            const response = await apiFetch('/api/bookings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newBooking)
@@ -1663,7 +1806,7 @@ async function deleteBookingById(bookingId, options = {}) {
     try {
         if (isCloudMode()) {
             // 云端模式：调用 API
-            const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}`, {
+            const response = await apiFetch(`/api/bookings/${bookingId}`, {
                 method: 'DELETE'
             });
 
@@ -2015,28 +2158,17 @@ function getBookingsForHourSlot(studio, dates, hour, bookingsToUse = allBookings
 
 // 获取要显示的日期
 function getDisplayDates() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     switch (currentDateRange) {
         case 'today':
-            return [formatDateToString(today)];
+            return [getChinaDate()];
         case 'tomorrow':
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            return [formatDateToString(tomorrow)];
+            return [getChinaDate(1)];
         case 'week':
-            const dates = [];
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(today);
-                date.setDate(date.getDate() + i);
-                dates.push(formatDateToString(date));
-            }
-            return dates;
+            return Array.from({ length: 7 }, (_, i) => getChinaDate(i));
         case 'custom':
-            return selectedDate ? [selectedDate] : [formatDateToString(today)];
+            return selectedDate ? [selectedDate] : [getChinaDate()];
         default:
-            return [formatDateToString(today)];
+            return [getChinaDate()];
     }
 }
 
@@ -2139,7 +2271,7 @@ function getFilteredBookings() {
     let filtered = [...allBookings];
 
     // 首先过滤掉昨天及之前的预约（只保留今天及以后的）
-    const today = formatDateToString(new Date());
+    const today = getChinaDate();
     filtered = filtered.filter(b => getDateOnly(b.date) >= today);
 
     // 只看我的预约
@@ -2156,7 +2288,7 @@ function updateTodayUsage() {
     const todayUsageElement = document.getElementById('todayUsage');
     if (!todayUsageElement) return; // 如果元素不存在，直接返回
 
-    const today = formatDateToString(new Date());
+    const today = getChinaDate();
     const todayBookings = allBookings.filter(b =>
         b.photographer === currentUser && b.date === today
     );
