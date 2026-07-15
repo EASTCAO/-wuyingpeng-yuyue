@@ -19,7 +19,7 @@ let editingBookingId = null;
 const STUDIO_GROUPS = [
     {
         key: 'large',
-        title: '大棚区域',
+        title: '7F 大棚区域',
         subtitle: '主力拍摄区',
         optionLabel: '大棚',
         cardClass: 'studio-section-large',
@@ -54,17 +54,6 @@ const STUDIO_GROUPS = [
             { id: '6F无影棚', title: '6F无影棚', location: '6F' }
         ]
     },
-    {
-        key: 'seventh-floor',
-        title: '7F',
-        subtitle: '跨楼层备用棚',
-        optionLabel: '7F',
-        cardClass: 'studio-section-seventh',
-        buttonClass: 'btn-primary',
-        studios: [
-            { id: '7F无影棚', title: '7F无影棚', location: '7F' }
-        ]
-    }
 ];
 
 function getAllStudios() {
