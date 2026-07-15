@@ -1137,8 +1137,10 @@ function createStudioSummary(studio, studioBookings) {
             return `
             <div
                 class="studio-summary-booking ${status}${isCancellable ? ' cancellable' : ''}"
-                onclick="${isCancellable ? `openSummaryCancel(event, ${bookingId})` : 'event.stopPropagation()'}"
-                ${isCancellable ? `role="button" tabindex="0" onkeydown="handleSummaryBookingKeydown(event, ${bookingId})"` : ''}
+                onclick="openSummaryBooking(event, ${bookingId})"
+                role="button"
+                tabindex="0"
+                onkeydown="handleSummaryBookingKeydown(event, ${bookingId})"
             >
                 <strong>${booking.startTime}-${booking.endTime}</strong>
                 <span class="summary-booking-user">${escapeHtml(booking.photographer)}</span>
@@ -1154,16 +1156,16 @@ function createStudioSummary(studio, studioBookings) {
     `;
 }
 
-function openSummaryCancel(event, bookingId) {
+function openSummaryBooking(event, bookingId) {
     event.stopPropagation();
-    showCancelBookingConfirm(bookingId);
+    showBookingDetail(bookingId);
 }
 
 function handleSummaryBookingKeydown(event, bookingId) {
     if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         event.stopPropagation();
-        showCancelBookingConfirm(bookingId);
+        showBookingDetail(bookingId);
     }
 }
 
@@ -1242,7 +1244,9 @@ function renderAvailabilityPanel() {
     const selectedDate = dateInput.value;
     const studioInfo = getStudioById(studio);
     const existingBookings = allBookings
-        .filter(booking => booking.studio === studio && getDateOnly(booking.date) === selectedDate)
+        .filter(booking => booking.id !== editingBookingId
+            && booking.studio === studio
+            && getDateOnly(booking.date) === selectedDate)
         .sort(compareBookingsByTime);
 
     subtitle.textContent = studioInfo
@@ -1323,8 +1327,23 @@ function selectAvailabilityTime(time) {
     const studio = document.getElementById('studioSelect').value;
     const date = document.getElementById('bookingDate').value;
     const existingBookings = allBookings
-        .filter(booking => booking.studio === studio && getDateOnly(booking.date) === date)
+        .filter(booking => booking.id !== editingBookingId
+            && booking.studio === studio
+            && getDateOnly(booking.date) === date)
         .sort(compareBookingsByTime);
+
+    if (endTimeSelect.value === time) {
+        endTimeSelect.value = '';
+        renderAvailabilityPanel();
+        return;
+    }
+
+    if (startTimeSelect.value === time) {
+        startTimeSelect.value = '';
+        endTimeSelect.value = '';
+        renderAvailabilityPanel();
+        return;
+    }
 
     const periodEndingAtTime = BOOKABLE_PERIODS.find(period => period.end === time);
     if (periodEndingAtTime && !startTimeSelect.value) {
@@ -1684,7 +1703,6 @@ function showStudioDetail(studioId) {
 
     document.getElementById('detailActions').innerHTML = `
         <button onclick="openAddBookingFromStudioDetail('${escapeHtml(studio.id)}')" class="btn ${studio.buttonClass}">预约</button>
-        <button onclick="closeDetailModal()" class="btn btn-secondary">关闭</button>
     `;
 
     document.getElementById('bookingDetailModal').classList.remove('hidden');
@@ -1828,10 +1846,7 @@ function showBookingDetail(bookingId) {
     const actionsHtml = isMyBooking ? `
         <button onclick="editBooking()" class="btn btn-primary">修改时间</button>
         <button onclick="deleteBooking()" class="btn btn-danger">取消预约</button>
-        <button onclick="closeDetailModal()" class="btn btn-secondary">关闭</button>
-    ` : `
-        <button onclick="closeDetailModal()" class="btn btn-secondary">关闭</button>
-    `;
+    ` : '';
 
     document.getElementById('detailActions').innerHTML = actionsHtml;
 
