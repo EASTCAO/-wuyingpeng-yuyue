@@ -2704,7 +2704,7 @@ body {
 
 .studio-map {
     display: grid;
-    grid-template-columns: minmax(250px, 1.08fr) minmax(420px, 1.62fr) minmax(210px, 0.72fr);
+    grid-template-columns: minmax(700px, 2.7fr) minmax(210px, 0.72fr);
     gap: 14px;
     align-items: stretch;
 }
@@ -2732,6 +2732,34 @@ body {
 .studio-map-zone-sixth-floor {
     background: linear-gradient(180deg, #FFFCF5 0%, #FFF7ED 100%);
     border-color: #FED7AA;
+}
+
+.studio-map-zone-seventh-floor {
+    background: linear-gradient(180deg, #F8FAFF 0%, #F3F7FF 100%);
+    border-color: #BFDBFE;
+    grid-column: 1;
+}
+
+.studio-floor-header {
+    margin-bottom: 12px;
+}
+
+.studio-map-zone-seventh-floor .studio-floor-header h3 {
+    color: #1D4ED8;
+    font-size: 19px;
+}
+
+.studio-floor-zones {
+    display: grid;
+    grid-template-columns: minmax(250px, 0.9fr) minmax(390px, 1.3fr);
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+
+.studio-floor-zones > .studio-map-zone {
+    min-width: 0;
+    padding: 10px;
 }
 
 .studio-map-zone-header {
@@ -3286,6 +3314,14 @@ body {
 
     .studio-map-zone {
         overflow: visible;
+    }
+
+    .studio-floor-zones {
+        grid-template-columns: 1fr;
+    }
+
+    .studio-map-zone-seventh-floor .studio-floor-header h3 {
+        font-size: 17px;
     }
 
     .studio-map-zone-small .studio-map-cards {

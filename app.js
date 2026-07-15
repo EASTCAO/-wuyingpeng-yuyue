@@ -19,7 +19,7 @@ let editingBookingId = null;
 const STUDIO_GROUPS = [
     {
         key: 'large',
-        title: '7F 大棚区域',
+        title: '大棚区域',
         subtitle: '主力拍摄区',
         optionLabel: '大棚',
         cardClass: 'studio-section-large',
@@ -98,31 +98,70 @@ function renderStudioSections() {
     const container = document.getElementById('studioGroups');
     if (!container) return;
 
+    const renderGroup = group => `
+        <section class="studio-floor-zone studio-map-zone studio-map-zone-${group.key}">
+            <div class="studio-map-zone-header">
+                <h3>${escapeHtml(group.title)}</h3>
+            </div>
+            <div class="studio-map-cards">
+                ${group.studios.map(studio => `
+                    <div
+                        class="studio-section studio-overview-card ${group.cardClass}"
+                        data-studio-id="${escapeHtml(studio.id)}"
+                        data-studio-group="${group.key}"
+                        onclick="showAddBookingForm('${escapeHtml(studio.id)}')"
+                        role="button"
+                        tabindex="0"
+                        onkeydown="handleStudioCardKeydown(event, '${escapeHtml(studio.id)}')"
+                    >
+                        <div class="studio-section-header">
+                            <div>
+                                <h2>
+                                    ${escapeHtml(studio.title)}
+                                    ${group.key === 'large' && studio.location ? `<small class="studio-card-location">（${escapeHtml(studio.location)}）</small>` : ''}
+                                </h2>
+                            </div>
+                        </div>
+                        <div id="${getStudioListId(studio.id)}" class="studio-summary">
+                            <p class="empty-message">暂无预约</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </section>
+    `;
+
+    const seventhFloorGroups = STUDIO_GROUPS.filter(group => group.key === 'large' || group.key === 'small');
+    const sixthFloorGroup = STUDIO_GROUPS.find(group => group.key === 'sixth-floor');
+
     container.innerHTML = `
         <div class="studio-map">
-            ${STUDIO_GROUPS.map(group => `
-                <section class="studio-map-zone studio-map-zone-${group.key}">
+            <section class="studio-map-zone studio-map-zone-seventh-floor">
+                <div class="studio-map-zone-header studio-floor-header">
+                    <h3>7F</h3>
+                </div>
+                <div class="studio-floor-zones">
+                    ${seventhFloorGroups.map(renderGroup).join('')}
+                </div>
+            </section>
+            ${sixthFloorGroup ? `
+                <section class="studio-map-zone studio-map-zone-${sixthFloorGroup.key}">
                     <div class="studio-map-zone-header">
-                        <h3>${escapeHtml(group.title)}</h3>
+                        <h3>${escapeHtml(sixthFloorGroup.title)}</h3>
                     </div>
                     <div class="studio-map-cards">
-                        ${group.studios.map(studio => `
+                        ${sixthFloorGroup.studios.map(studio => `
                             <div
-                                class="studio-section studio-overview-card ${group.cardClass}"
+                                class="studio-section studio-overview-card ${sixthFloorGroup.cardClass}"
                                 data-studio-id="${escapeHtml(studio.id)}"
-                                data-studio-group="${group.key}"
+                                data-studio-group="${sixthFloorGroup.key}"
                                 onclick="showAddBookingForm('${escapeHtml(studio.id)}')"
                                 role="button"
                                 tabindex="0"
                                 onkeydown="handleStudioCardKeydown(event, '${escapeHtml(studio.id)}')"
                             >
                                 <div class="studio-section-header">
-                                    <div>
-                                        <h2>
-                                            ${escapeHtml(studio.title)}
-                                            ${group.key === 'large' && studio.location ? `<small class="studio-card-location">（${escapeHtml(studio.location)}）</small>` : ''}
-                                        </h2>
-                                    </div>
+                                    <div><h2>${escapeHtml(studio.title.replace(/^6F/, ''))}</h2></div>
                                 </div>
                                 <div id="${getStudioListId(studio.id)}" class="studio-summary">
                                     <p class="empty-message">暂无预约</p>
@@ -131,7 +170,7 @@ function renderStudioSections() {
                         `).join('')}
                     </div>
                 </section>
-            `).join('')}
+            ` : ''}
         </div>
     `;
 }
