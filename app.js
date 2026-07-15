@@ -1267,11 +1267,17 @@ function renderAvailabilityPanel() {
             isRange ? ' selected-range' : '',
             isEnd ? ' selected-end' : ''
         ].join('');
-        const canSelect = state.type === 'free' || state.type === 'closing';
+        const canSelectBookedBoundary = state.type === 'booked'
+            && selectedStartTime
+            && state.booking
+            && time === state.booking.startTime
+            && selectedStartTime < time;
+        const canSelect = state.type === 'free' || state.type === 'closing' || canSelectBookedBoundary;
+        const slotClass = `availability-${state.type}${canSelectBookedBoundary ? ' availability-booked-boundary' : ''}${selectedClass}`;
         return `
             <button
                 type="button"
-                class="availability-slot availability-${state.type}${selectedClass}"
+                class="availability-slot ${slotClass}"
                 ${canSelect ? `onclick="selectAvailabilityTime('${time}')"` : 'disabled'}
                 title="${escapeHtml(state.label)}"
             >

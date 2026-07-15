@@ -912,6 +912,14 @@ body {
     cursor: not-allowed;
 }
 
+.availability-booked-boundary {
+    cursor: pointer;
+}
+
+.availability-booked-boundary:hover {
+    background: #FECACA;
+}
+
 .availability-past {
     color: #6B7280;
     background: #E5E7EB;
