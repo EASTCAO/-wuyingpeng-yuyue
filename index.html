@@ -16,50 +16,53 @@
     <link rel="apple-touch-icon" href="favicon.svg">
     
     <title>无影棚预约系统</title>
-    <link rel="stylesheet" href="style.css?v=20260325-1">
+    <link rel="stylesheet" href="style.css?v=20260715-location-inline-15px">
 </head>
 <body>
     <!-- 登录页面 -->
     <div id="loginPage" class="page">
         <div class="login-container">
             <div class="login-card">
-                <!-- 图标 -->
-                <div class="login-icon">
-                    <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="bodyGradient" x1="8" y1="18" x2="64" y2="58" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#22D3EE"/>
-                                <stop offset="0.5" stop-color="#38BDF8"/>
-                                <stop offset="1" stop-color="#818CF8"/>
-                            </linearGradient>
-                            <linearGradient id="lensGradient" x1="24" y1="28" x2="48" y2="52" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#06B6D4"/>
-                                <stop offset="0.5" stop-color="#3B82F6"/>
-                                <stop offset="1" stop-color="#8B5CF6"/>
-                            </linearGradient>
-                            <linearGradient id="innerLensGradient" x1="28" y1="32" x2="44" y2="48" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#67E8F9"/>
-                                <stop offset="1" stop-color="#A5B4FC"/>
-                            </linearGradient>
-                        </defs>
-                        <!-- 相机机身 -->
-                        <rect x="8" y="20" width="56" height="40" rx="8" fill="url(#bodyGradient)"/>
-                        <!-- 取景器凸起 -->
-                        <rect x="26" y="12" width="20" height="12" rx="4" fill="url(#bodyGradient)"/>
-                        <!-- 镜头外圈 -->
-                        <circle cx="36" cy="40" r="16" fill="url(#lensGradient)"/>
-                        <!-- 镜头内圈 -->
-                        <circle cx="36" cy="40" r="10" fill="url(#innerLensGradient)"/>
-                        <!-- 镜头中心 -->
-                        <circle cx="36" cy="40" r="5" fill="white" fill-opacity="0.3"/>
-                        <!-- 闪光灯 -->
-                        <circle cx="54" cy="28" r="4" fill="white" fill-opacity="0.6"/>
-                    </svg>
-                </div>
+                <div class="login-brand">
+                    <!-- 图标 -->
+                    <div class="login-icon">
+                        <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="bodyGradient" x1="8" y1="18" x2="64" y2="58" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#22D3EE"/>
+                                    <stop offset="0.5" stop-color="#38BDF8"/>
+                                    <stop offset="1" stop-color="#818CF8"/>
+                                </linearGradient>
+                                <linearGradient id="lensGradient" x1="24" y1="28" x2="48" y2="52" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#06B6D4"/>
+                                    <stop offset="0.5" stop-color="#3B82F6"/>
+                                    <stop offset="1" stop-color="#8B5CF6"/>
+                                </linearGradient>
+                                <linearGradient id="innerLensGradient" x1="28" y1="32" x2="44" y2="48" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#67E8F9"/>
+                                    <stop offset="1" stop-color="#A5B4FC"/>
+                                </linearGradient>
+                            </defs>
+                            <!-- 相机机身 -->
+                            <rect x="8" y="20" width="56" height="40" rx="8" fill="url(#bodyGradient)"/>
+                            <!-- 取景器凸起 -->
+                            <rect x="26" y="12" width="20" height="12" rx="4" fill="url(#bodyGradient)"/>
+                            <!-- 镜头外圈 -->
+                            <circle cx="36" cy="40" r="16" fill="url(#lensGradient)"/>
+                            <!-- 镜头内圈 -->
+                            <circle cx="36" cy="40" r="10" fill="url(#innerLensGradient)"/>
+                            <!-- 镜头中心 -->
+                            <circle cx="36" cy="40" r="5" fill="white" fill-opacity="0.3"/>
+                            <!-- 闪光灯 -->
+                            <circle cx="54" cy="28" r="4" fill="white" fill-opacity="0.6"/>
+                        </svg>
+                    </div>
 
-                <!-- 标题 -->
-                <h1 class="login-title">无影棚预约系统</h1>
-                <p class="login-subtitle">登录您的工作账户</p>
+                    <!-- 标题 -->
+                    <div class="login-heading">
+                        <h1 class="login-title">无影棚预约</h1>
+                    </div>
+                </div>
 
                 <!-- 表单 -->
                 <div class="login-form">
@@ -98,7 +101,7 @@
                         </label>
                     </div>
 
-                    <button onclick="login()" class="login-btn">登 录</button>
+                    <button onclick="login()" class="login-btn">登录</button>
                     <button onclick="guestLogin()" class="guest-btn">游客模式</button>
                 </div>
             </div>
@@ -144,7 +147,7 @@
                         <circle cx="54" cy="28" r="4" fill="white" fill-opacity="0.6"/>
                     </svg>
                 </div>
-                <h1>无影棚预约系统</h1>
+                <h1>无影棚预约</h1>
             </div>
             <div class="user-info">
                 <span id="currentUser"></span>
@@ -168,7 +171,6 @@
             <!-- 左侧筛选区域 -->
             <div class="sidebar">
                 <div class="sidebar-top">
-                    <input type="text" id="searchInput" class="search-input" placeholder="搜索">
                     <label class="switch-row">
                         <span>只看我的</span>
                         <input type="checkbox" id="filterMyBookings" onchange="applyFilters()">
@@ -200,58 +202,7 @@
 
                 <!-- 大厅视图 -->
                 <div id="listView" class="list-view">
-                    <!-- 大棚区域 -->
-                    <div class="studio-group">
-                        <h3 class="studio-group-title">大棚区域</h3>
-
-                        <!-- 无影棚1号 -->
-                        <div class="studio-section studio-section-large">
-                            <div class="studio-section-header">
-                                <h2>1号<small style="font: size 0.8em;font-weight:normal;margin-left:4px;">（付老师对面）</small></h2>
-                                <button onclick="showAddBookingForm('无影棚1号')" class="btn btn-primary btn-small">+ 新建预约</button>
-                            </div>
-                            <div id="studio1List" class="booking-list">
-                                <p class="empty-message">暂无预约</p>
-                            </div>
-                        </div>
-
-                        <!-- 无影棚2号 -->
-                        <div class="studio-section studio-section-large">
-                            <div class="studio-section-header">
-                                <h2>2号</h2>
-                                <button onclick="showAddBookingForm('无影棚2号')" class="btn btn-primary btn-small">+ 新建预约</button>
-                            </div>
-                            <div id="studio2List" class="booking-list">
-                                <p class="empty-message">暂无预约</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 小棚区域 -->
-                    <div class="studio-group">
-                        <h3 class="studio-group-title">小棚区域</h3>
-
-                        <!-- 无影棚3号（已冻结，暂停预约） -->
-                        <div class="studio-section studio-section-small studio-frozen">
-                            <div class="studio-section-header">
-                                <h2>3号 <span class="frozen-badge">已冻结</span></h2>
-                            </div>
-                            <div id="studio3List" class="booking-list">
-                                <p class="empty-message">该影棚暂停使用，无法预约</p>
-                            </div>
-                        </div>
-
-                        <!-- 5楼无影棚 -->
-                        <div class="studio-section studio-section-small">
-                            <div class="studio-section-header">
-                                <h2>5楼无影棚</h2>
-                                <button onclick="showAddBookingForm('5楼无影棚')" class="btn btn-success btn-small">+ 新建预约</button>
-                            </div>
-                            <div id="studio4List" class="booking-list">
-                                <p class="empty-message">暂无预约</p>
-                            </div>
-                        </div>
-                    </div>
+                    <div id="studioGroups"></div>
                 </div>
 
                 <!-- 统计视图 -->
@@ -262,17 +213,7 @@
                             <select id="statsMonth" onchange="renderStatsView()">
                                 <option value="all">所有时间</option>
                             </select>
-                            <select id="statsStudio" onchange="renderStatsView()">
-                                <option value="all">所有影棚</option>
-                                <optgroup label="大棚">
-                                    <option value="无影棚1号">无影棚1号</option>
-                                    <option value="无影棚2号">无影棚2号</option>
-                                </optgroup>
-                                <optgroup label="小棚">
-                                    <option value="无影棚3号">无影棚3号</option>
-                                    <option value="5楼无影棚">5楼无影棚</option>
-                                </optgroup>
-                            </select>
+                            <select id="statsStudio" onchange="renderStatsView()"></select>
                         </div>
                     </div>
 
@@ -323,7 +264,7 @@
         </div>
 
         <!-- 移动端悬浮添加按钮 -->
-        <button class="mobile-fab" onclick="showAddBookingForm()" aria-label="新建预约">
+        <button class="mobile-fab" onclick="showAddBookingForm()" aria-label="预约">
             <span>+</span>
         </button>
 
@@ -344,123 +285,51 @@
     <div id="addBookingModal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>新建预约</h2>
+                <h2>预约</h2>
                 <button onclick="closeAddBookingForm()" class="close-btn">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>选择影棚</label>
-                    <select id="studioSelect">
-                        <optgroup label="大棚">
-                            <option value="无影棚1号">无影棚1号</option>
-                            <option value="无影棚2号">无影棚2号</option>
-                        </optgroup>
-                        <optgroup label="小棚">
-                            <option value="无影棚3号" disabled>无影棚3号（已冻结）</option>
-                            <option value="5楼无影棚">5楼无影棚</option>
-                        </optgroup>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>日期</label>
-                    <input type="date" id="bookingDate" required>
-                </div>
-                <div class="form-group">
-                    <label>开始时间</label>
-                    <select id="startTime" required>
-                        <option value="">请选择开始时间</option>
-                        <option value="08:30">08:30</option>
-                        <option value="08:45">08:45</option>
-                        <option value="09:00">09:00</option>
-                        <option value="09:15">09:15</option>
-                        <option value="09:30">09:30</option>
-                        <option value="09:45">09:45</option>
-                        <option value="10:00">10:00</option>
-                        <option value="10:15">10:15</option>
-                        <option value="10:30">10:30</option>
-                        <option value="10:45">10:45</option>
-                        <option value="11:00">11:00</option>
-                        <option value="11:15">11:15</option>
-                        <option value="11:30">11:30</option>
-                        <option value="11:45">11:45</option>
-                        <option value="12:00">12:00</option>
-                        <option value="12:15">12:15</option>
-                        <option value="12:30">12:30</option>
-                        <option value="12:45">12:45</option>
-                        <option value="13:00">13:00</option>
-                        <option value="13:15">13:15</option>
-                        <option value="13:30">13:30</option>
-                        <option value="13:45">13:45</option>
-                        <option value="14:00">14:00</option>
-                        <option value="14:15">14:15</option>
-                        <option value="14:30">14:30</option>
-                        <option value="14:45">14:45</option>
-                        <option value="15:00">15:00</option>
-                        <option value="15:15">15:15</option>
-                        <option value="15:30">15:30</option>
-                        <option value="15:45">15:45</option>
-                        <option value="16:00">16:00</option>
-                        <option value="16:15">16:15</option>
-                        <option value="16:30">16:30</option>
-                        <option value="16:45">16:45</option>
-                        <option value="17:00">17:00</option>
-                        <option value="17:15">17:15</option>
-                        <option value="17:30">17:30</option>
-                        <option value="17:45">17:45</option>
-                        <option value="18:00">18:00</option>
-                        <option value="18:15">18:15</option>
-                        <option value="18:30">18:30</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>结束时间</label>
-                    <select id="endTime" required>
-                        <option value="">请选择结束时间</option>
-                        <option value="08:45">08:45</option>
-                        <option value="09:00">09:00</option>
-                        <option value="09:15">09:15</option>
-                        <option value="09:30">09:30</option>
-                        <option value="09:45">09:45</option>
-                        <option value="10:00">10:00</option>
-                        <option value="10:15">10:15</option>
-                        <option value="10:30">10:30</option>
-                        <option value="10:45">10:45</option>
-                        <option value="11:00">11:00</option>
-                        <option value="11:15">11:15</option>
-                        <option value="11:30">11:30</option>
-                        <option value="11:45">11:45</option>
-                        <option value="12:00">12:00</option>
-                        <option value="12:15">12:15</option>
-                        <option value="12:30">12:30</option>
-                        <option value="12:45">12:45</option>
-                        <option value="13:00">13:00</option>
-                        <option value="13:15">13:15</option>
-                        <option value="13:30">13:30</option>
-                        <option value="13:45">13:45</option>
-                        <option value="14:00">14:00</option>
-                        <option value="14:15">14:15</option>
-                        <option value="14:30">14:30</option>
-                        <option value="14:45">14:45</option>
-                        <option value="15:00">15:00</option>
-                        <option value="15:15">15:15</option>
-                        <option value="15:30">15:30</option>
-                        <option value="15:45">15:45</option>
-                        <option value="16:00">16:00</option>
-                        <option value="16:15">16:15</option>
-                        <option value="16:30">16:30</option>
-                        <option value="16:45">16:45</option>
-                        <option value="17:00">17:00</option>
-                        <option value="17:15">17:15</option>
-                        <option value="17:30">17:30</option>
-                        <option value="17:45">17:45</option>
-                        <option value="18:00">18:00</option>
-                        <option value="18:15">18:15</option>
-                        <option value="18:30">18:30</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>拍摄内容备注</label>
-                    <textarea id="bookingNote" placeholder="例如：拍摄大型家具，预计2小时" rows="3"></textarea>
+                <div class="booking-form-layout">
+                    <div class="booking-form-fields">
+                        <div class="form-group">
+                            <label>选择影棚</label>
+                            <select id="studioSelect"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>日期</label>
+                            <input type="date" id="bookingDate" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>开始时间</label>
+                                <select id="startTime" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label>结束时间</label>
+                                <select id="endTime" required></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>拍摄内容备注</label>
+                            <textarea id="bookingNote" placeholder="例如：拍摄大型家具，预计2小时" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="booking-availability-panel">
+                        <div class="availability-header">
+                            <div>
+                                <h3>可预约时间</h3>
+                                <p id="availabilitySubtitle">选择影棚和日期后查看</p>
+                            </div>
+                            <div class="availability-legend">
+                                <span><i class="legend-free"></i>可约</span>
+                                <span><i class="legend-handoff"></i>可接</span>
+                                <span><i class="legend-booked"></i>已约</span>
+                                <span><i class="legend-past"></i>已过</span>
+                            </div>
+                        </div>
+                        <div id="availabilityTimeline" class="availability-timeline"></div>
+                        <div id="availabilityBookings" class="availability-bookings"></div>
+                    </div>
                 </div>
                 <div class="form-actions">
                     <button type="button" onclick="closeAddBookingForm()" class="btn btn-secondary">取消</button>
@@ -480,6 +349,24 @@
             <div class="modal-body">
                 <div id="bookingDetailContent"></div>
                 <div class="form-actions" id="detailActions"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 取消预约确认弹窗 -->
+    <div id="cancelBookingModal" class="modal hidden">
+        <div class="modal-content cancel-booking-modal-content">
+            <div class="modal-header">
+                <h2>确认取消</h2>
+                <button onclick="closeCancelBookingConfirm()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="cancel-booking-hint">请确认要取消的预约时间段</p>
+                <div id="cancelBookingContent"></div>
+                <div class="form-actions">
+                    <button type="button" onclick="confirmCancelBooking()" class="btn btn-danger">确认取消</button>
+                    <button type="button" onclick="closeCancelBookingConfirm()" class="btn btn-secondary">返回</button>
+                </div>
             </div>
         </div>
     </div>
@@ -535,12 +422,19 @@
         </div>
     </div>
 
-    <script src="app.js?v=20260325-1"></script>
+    <script src="app.js?v=20260715-location-inline-15px"></script>
 
     <!-- PWA Service Worker 注册 -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
+                const isLocalPreview = ['localhost', '127.0.0.1', ''].includes(window.location.hostname);
+                if (isLocalPreview) {
+                    navigator.serviceWorker.getRegistrations()
+                        .then(registrations => registrations.forEach(registration => registration.unregister()));
+                    return;
+                }
+
                 navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
                         console.log('ServiceWorker registration successful with scope: ', registration.scope);

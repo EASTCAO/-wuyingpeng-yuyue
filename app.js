@@ -5,16 +5,217 @@ let selectedBookingId = null;
 let currentView = 'list'; // 'list' or 'stats'
 let currentDateRange = 'today'; // 'today', 'tomorrow', 'week'
 let selectedDate = null;
+let pendingCancelBookingId = null;
+let pendingCancelStudioId = null;
 let reminderInterval = null;
 let notifiedBookings = new Set(); // 记录已通知的预约ID
 let soundEnabled = true;
 let globalAudioContext = null; // 全局 AudioContext
 
+// ============ 影棚配置 ============
+// 所有影棚入口、下拉框、统计筛选和时间轴都从这里生成。
+const STUDIO_GROUPS = [
+    {
+        key: 'large',
+        title: '大棚区域',
+        subtitle: '主力拍摄区',
+        optionLabel: '大棚',
+        cardClass: 'studio-section-large',
+        buttonClass: 'btn-primary',
+        studios: [
+            { id: '大无影棚1（工位对面）', title: '无影棚1', location: '工位对面' },
+            { id: '大无影棚2（鄢军隔壁）', title: '无影棚2', location: '鄢军对面' }
+        ]
+    },
+    {
+        key: 'small',
+        title: '小棚区域',
+        subtitle: '常用小棚区',
+        optionLabel: '小棚',
+        cardClass: 'studio-section-small',
+        buttonClass: 'btn-success',
+        studios: [
+            { id: '小无影棚1', title: '无影棚1', location: '小棚区 1' },
+            { id: '小无影棚2', title: '无影棚2', location: '小棚区 2' },
+            { id: '小无影棚3', title: '无影棚3', location: '小棚区 3' },
+            { id: '小无影棚4', title: '无影棚4', location: '小棚区 4' }
+        ]
+    },
+    {
+        key: 'sixth-floor',
+        title: '6楼区域',
+        subtitle: '跨楼层备用棚',
+        optionLabel: '6楼',
+        cardClass: 'studio-section-sixth',
+        buttonClass: 'btn-primary',
+        studios: [
+            { id: '6楼无影棚', title: '6楼无影棚', location: '6楼' }
+        ]
+    }
+];
+
+function getAllStudios() {
+    return STUDIO_GROUPS.flatMap(group => group.studios.map(studio => ({
+        ...studio,
+        groupKey: group.key,
+        groupTitle: group.title,
+        groupOptionLabel: group.optionLabel,
+        groupSubtitle: group.subtitle,
+        cardClass: group.cardClass,
+        buttonClass: group.buttonClass
+    })));
+}
+
+function getDefaultStudioId() {
+    return getAllStudios()[0].id;
+}
+
+function getStudioById(studioId) {
+    return getAllStudios().find(studio => studio.id === studioId);
+}
+
+function getStudioListId(studioId) {
+    const index = getAllStudios().findIndex(studio => studio.id === studioId);
+    return index >= 0 ? `studio${index + 1}List` : '';
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function inlineJsString(value) {
+    return escapeHtml(JSON.stringify(String(value)));
+}
+
+function renderStudioSections() {
+    const container = document.getElementById('studioGroups');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="studio-map">
+            ${STUDIO_GROUPS.map(group => `
+                <section class="studio-map-zone studio-map-zone-${group.key}">
+                    <div class="studio-map-zone-header">
+                        <h3>${escapeHtml(group.title)}</h3>
+                    </div>
+                    <div class="studio-map-cards">
+                        ${group.studios.map(studio => `
+                            <div
+                                class="studio-section studio-overview-card ${group.cardClass}"
+                                data-studio-id="${escapeHtml(studio.id)}"
+                                data-studio-group="${group.key}"
+                                onclick="showAddBookingForm('${escapeHtml(studio.id)}')"
+                                role="button"
+                                tabindex="0"
+                                onkeydown="handleStudioCardKeydown(event, '${escapeHtml(studio.id)}')"
+                            >
+                                <div class="studio-section-header">
+                                    <div>
+                                        <h2>
+                                            ${escapeHtml(studio.title)}
+                                            ${group.key === 'large' && studio.location ? `<small class="studio-card-location">（${escapeHtml(studio.location)}）</small>` : ''}
+                                        </h2>
+                                    </div>
+                                </div>
+                                <div id="${getStudioListId(studio.id)}" class="studio-summary">
+                                    <p class="empty-message">暂无预约</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderStudioOptions(selectId, includeAll = false) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const allOption = includeAll ? '<option value="all">所有影棚</option>' : '';
+    select.innerHTML = allOption + STUDIO_GROUPS.map(group => `
+        <optgroup label="${group.optionLabel}">
+            ${group.studios.map(studio => `<option value="${escapeHtml(studio.id)}">${studio.id}</option>`).join('')}
+        </optgroup>
+    `).join('');
+}
+
+function initStudioUI() {
+    renderStudioSections();
+    renderStudioOptions('studioSelect');
+    renderStudioOptions('statsStudio', true);
+}
+
+function handleStudioCardKeydown(event, studioId) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        showAddBookingForm(studioId);
+    }
+}
+
+function normalizeStudioName(studioName) {
+    const studioNameMap = {
+        '无影棚1号': '大无影棚1（工位对面）',
+        '无影棚2号': '大无影棚2（鄢军隔壁）',
+        '无影棚3号': '小无影棚1',
+        '无影棚4号': '小无影棚2',
+        '5楼无影棚': '小无影棚2'
+    };
+
+    return studioNameMap[studioName] || studioName;
+}
+
 // ============ API 配置 ============
 // 部署后端后，将此 URL 改为你的后端地址
 // 例如：'https://your-backend.zeabur.app'
 // 设置为空字符串则使用本地 localStorage（单机模式，无法多用户同步）
-const API_BASE_URL = 'https://wuhanphotoyy.zeabur.app'; // 线上后端 API
+const ONLINE_API_BASE_URL = 'https://wuhanphotoyy.zeabur.app'; // 线上后端 API
+const LOCAL_PREVIEW_HOSTS = ['localhost', '127.0.0.1', ''];
+const IS_LOCAL_PREVIEW = typeof window !== 'undefined'
+    && window.location
+    && LOCAL_PREVIEW_HOSTS.includes(window.location.hostname);
+const API_BASE_URL = IS_LOCAL_PREVIEW ? '' : ONLINE_API_BASE_URL;
+
+const BOOKING_START_TIME = '08:30';
+const BOOKING_END_TIME = '18:30';
+const BOOKING_INTERVAL_MINUTES = 15;
+
+function timeToMinutes(time) {
+    const [hour, minute] = time.split(':').map(Number);
+    return hour * 60 + minute;
+}
+
+function minutesToTime(minutes) {
+    const hour = Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+function getTimeOptions(startTime = BOOKING_START_TIME, endTime = BOOKING_END_TIME, step = BOOKING_INTERVAL_MINUTES) {
+    const options = [];
+    for (let minutes = timeToMinutes(startTime); minutes <= timeToMinutes(endTime); minutes += step) {
+        options.push(minutesToTime(minutes));
+    }
+    return options;
+}
+
+function renderTimeSelectOptions() {
+    const startTimeSelect = document.getElementById('startTime');
+    const endTimeSelect = document.getElementById('endTime');
+    if (!startTimeSelect || !endTimeSelect) return;
+
+    const times = getTimeOptions();
+    startTimeSelect.innerHTML = '<option value="">请选择开始时间</option>'
+        + times.map(time => `<option value="${time}">${time}</option>`).join('');
+    endTimeSelect.innerHTML = '<option value="">请选择结束时间</option>'
+        + times.slice(1).map(time => `<option value="${time}">${time}</option>`).join('');
+}
 
 // 检查是否使用云端同步
 function isCloudMode() {
@@ -446,6 +647,7 @@ function showMainPage() {
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('mainPage').classList.remove('hidden');
     document.getElementById('currentUser').textContent = currentUser;
+    initStudioUI();
 
     // admin 用户显示用户管理入口
     document.querySelectorAll('.admin-only').forEach(el => {
@@ -502,36 +704,22 @@ function showTab(tabName) {
 }
 
 // 加载预约数据（支持云端和本地）
-// 迁移旧影棚名称：「无影棚4号」→「5楼无影棚」
-// 旧预约数据里存的是「无影棚4号」，重命名后需要同步更新，否则旧预约不再显示
+// 迁移旧影棚名称到本次重新设计后的影棚配置，避免旧预约不显示。
 function migrateStudioNames() {
     let changed = false;
     allBookings.forEach(booking => {
-        if (booking.studio === '无影棚4号') {
-            booking.studio = '5楼无影棚';
+        const normalizedStudio = normalizeStudioName(booking.studio);
+        if (booking.studio !== normalizedStudio) {
+            booking.studio = normalizedStudio;
             changed = true;
         }
     });
     if (changed) {
         try {
             localStorage.setItem('bookings', JSON.stringify(allBookings));
-            console.log('✅ 已将旧「无影棚4号」预约迁移为「5楼无影棚」');
+            console.log('✅ 已将旧影棚名称迁移到新版影棚配置');
         } catch (error) {
             console.error('迁移影棚名称保存失败:', error);
-        }
-    }
-}
-
-// 3号无影棚已冻结：删除所有 3 号预约（含今天已存在的），并在每个客户端本地生效
-function purgeFrozenStudioBookings() {
-    const before = allBookings.length;
-    allBookings = allBookings.filter(booking => booking.studio !== '无影棚3号');
-    if (allBookings.length !== before) {
-        try {
-            localStorage.setItem('bookings', JSON.stringify(allBookings));
-            console.log('✅ 已清理', before - allBookings.length, '条已冻结的「无影棚3号」预约');
-        } catch (error) {
-            console.error('清理冻结影棚预约保存失败:', error);
         }
     }
 }
@@ -551,6 +739,7 @@ async function loadBookings() {
             // 标准化字段名：后端使用 notes，前端使用 note
             allBookings = allBookings.map(booking => ({
                 ...booking,
+                studio: normalizeStudioName(booking.studio),
                 note: booking.notes || booking.note || ''
             }));
 
@@ -567,10 +756,7 @@ async function loadBookings() {
         try {
             const stored = localStorage.getItem('bookings');
             allBookings = stored ? JSON.parse(stored) : [];
-            // 迁移：旧影棚名「无影棚4号」改为「5楼无影棚」
             migrateStudioNames();
-            // 3号无影棚已冻结：清理掉所有 3 号预约（含今天已预约的）
-            purgeFrozenStudioBookings();
             sortBookings();
             renderAllViews();
             console.log('✅ 从本地加载了', allBookings.length, '条预约');
@@ -615,60 +801,387 @@ function renderAllViews() {
 // 渲染预约列表（列表视图）
 // 根据日期筛选器显示预约
 function renderBookings() {
-    const studio1List = document.getElementById('studio1List');
-    const studio2List = document.getElementById('studio2List');
-    const studio3List = document.getElementById('studio3List');
-    const studio4List = document.getElementById('studio4List');
-
     // 获取要显示的日期范围
     const displayDates = getDisplayDates();
 
-    // 使用 getFilteredBookings 应用"只看我的"和搜索过滤
-    const filtered = getFilteredBookings();
+    getAllStudios().forEach(studio => {
+        const studioSummary = document.getElementById(getStudioListId(studio.id));
+        if (!studioSummary) return;
 
-    // 按影棚分组，并根据日期筛选
-    const studio1Bookings = filtered.filter(b =>
-        b.studio === '无影棚1号' && displayDates.includes(getDateOnly(b.date))
-    );
-    const studio2Bookings = filtered.filter(b =>
-        b.studio === '无影棚2号' && displayDates.includes(getDateOnly(b.date))
-    );
-    const studio3Bookings = filtered.filter(b =>
-        b.studio === '无影棚3号' && displayDates.includes(getDateOnly(b.date))
-    );
-    const studio4Bookings = filtered.filter(b =>
-        b.studio === '5楼无影棚' && displayDates.includes(getDateOnly(b.date))
+        const studioBookings = getStudioBookingsForDates(studio.id, displayDates);
+        const studioCard = studioSummary.closest('.studio-overview-card');
+        const fullyBooked = isStudioFullyBooked(studio.id, displayDates);
+        if (studioCard) {
+            studioCard.classList.toggle('studio-fully-booked', fullyBooked);
+            studioCard.title = fullyBooked ? '当前日期已约满' : '';
+        }
+
+        studioSummary.innerHTML = createStudioSummary(studio, studioBookings);
+    });
+}
+
+function getStudioBookingsForDates(studioId, dates, bookingsToUse = allBookings) {
+    return bookingsToUse
+        .filter(booking => booking.studio === studioId && dates.includes(getDateOnly(booking.date)))
+        .sort(compareBookingsByTime);
+}
+
+function compareBookingsByTime(a, b) {
+    const aDate = getDateOnly(a.date);
+    const bDate = getDateOnly(b.date);
+    if (aDate !== bDate) return aDate.localeCompare(bDate);
+    return a.startTime.localeCompare(b.startTime);
+}
+
+function getTodayBookingCount(studioId) {
+    const today = formatDateToString(new Date());
+    return allBookings.filter(booking =>
+        booking.studio === studioId && getDateOnly(booking.date) === today
+    ).length;
+}
+
+function getStudioLiveState(studioBookings) {
+    const now = new Date();
+    const today = formatDateToString(now);
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    const activeBooking = studioBookings.find(booking =>
+        getDateOnly(booking.date) === today &&
+        booking.startTime <= currentTime &&
+        currentTime < booking.endTime
     );
 
-    // 渲染无影棚1号
-    if (studio1Bookings.length === 0) {
-        studio1List.innerHTML = '<p class="empty-message">暂无预约</p>';
-    } else {
-        studio1List.innerHTML = studio1Bookings.map(booking => createBookingCard(booking)).join('');
+    if (activeBooking) {
+        return {
+            type: 'busy',
+            label: '正在使用',
+            booking: activeBooking
+        };
     }
 
-    // 渲染无影棚2号
-    if (studio2Bookings.length === 0) {
-        studio2List.innerHTML = '<p class="empty-message">暂无预约</p>';
-    } else {
-        studio2List.innerHTML = studio2Bookings.map(booking => createBookingCard(booking)).join('');
+    const nextBooking = studioBookings.find(booking => {
+        const bookingDate = getDateOnly(booking.date);
+        if (bookingDate < today) return false;
+        if (bookingDate === today && booking.endTime <= currentTime) return false;
+        return true;
+    });
+
+    if (nextBooking) {
+        return {
+            type: 'upcoming',
+            label: '下一场',
+            booking: nextBooking
+        };
     }
 
-    // 无影棚3号已冻结：保留 HTML 里的冻结提示，不渲染预约
-    // （studio3List 在 index.html 中固定显示「该影棚暂停使用，无法预约」）
+    return {
+        type: 'free',
+        label: '空闲',
+        booking: null
+    };
+}
 
-    // 渲染5楼无影棚
-    if (studio4Bookings.length === 0) {
-        studio4List.innerHTML = '<p class="empty-message">暂无预约</p>';
-    } else {
-        studio4List.innerHTML = studio4Bookings.map(booking => createBookingCard(booking)).join('');
+function formatShortDate(dateStr) {
+    const dateOnly = getDateOnly(dateStr);
+    const today = formatDateToString(new Date());
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = formatDateToString(tomorrow);
+
+    if (dateOnly === today) return '今天';
+    if (dateOnly === tomorrowStr) return '明天';
+    return dateOnly.slice(5);
+}
+
+function getBookableStartDate() {
+    return formatDateToString(new Date());
+}
+
+function getBookableEndDate() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return formatDateToString(tomorrow);
+}
+
+function isBookableDate(date) {
+    return date >= getBookableStartDate() && date <= getBookableEndDate();
+}
+
+function getDefaultBookingDate() {
+    const displayDate = getDisplayDates()[0];
+    return isBookableDate(displayDate) ? displayDate : getBookableStartDate();
+}
+
+function hasAvailableBookingSlot(studioId, date) {
+    if (!isBookableDate(date)) return false;
+
+    const today = getBookableStartDate();
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const existingBookings = getStudioBookingsForDates(studioId, [date]);
+    const startTimes = getTimeOptions(BOOKING_START_TIME, BOOKING_END_TIME)
+        .filter(time => time < BOOKING_END_TIME);
+
+    return startTimes.some(startTime => {
+        if (date === today && startTime < currentTime) return false;
+
+        const endTime = minutesToTime(timeToMinutes(startTime) + BOOKING_INTERVAL_MINUTES);
+        return !existingBookings.some(booking =>
+            !(endTime <= booking.startTime || startTime >= booking.endTime)
+        );
+    });
+}
+
+function isStudioFullyBooked(studioId, dates) {
+    const bookableDates = dates.filter(isBookableDate);
+    if (bookableDates.length === 0) return false;
+
+    return bookableDates.every(date => !hasAvailableBookingSlot(studioId, date));
+}
+
+function getBookingNote(booking) {
+    return booking.note || booking.notes || '';
+}
+
+function createStudioSummary(studio, studioBookings) {
+    const bookingRows = studioBookings.length === 0
+        ? ''
+        : studioBookings.map(booking => {
+            const status = getBookingStatus(booking);
+            const isCancellable = canCancelBooking(booking);
+            const bookingId = inlineJsString(booking.id);
+            return `
+            <div
+                class="studio-summary-booking ${status}${isCancellable ? ' cancellable' : ''}"
+                onclick="${isCancellable ? `openSummaryCancel(event, ${bookingId})` : 'event.stopPropagation()'}"
+                ${isCancellable ? `role="button" tabindex="0" onkeydown="handleSummaryBookingKeydown(event, ${bookingId})"` : ''}
+            >
+                <strong>${booking.startTime}-${booking.endTime}</strong>
+                <span class="summary-booking-user">${escapeHtml(booking.photographer)}</span>
+                ${status === 'completed' ? '<span class="summary-expired-label">已过期</span>' : ''}
+            </div>
+        `;
+        }).join('');
+
+    return `
+        <div class="studio-summary-bookings">
+            ${bookingRows}
+        </div>
+    `;
+}
+
+function openSummaryCancel(event, bookingId) {
+    event.stopPropagation();
+    showCancelBookingConfirm(bookingId);
+}
+
+function handleSummaryBookingKeydown(event, bookingId) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        event.stopPropagation();
+        showCancelBookingConfirm(bookingId);
     }
+}
+
+function getAvailabilitySlotState(time, selectedDate, existingBookings) {
+    const today = formatDateToString(new Date());
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    if (selectedDate === today && time < currentTime) {
+        return { type: 'past', label: '已过' };
+    }
+
+    const booking = existingBookings.find(item => time >= item.startTime && time < item.endTime);
+    if (booking) {
+        return {
+            type: 'booked',
+            label: `${booking.startTime}-${booking.endTime} ${booking.photographer}`,
+            booking
+        };
+    }
+
+    const previousBooking = existingBookings.find(item => time === item.endTime);
+    if (previousBooking) {
+        return {
+            type: 'handoff',
+            label: `${previousBooking.startTime}-${previousBooking.endTime} 刚结束，可接下一场`,
+            booking: previousBooking
+        };
+    }
+
+    return { type: 'free', label: '可约' };
+}
+
+function findNextBlockedTime(startTime, existingBookings) {
+    let blockedFrom = BOOKING_END_TIME;
+
+    existingBookings.forEach(booking => {
+        if (booking.startTime > startTime && booking.startTime < blockedFrom) {
+            blockedFrom = booking.startTime;
+        }
+        if (startTime >= booking.startTime && startTime < booking.endTime) {
+            blockedFrom = booking.startTime;
+        }
+    });
+
+    return blockedFrom;
+}
+
+function updateEndTimeOptions(startTime, endTimeSelect, existingBookings) {
+    const blockedFrom = findNextBlockedTime(startTime, existingBookings);
+    const endOptions = endTimeSelect.querySelectorAll('option');
+
+    endOptions.forEach(option => {
+        if (option.value === '') {
+            option.disabled = false;
+            return;
+        }
+
+        const tooEarly = option.value <= startTime;
+        const tooLate = option.value > blockedFrom;
+        option.disabled = tooEarly || tooLate;
+    });
+
+    const selectedEndOption = Array.from(endOptions).find(option => option.value === endTimeSelect.value);
+    if (endTimeSelect.value && (!selectedEndOption || selectedEndOption.disabled)) {
+        endTimeSelect.value = '';
+    }
+}
+
+function renderAvailabilityPanel() {
+    const studioSelect = document.getElementById('studioSelect');
+    const dateInput = document.getElementById('bookingDate');
+    const timeline = document.getElementById('availabilityTimeline');
+    const bookingsList = document.getElementById('availabilityBookings');
+    const subtitle = document.getElementById('availabilitySubtitle');
+    const startTimeSelect = document.getElementById('startTime');
+
+    if (!studioSelect || !dateInput || !timeline || !bookingsList || !subtitle) return;
+
+    const studio = studioSelect.value;
+    const selectedDate = dateInput.value;
+    const studioInfo = getStudioById(studio);
+    const existingBookings = allBookings
+        .filter(booking => booking.studio === studio && getDateOnly(booking.date) === selectedDate)
+        .sort(compareBookingsByTime);
+
+    subtitle.textContent = studioInfo
+        ? `${studioInfo.title} · ${formatDate(selectedDate)}`
+        : '选择影棚和日期后查看';
+
+    const selectedStartTime = startTimeSelect ? startTimeSelect.value : '';
+    const selectedEndTime = document.getElementById('endTime')?.value || '';
+    const times = getTimeOptions(BOOKING_START_TIME, BOOKING_END_TIME);
+
+    const renderAvailabilitySlot = time => {
+        let state = getAvailabilitySlotState(time, selectedDate, existingBookings);
+        const isClosingTime = time === BOOKING_END_TIME;
+        if (isClosingTime && (state.type === 'free' || state.type === 'handoff')) {
+            state = { type: 'closing', label: `${BOOKING_END_TIME} 结束时间` };
+        }
+        const isStart = selectedStartTime === time;
+        const isRange = selectedStartTime && selectedEndTime && time > selectedStartTime && time < selectedEndTime;
+        const isEnd = selectedEndTime === time;
+        const selectedClass = [
+            isStart ? ' selected-start' : '',
+            isRange ? ' selected-range' : '',
+            isEnd ? ' selected-end' : ''
+        ].join('');
+        const canSelect = state.type === 'free' || state.type === 'handoff' || state.type === 'closing';
+        return `
+            <button
+                type="button"
+                class="availability-slot availability-${state.type}${selectedClass}"
+                ${canSelect ? `onclick="selectAvailabilityTime('${time}')"` : 'disabled'}
+                title="${escapeHtml(state.label)}"
+            >
+                <span>${time}</span>
+                ${state.type === 'handoff' ? '<small>可接</small>' : ''}
+            </button>
+        `;
+    };
+
+    const morningTimes = times.filter(time => time >= '08:30' && time <= '12:30');
+    const afternoonTimes = times.filter(time => time >= '14:00' && time <= '18:30');
+    timeline.innerHTML = `
+        <section class="availability-period">
+            <div class="availability-period-title">上午</div>
+            <div class="availability-period-grid">
+                ${morningTimes.map(renderAvailabilitySlot).join('')}
+            </div>
+        </section>
+        <section class="availability-period">
+            <div class="availability-period-title">下午</div>
+            <div class="availability-period-grid">
+                ${afternoonTimes.map(renderAvailabilitySlot).join('')}
+            </div>
+        </section>
+    `;
+
+    if (existingBookings.length === 0) {
+        bookingsList.innerHTML = '<p class="availability-empty">当天还没有预约，整段时间都比较空。</p>';
+        return;
+    }
+
+    bookingsList.innerHTML = existingBookings.map(booking => `
+        <div class="availability-booking-item">
+            <strong>${booking.startTime}-${booking.endTime}</strong>
+            <span>${escapeHtml(booking.photographer)}</span>
+            ${getBookingNote(booking) ? `<em>${escapeHtml(getBookingNote(booking))}</em>` : ''}
+        </div>
+    `).join('');
+}
+
+function selectAvailabilityTime(time) {
+    const startTimeSelect = document.getElementById('startTime');
+    const endTimeSelect = document.getElementById('endTime');
+    const studio = document.getElementById('studioSelect').value;
+    const date = document.getElementById('bookingDate').value;
+    const existingBookings = allBookings
+        .filter(booking => booking.studio === studio && getDateOnly(booking.date) === date)
+        .sort(compareBookingsByTime);
+
+    if (time === BOOKING_END_TIME && !startTimeSelect.value) {
+        startTimeSelect.value = minutesToTime(timeToMinutes(BOOKING_END_TIME) - BOOKING_INTERVAL_MINUTES);
+        endTimeSelect.value = BOOKING_END_TIME;
+        startTimeSelect.dispatchEvent(new Event('change'));
+        renderAvailabilityPanel();
+        return;
+    }
+
+    if (!startTimeSelect.value || time <= startTimeSelect.value) {
+        startTimeSelect.value = time;
+        endTimeSelect.value = '';
+        startTimeSelect.dispatchEvent(new Event('change'));
+    } else {
+        updateEndTimeOptions(startTimeSelect.value, endTimeSelect, existingBookings);
+        const endOption = Array.from(endTimeSelect.options).find(option =>
+            option.value === time && !option.disabled
+        );
+
+        if (endOption) {
+            endTimeSelect.value = time;
+        } else {
+            startTimeSelect.value = time;
+            endTimeSelect.value = '';
+            startTimeSelect.dispatchEvent(new Event('change'));
+        }
+    }
+
+    updateEndTimeOptions(startTimeSelect.value, endTimeSelect, existingBookings);
+
+    renderAvailabilityPanel();
 }
 
 // 创建预约卡片
 function createBookingCard(booking) {
     const isMyBooking = booking.photographer === currentUser;
     const myBookingClass = isMyBooking ? 'my-booking' : '';
+    const studioInfo = getStudioById(booking.studio);
+    const studioGroup = studioInfo ? studioInfo.groupKey : 'unknown';
+    const bookingId = inlineJsString(booking.id);
+    const note = getBookingNote(booking);
 
     // 判断预约状态
     const status = getBookingStatus(booking);
@@ -676,15 +1189,14 @@ function createBookingCard(booking) {
     const expiredLabel = status === 'completed' ? '<div class="expired-label">已过期</div>' : '';
 
     return `
-        <div class="booking-card ${myBookingClass} ${statusClass}" data-studio="${booking.studio}" onclick="showBookingDetail('${booking.id}')">
+        <div class="booking-card ${myBookingClass} ${statusClass}" data-studio="${escapeHtml(booking.studio)}" data-studio-group="${escapeHtml(studioGroup)}" onclick="showBookingDetail(${bookingId})">
             ${expiredLabel}
             <div class="booking-info">
                 <div class="booking-time">${booking.startTime} - ${booking.endTime}</div>
                 <div class="booking-date">${formatDate(booking.date)}</div>
-                <div class="booking-photographer">📷 ${booking.photographer}</div>
+                <div class="booking-photographer">📷 ${escapeHtml(booking.photographer)}</div>
             </div>
-            ${booking.note ? `<div class="booking-note">${booking.note}</div>` : ''}
-        </div>
+            ${note ? `<div class="booking-note">${escapeHtml(note)}</div>` : ''}
         </div>
     `;
 }
@@ -724,15 +1236,18 @@ function showAddBookingForm(defaultStudio) {
     // 重置表单
     const studioSelect = document.getElementById('studioSelect');
     if (defaultStudio) {
-        studioSelect.value = defaultStudio;
+        studioSelect.value = normalizeStudioName(defaultStudio);
     } else {
-        studioSelect.value = '无影棚1号';
+        studioSelect.value = getDefaultStudioId();
     }
 
-    // 根据当前日期筛选器设置默认日期
-    const displayDates = getDisplayDates();
-    const defaultDate = displayDates[0]; // 使用筛选器的第一个日期
+    // 最多提前一天预约：今天和明天可选，后天及以后不可选。
+    const minDate = getBookableStartDate();
+    const maxDate = getBookableEndDate();
+    const defaultDate = getDefaultBookingDate();
     const dateInput = document.getElementById('bookingDate');
+    dateInput.min = minDate;
+    dateInput.max = maxDate;
     dateInput.value = defaultDate;
     document.getElementById('startTime').value = '';
     document.getElementById('endTime').value = '';
@@ -740,9 +1255,17 @@ function showAddBookingForm(defaultStudio) {
 
     const startTimeSelect = document.getElementById('startTime');
     const endTimeSelect = document.getElementById('endTime');
+    renderTimeSelectOptions();
+
+    startTimeSelect.value = '';
+    endTimeSelect.value = '';
 
     // 根据选择的日期和当前时间，禁用已过去的开始时间
     function updateStartTimeOptions() {
+        if (!isBookableDate(dateInput.value)) {
+            dateInput.value = defaultDate;
+        }
+
         const selectedDate = dateInput.value;
         const today = new Date().toISOString().split('T')[0];
         const now = new Date();
@@ -781,6 +1304,8 @@ function showAddBookingForm(defaultStudio) {
             startTimeSelect.value = '';
             endTimeSelect.value = '';
         }
+
+        renderAvailabilityPanel();
     }
 
     // 日期或影棚变化时更新开始时间选项
@@ -803,55 +1328,12 @@ function showAddBookingForm(defaultStudio) {
             b.studio === studio && getDateOnly(b.date) === date
         );
 
-        // 找到选择开始时间后第一个被占用的时间点
-        let blockedFrom = null;
-        for (const b of existingBookings) {
-            if (b.startTime > startTime) {
-                if (blockedFrom === null || b.startTime < blockedFrom) {
-                    blockedFrom = b.startTime;
-                }
-            }
-            // 如果开始时间落在某个预约内，也要限制
-            if (startTime >= b.startTime && startTime < b.endTime) {
-                blockedFrom = b.startTime;
-            }
-        }
+        updateEndTimeOptions(startTime, endTimeSelect, existingBookings);
 
-        // 获取所有结束时间选项
-        const endOptions = endTimeSelect.querySelectorAll('option');
-
-        endOptions.forEach(option => {
-            if (option.value === '') {
-                option.disabled = false;
-                return;
-            }
-            // 禁用早于或等于开始时间的选项
-            // 禁用超过下一个已占用预约开始时间的选项
-            const tooEarly = option.value <= startTime;
-            const tooLate = blockedFrom !== null && option.value > blockedFrom;
-            option.disabled = tooEarly || tooLate;
-        });
-
-        // 如果当前选择的结束时间无效，自动选择下一个有效时间
-        if (endTimeSelect.value && endTimeSelect.value <= startTime) {
-            const [startHour, startMinute] = startTime.split(':').map(Number);
-            let suggestedMinute = startMinute + 15;
-            let suggestedHour = startHour;
-
-            if (suggestedMinute >= 60) {
-                suggestedMinute -= 60;
-                suggestedHour += 1;
-            }
-
-            const suggestedEndTime = `${String(suggestedHour).padStart(2, '0')}:${String(suggestedMinute).padStart(2, '0')}`;
-            const hasOption = Array.from(endOptions).some(opt => opt.value === suggestedEndTime && !opt.disabled);
-            if (hasOption) {
-                endTimeSelect.value = suggestedEndTime;
-            } else {
-                endTimeSelect.value = '';
-            }
-        }
+        renderAvailabilityPanel();
     };
+
+    endTimeSelect.onchange = renderAvailabilityPanel;
 }
 
 // 关闭新建预约表单
@@ -881,9 +1363,13 @@ async function addBooking() {
         return;
     }
 
-    // 3号无影棚已冻结，禁止预约
-    if (studio === '无影棚3号') {
-        showToast('3号无影棚已冻结，暂停预约', 'error');
+    if (!isBookableDate(date)) {
+        showToast('只能预约今天或明天的无影棚', 'error');
+        return;
+    }
+
+    if (!getStudioById(studio)) {
+        showToast('请选择有效的影棚', 'error');
         return;
     }
 
@@ -917,6 +1403,7 @@ async function addBooking() {
         endTime: endTime,
         photographer: currentUser,
         contact: currentUser, // 使用用户名作为联系方式
+        note: note,
         notes: note, // 后端字段名是 notes
         createdAt: new Date().toISOString() // 使用 ISO 格式
     };
@@ -957,6 +1444,148 @@ async function addBooking() {
     }
 }
 
+function showStudioDetail(studioId) {
+    const normalizedStudioId = normalizeStudioName(studioId);
+    const studio = getStudioById(normalizedStudioId);
+    if (!studio) return;
+
+    selectedBookingId = null;
+    const displayDates = getDisplayDates();
+    const studioBookings = getStudioBookingsForDates(studio.id, displayDates);
+    const state = getStudioLiveState(studioBookings);
+    const todayCount = getTodayBookingCount(studio.id);
+
+    const bookingListHtml = studioBookings.length === 0
+        ? '<p class="studio-detail-empty">当前日期范围暂无预约</p>'
+        : studioBookings.map(booking => createStudioDetailBookingItem(booking)).join('');
+
+    document.getElementById('bookingDetailContent').innerHTML = `
+        <div class="studio-detail-overview" data-studio-group="${studio.groupKey}">
+            <div class="studio-detail-heading">
+                <span class="studio-type-badge">${escapeHtml(studio.groupOptionLabel)}</span>
+                <h3>${escapeHtml(studio.title)}</h3>
+                <p>位置：${escapeHtml(studio.location || studio.groupTitle)}</p>
+            </div>
+            <div class="studio-detail-status studio-summary-${state.type}">
+                <span class="studio-status-dot"></span>
+                <span>${state.label}</span>
+            </div>
+            <div class="studio-detail-stats">
+                <span>今日 ${todayCount} 场</span>
+                <span>当前范围 ${studioBookings.length} 场</span>
+            </div>
+        </div>
+        <div class="studio-detail-list">
+            ${bookingListHtml}
+        </div>
+    `;
+
+    document.getElementById('detailActions').innerHTML = `
+        <button onclick="openAddBookingFromStudioDetail('${escapeHtml(studio.id)}')" class="btn ${studio.buttonClass}">预约</button>
+        <button onclick="closeDetailModal()" class="btn btn-secondary">关闭</button>
+    `;
+
+    document.getElementById('bookingDetailModal').classList.remove('hidden');
+}
+
+function createStudioDetailBookingItem(booking) {
+    const status = getBookingStatus(booking);
+    const statusText = status === 'ongoing' ? '进行中' : status === 'completed' ? '已结束' : '未开始';
+    const note = getBookingNote(booking);
+    const bookingId = inlineJsString(booking.id);
+    const studioId = inlineJsString(booking.studio);
+    const cancelButtonHtml = canCancelBooking(booking)
+        ? `<button type="button" class="studio-detail-booking-cancel" onclick="cancelBookingFromStudioDetail(event, ${bookingId}, ${studioId})">取消</button>`
+        : '';
+
+    return `
+        <div
+            class="studio-detail-booking ${status}"
+            onclick="showBookingDetail(${bookingId})"
+            role="button"
+            tabindex="0"
+            onkeydown="handleStudioDetailBookingKeydown(event, ${bookingId})"
+        >
+            <span class="studio-detail-booking-time">${formatShortDate(booking.date)} ${booking.startTime}-${booking.endTime}</span>
+            <span class="studio-detail-booking-user">${escapeHtml(booking.photographer)}</span>
+            <span class="studio-detail-booking-status">${statusText}</span>
+            ${cancelButtonHtml}
+            ${note ? `<span class="studio-detail-booking-note">${escapeHtml(note)}</span>` : ''}
+        </div>
+    `;
+}
+
+function handleStudioDetailBookingKeydown(event, bookingId) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        showBookingDetail(bookingId);
+    }
+}
+
+function canCancelBooking(booking) {
+    return Boolean(booking && currentUser && (booking.photographer === currentUser || currentUser === 'admin'));
+}
+
+async function cancelBookingFromStudioDetail(event, bookingId, studioId) {
+    event.stopPropagation();
+    showCancelBookingConfirm(bookingId, studioId);
+}
+
+function showCancelBookingConfirm(bookingId, studioId = '') {
+    const booking = allBookings.find(item => item.id === bookingId);
+    if (!booking) return;
+    if (!canCancelBooking(booking)) {
+        showToast('只能取消自己的预约', 'error');
+        return;
+    }
+
+    pendingCancelBookingId = bookingId;
+    pendingCancelStudioId = studioId;
+
+    const note = getBookingNote(booking);
+    const content = document.getElementById('cancelBookingContent');
+    if (!content) return;
+
+    content.innerHTML = `
+        <div class="cancel-booking-summary">
+            <div class="cancel-booking-studio">${escapeHtml(booking.studio)}</div>
+            <div class="cancel-booking-time">${formatDate(booking.date)} ${booking.startTime} - ${booking.endTime}</div>
+            <div class="cancel-booking-user">摄影师：${escapeHtml(booking.photographer)}</div>
+            ${note ? `<div class="cancel-booking-note">备注：${escapeHtml(note)}</div>` : ''}
+        </div>
+    `;
+
+    document.getElementById('cancelBookingModal').classList.remove('hidden');
+}
+
+function closeCancelBookingConfirm() {
+    document.getElementById('cancelBookingModal').classList.add('hidden');
+    pendingCancelBookingId = null;
+    pendingCancelStudioId = null;
+}
+
+async function confirmCancelBooking() {
+    const bookingId = pendingCancelBookingId;
+    const studioId = pendingCancelStudioId;
+    if (!bookingId) return;
+    const shouldRefreshStudioDetail = Boolean(studioId);
+
+    await deleteBookingById(bookingId, {
+        closeAfterDelete: !shouldRefreshStudioDetail,
+        onDeleted: () => {
+            closeCancelBookingConfirm();
+            if (shouldRefreshStudioDetail) {
+                showStudioDetail(studioId);
+            }
+        }
+    });
+}
+
+function openAddBookingFromStudioDetail(studioId) {
+    closeDetailModal();
+    showAddBookingForm(studioId);
+}
+
 // 显示预约详情
 function showBookingDetail(bookingId) {
     selectedBookingId = bookingId;
@@ -964,12 +1593,12 @@ function showBookingDetail(bookingId) {
 
     if (!booking) return;
 
-    const isMyBooking = booking.photographer === currentUser;
+    const isMyBooking = canCancelBooking(booking);
 
     const detailHtml = `
         <div class="detail-item">
             <div class="detail-label">影棚</div>
-            <div class="detail-value">${booking.studio}</div>
+            <div class="detail-value">${escapeHtml(booking.studio)}</div>
         </div>
         <div class="detail-item">
             <div class="detail-label">日期</div>
@@ -981,12 +1610,12 @@ function showBookingDetail(bookingId) {
         </div>
         <div class="detail-item">
             <div class="detail-label">摄影师</div>
-            <div class="detail-value">${booking.photographer}</div>
+            <div class="detail-value">${escapeHtml(booking.photographer)}</div>
         </div>
-        ${booking.note ? `
+        ${getBookingNote(booking) ? `
         <div class="detail-item">
             <div class="detail-label">备注</div>
-            <div class="detail-value">${booking.note}</div>
+            <div class="detail-value">${escapeHtml(getBookingNote(booking))}</div>
         </div>
         ` : ''}
     `;
@@ -1014,14 +1643,27 @@ function closeDetailModal() {
 
 // 删除预约
 async function deleteBooking() {
-    if (!confirm('确定要取消这个预约吗？')) {
-        return;
+    showCancelBookingConfirm(selectedBookingId);
+}
+
+async function deleteBookingById(bookingId, options = {}) {
+    if (!bookingId) return false;
+
+    const { closeAfterDelete = true, onDeleted = null } = options;
+    const booking = allBookings.find(item => item.id === bookingId);
+    if (!booking) {
+        showToast('预约不存在或已取消', 'error');
+        return false;
+    }
+    if (!canCancelBooking(booking)) {
+        showToast('只能取消自己的预约', 'error');
+        return false;
     }
 
     try {
         if (isCloudMode()) {
             // 云端模式：调用 API
-            const response = await fetch(`${API_BASE_URL}/api/bookings/${selectedBookingId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}`, {
                 method: 'DELETE'
             });
 
@@ -1034,16 +1676,23 @@ async function deleteBooking() {
             await loadBookings();
         } else {
             // 本地模式：从数组中删除
-            allBookings = allBookings.filter(b => b.id !== selectedBookingId);
+            allBookings = allBookings.filter(b => b.id !== bookingId);
             saveBookings();
             renderAllViews();
         }
 
         showToast('预约已取消', 'success');
-        closeDetailModal();
+        if (typeof onDeleted === 'function') {
+            onDeleted();
+        }
+        if (closeAfterDelete) {
+            closeDetailModal();
+        }
+        return true;
     } catch (error) {
         console.error('取消预约失败:', error);
         showToast('取消预约失败，请重试', 'error');
+        return false;
     }
 }
 
@@ -1055,18 +1704,21 @@ function renderMyBookings() {
     if (myBookings.length === 0) {
         myBookingsList.innerHTML = '<p class="empty-message">您还没有预约</p>';
     } else {
-        myBookingsList.innerHTML = myBookings.map(booking => `
-            <div class="booking-card my-booking" onclick="showBookingDetail('${booking.id}')">
+        myBookingsList.innerHTML = myBookings.map(booking => {
+            const bookingId = inlineJsString(booking.id);
+            return `
+            <div class="booking-card my-booking" onclick="showBookingDetail(${bookingId})">
                 <div class="booking-info">
                     <div>
                         <div class="booking-time">${booking.startTime} - ${booking.endTime}</div>
                         <div class="booking-date">${formatDate(booking.date)}</div>
                     </div>
-                    <div class="booking-photographer">${booking.studio}</div>
+                    <div class="booking-photographer">${escapeHtml(booking.studio)}</div>
                 </div>
-                ${booking.note ? `<div class="booking-note">${booking.note}</div>` : ''}
+                ${getBookingNote(booking) ? `<div class="booking-note">${escapeHtml(getBookingNote(booking))}</div>` : ''}
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 }
 
@@ -1090,6 +1742,8 @@ window.addEventListener('click', (e) => {
             closeAddBookingForm();
         } else if (e.target.id === 'bookingDetailModal') {
             closeDetailModal();
+        } else if (e.target.id === 'cancelBookingModal') {
+            closeCancelBookingConfirm();
         } else if (e.target.id === 'reminderModal') {
             closeReminderModal();
         } else if (e.target.id === 'changePasswordModal') {
@@ -1223,7 +1877,8 @@ function renderTimelineView() {
     const filteredBookings = getFilteredBookings();
 
     // 为每个影棚渲染时间轴
-    ['无影棚1号', '无影棚2号', '无影棚3号', '5楼无影棚'].forEach((studio, index) => {
+    getAllStudios().forEach((studioInfo, index) => {
+        const studio = studioInfo.id;
         const timelineBody = document.getElementById(`timeline${index + 1}Body`);
         if (!timelineBody) return;
 
@@ -1301,8 +1956,11 @@ function createTimelineBookingBlock(booking) {
     const isMyBooking = booking.photographer === currentUser;
     const status = getBookingStatus(booking);
     const statusClass = status === 'completed' ? 'booking-completed' : '';
+    const studioInfo = getStudioById(booking.studio);
 
     block.className = `timeline-booking-block ${isMyBooking ? 'my-booking' : ''} ${statusClass}`;
+    block.setAttribute('data-studio', booking.studio);
+    block.setAttribute('data-studio-group', studioInfo ? studioInfo.groupKey : 'unknown');
     block.onclick = () => showBookingDetail(booking.id);
 
     const timeDiv = document.createElement('div');
@@ -1400,6 +2058,7 @@ function getDateOnly(dateStr) {
 function createTimelineBookingItem(booking) {
     const item = document.createElement('div');
     const isMyBooking = booking.photographer === currentUser;
+    const studioInfo = getStudioById(booking.studio);
 
     // 判断预约状态
     const status = getBookingStatus(booking);
@@ -1407,6 +2066,7 @@ function createTimelineBookingItem(booking) {
 
     item.className = `timeline-booking-item ${isMyBooking ? 'my-booking' : ''} ${statusClass}`;
     item.setAttribute('data-studio', booking.studio);
+    item.setAttribute('data-studio-group', studioInfo ? studioInfo.groupKey : 'unknown');
     item.onclick = () => showBookingDetail(booking.id);
 
     // 添加已过期标签
@@ -1488,16 +2148,6 @@ function getFilteredBookings() {
         filtered = filtered.filter(b => b.photographer === currentUser);
     }
 
-    // 搜索过滤
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput && searchInput.value.trim()) {
-        const searchTerm = searchInput.value.trim().toLowerCase();
-        filtered = filtered.filter(b =>
-            b.photographer.toLowerCase().includes(searchTerm) ||
-            (b.note && b.note.toLowerCase().includes(searchTerm))
-        );
-    }
-
     return filtered;
 }
 
@@ -1528,13 +2178,7 @@ function updateTodayUsage() {
 const originalShowMainPage = showMainPage;
 showMainPage = function() {
     originalShowMainPage();
-    // updateTodayUsage 和 renderTimelineView 已经在 loadBookings -> renderAllViews 中被调用了，这里只需初始化监听
-    
-    // 添加搜索框事件监听
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', applyFilters);
-    }
+    // updateTodayUsage 和 renderTimelineView 已经在 loadBookings -> renderAllViews 中被调用了，这里只需初始化提醒
 
     // 初始化提醒功能
     initReminder();
@@ -2092,4 +2736,3 @@ function renderStatsView() {
         `;
     }).join('');
 }
-
