@@ -836,6 +836,7 @@ body {
 .availability-period-title {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     color: #6B7280;
     font-size: 15px;
@@ -848,6 +849,17 @@ body {
     flex: 1;
     height: 1px;
     background: #E5E7EB;
+}
+
+.availability-period-ranges {
+    color: #047857;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.availability-period-ranges.no-availability {
+    color: #9CA3AF;
 }
 
 .availability-period-grid {

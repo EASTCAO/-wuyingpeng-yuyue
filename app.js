@@ -1192,6 +1192,45 @@ function getAvailabilitySlotState(time, selectedDate, existingBookings) {
     return { type: 'free', label: '可约' };
 }
 
+function getAvailableTimeRanges(period, selectedDate, existingBookings) {
+    const today = getChinaDate();
+    const currentTime = getChinaCurrentTime();
+    const startTimes = getTimeOptions(period.start, period.end).slice(0, -1);
+    const ranges = [];
+    let rangeStart = '';
+
+    startTimes.forEach(startTime => {
+        const endTime = minutesToTime(timeToMinutes(startTime) + BOOKING_INTERVAL_MINUTES);
+        const isPast = selectedDate === today && startTime < currentTime;
+        const isBooked = existingBookings.some(booking =>
+            !(endTime <= booking.startTime || startTime >= booking.endTime)
+        );
+
+        if (!isPast && !isBooked) {
+            if (!rangeStart) rangeStart = startTime;
+            return;
+        }
+
+        if (rangeStart) {
+            ranges.push({ start: rangeStart, end: startTime });
+            rangeStart = '';
+        }
+    });
+
+    if (rangeStart) ranges.push({ start: rangeStart, end: period.end });
+    return ranges;
+}
+
+function renderAvailableRanges(period, selectedDate, existingBookings) {
+    const ranges = getAvailableTimeRanges(period, selectedDate, existingBookings);
+    if (ranges.length === 0) {
+        return '<span class="availability-period-ranges no-availability">暂无空档</span>';
+    }
+
+    const text = ranges.map(range => `${range.start}-${range.end}`).join('、');
+    return `<span class="availability-period-ranges">可约 ${text}</span>`;
+}
+
 function findNextBlockedTime(startTime, existingBookings) {
     let blockedFrom = BOOKING_END_TIME;
 
@@ -1292,15 +1331,23 @@ function renderAvailabilityPanel() {
 
     const morningTimes = times.filter(time => time >= '08:30' && time <= '12:30');
     const afternoonTimes = times.filter(time => time >= '14:00' && time <= '18:30');
+    const morningPeriod = BOOKABLE_PERIODS[0];
+    const afternoonPeriod = BOOKABLE_PERIODS[1];
     timeline.innerHTML = `
         <section class="availability-period">
-            <div class="availability-period-title">上午</div>
+            <div class="availability-period-title">
+                <span>上午</span>
+                ${renderAvailableRanges(morningPeriod, selectedDate, existingBookings)}
+            </div>
             <div class="availability-period-grid">
                 ${morningTimes.map(renderAvailabilitySlot).join('')}
             </div>
         </section>
         <section class="availability-period">
-            <div class="availability-period-title">下午</div>
+            <div class="availability-period-title">
+                <span>下午</span>
+                ${renderAvailableRanges(afternoonPeriod, selectedDate, existingBookings)}
+            </div>
             <div class="availability-period-grid">
                 ${afternoonTimes.map(renderAvailabilitySlot).join('')}
             </div>
