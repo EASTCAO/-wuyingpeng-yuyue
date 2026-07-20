@@ -853,13 +853,19 @@ body {
 
 .availability-period-ranges {
     color: #047857;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1.4;
+    background: #D1FAE5;
+    border: 1px solid #6EE7B7;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
 }
 
 .availability-period-ranges.no-availability {
-    color: #9CA3AF;
+    color: #6B7280;
+    background: #F3F4F6;
+    border-color: #D1D5DB;
 }
 
 .availability-period-grid {
