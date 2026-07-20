@@ -742,6 +742,93 @@ body {
     max-width: 980px;
 }
 
+@media (min-width: 769px) {
+    #addBookingModal {
+        padding: 12px;
+    }
+
+    #addBookingModal .modal-content {
+        max-height: calc(100vh - 24px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #addBookingModal .modal-header {
+        flex: 0 0 auto;
+        padding: 14px 18px;
+    }
+
+    #addBookingModal .modal-body {
+        min-height: 0;
+        padding: 12px 18px 14px;
+        overflow: hidden;
+    }
+
+    #addBookingModal .form-group {
+        margin-bottom: 14px;
+    }
+
+    #addBookingModal .form-group label {
+        margin-bottom: 6px;
+    }
+
+    #addBookingModal .form-group input,
+    #addBookingModal .form-group select,
+    #addBookingModal .form-group textarea {
+        padding: 10px 14px;
+    }
+
+    #addBookingModal #bookingNote {
+        min-height: 68px;
+        max-height: 80px;
+    }
+
+    #addBookingModal .booking-form-layout {
+        gap: 16px;
+    }
+
+    #addBookingModal .booking-availability-panel {
+        padding: 12px;
+    }
+
+    #addBookingModal .availability-header {
+        margin-bottom: 8px;
+    }
+
+    #addBookingModal .availability-timeline {
+        gap: 8px;
+    }
+
+    #addBookingModal .availability-period {
+        gap: 5px;
+    }
+
+    #addBookingModal .availability-period-grid {
+        gap: 6px;
+    }
+
+    #addBookingModal .availability-slot {
+        min-height: 30px;
+    }
+
+    #addBookingModal .availability-bookings {
+        margin-top: 8px;
+        max-height: 92px;
+    }
+
+    #addBookingModal .form-actions {
+        margin-top: 10px;
+    }
+}
+
+@media (min-width: 769px) and (max-height: 680px) {
+    #addBookingModal .modal-content,
+    #addBookingModal .modal-body {
+        overflow-y: auto;
+    }
+}
+
 .booking-form-layout {
     display: grid;
     grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.1fr);
