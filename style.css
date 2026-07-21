@@ -2987,6 +2987,10 @@ body {
     box-shadow: none;
 }
 
+.studio-overview-card.studio-frozen .studio-section-header h2 {
+    color: #000000;
+}
+
 .studio-frozen-label {
     flex: 0 0 auto;
     padding: 2px 6px;
