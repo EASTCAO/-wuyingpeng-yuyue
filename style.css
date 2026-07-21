@@ -2958,14 +2958,10 @@ body {
     min-height: 245px;
 }
 
-.studio-map-zone-large .studio-overview-card:nth-child(1) {
+.studio-map-zone-large .studio-overview-card:nth-child(1),
+.studio-map-zone-large .studio-overview-card:nth-child(2) {
     background: linear-gradient(180deg, #FFFFFF 0%, #F4F8FF 100%);
     border-color: #BFDBFE;
-}
-
-.studio-map-zone-large .studio-overview-card:nth-child(2) {
-    background: linear-gradient(180deg, #FFFFFF 0%, #F5F3FF 100%);
-    border-color: #C7D2FE;
 }
 
 .studio-overview-card[data-studio-group="small"] {
@@ -3210,9 +3206,11 @@ body {
     border-color: #D4E1FB;
 }
 
-.studio-summary-booking.completed {
+.studio-summary-booking.completed,
+.studio-overview-card.studio-fully-booked .studio-summary-booking.completed {
     background: #F3F4F6;
     border-color: #E5E7EB;
+    box-shadow: none;
 }
 
 .studio-overview-card.studio-fully-booked .studio-summary-booking {
@@ -3228,12 +3226,6 @@ body {
 .studio-overview-card.studio-fully-booked .studio-summary-booking.upcoming {
     background: #F0F5FF;
     border-color: #D4E1FB;
-}
-
-.studio-overview-card.studio-fully-booked .studio-summary-booking.completed {
-    background: #DDE4EC;
-    border-color: #C3CEDA;
-    box-shadow: none;
 }
 
 .studio-overview-card[data-studio-group="small"] .studio-summary-booking.ongoing {
