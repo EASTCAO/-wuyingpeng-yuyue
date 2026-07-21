@@ -814,7 +814,20 @@ body {
 
     #addBookingModal .availability-bookings {
         margin-top: 8px;
-        max-height: 92px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        max-height: none;
+        overflow: visible;
+    }
+
+    #addBookingModal .availability-booking-item {
+        min-width: 0;
+        padding: 7px 9px;
+        border-radius: 8px;
+    }
+
+    #addBookingModal .availability-empty {
+        grid-column: 1 / -1;
     }
 
     #addBookingModal .form-actions {
@@ -2961,6 +2974,30 @@ body {
     border-color: #D9EEE3;
 }
 
+.studio-overview-card.studio-frozen {
+    cursor: default;
+    background: #F4F6F8;
+    border-color: #D8DEE6;
+    box-shadow: none;
+}
+
+.studio-overview-card.studio-frozen:hover,
+.studio-overview-card.studio-frozen:focus {
+    transform: none;
+    box-shadow: none;
+}
+
+.studio-frozen-label {
+    flex: 0 0 auto;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #E2E8F0;
+    color: #64748B;
+    font-size: 11px;
+    line-height: 1.4;
+    font-weight: 400;
+}
+
 .studio-overview-card[data-studio-group="sixth-floor"] {
     min-height: 0;
     background: linear-gradient(180deg, #FFFFFF 0%, #FFFBF5 100%);
@@ -3027,10 +3064,10 @@ body {
 .studio-section-header h2 .studio-card-location {
     display: inline;
     margin-left: 2px;
-    color: #6B7280;
-    font-size: 11px;
+    color: #475569;
+    font-size: 12px;
     line-height: inherit;
-    font-weight: 400;
+    font-weight: 500;
     white-space: nowrap;
 }
 

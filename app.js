@@ -37,10 +37,10 @@ const STUDIO_GROUPS = [
         cardClass: 'studio-section-small',
         buttonClass: 'btn-success',
         studios: [
-            { id: '小无影棚1', title: '无影棚1', location: '小棚区 1' },
-            { id: '小无影棚2', title: '无影棚2', location: '小棚区 2' },
-            { id: '小无影棚3', title: '无影棚3', location: '小棚区 3' },
-            { id: '小无影棚4', title: '无影棚4', location: '小棚区 4' }
+            { id: '小无影棚1', title: '无影棚1', location: '小棚区 1', frozen: true },
+            { id: '小无影棚2', title: '无影棚2', location: '小棚区 2', frozen: true },
+            { id: '小无影棚3', title: '无影棚3', location: '大无影棚对面' },
+            { id: '小无影棚4', title: '无影棚4', location: '谭金林隔壁' }
         ]
     },
     {
@@ -76,6 +76,10 @@ function getStudioById(studioId) {
     return getAllStudios().find(studio => studio.id === studioId);
 }
 
+function isStudioFrozen(studioId) {
+    return Boolean(getStudioById(studioId)?.frozen);
+}
+
 function getStudioListId(studioId) {
     const index = getAllStudios().findIndex(studio => studio.id === studioId);
     return index >= 0 ? `studio${index + 1}List` : '';
@@ -106,21 +110,22 @@ function renderStudioSections() {
             <div class="studio-map-cards">
                 ${group.studios.map(studio => `
                     <div
-                        class="studio-section studio-overview-card ${group.cardClass}"
+                        class="studio-section studio-overview-card ${group.cardClass}${studio.frozen ? ' studio-frozen' : ''}"
                         data-studio-id="${escapeHtml(studio.id)}"
                         data-studio-group="${group.key}"
-                        onclick="showAddBookingForm('${escapeHtml(studio.id)}')"
-                        role="button"
-                        tabindex="0"
-                        onkeydown="handleStudioCardKeydown(event, '${escapeHtml(studio.id)}')"
+                        ${studio.frozen ? 'aria-disabled="true"' : `onclick="showAddBookingForm('${escapeHtml(studio.id)}')"`}
+                        role="${studio.frozen ? 'group' : 'button'}"
+                        tabindex="${studio.frozen ? '-1' : '0'}"
+                        ${studio.frozen ? '' : `onkeydown="handleStudioCardKeydown(event, '${escapeHtml(studio.id)}')"`}
                     >
                         <div class="studio-section-header">
                             <div>
                                 <h2>
                                     ${escapeHtml(studio.title)}
-                                    ${group.key === 'large' && studio.location ? `<small class="studio-card-location">（${escapeHtml(studio.location)}）</small>` : ''}
+                                    ${(group.key === 'large' || (group.key === 'small' && !studio.frozen)) && studio.location ? `<small class="studio-card-location">（${escapeHtml(studio.location)}）</small>` : ''}
                                 </h2>
                             </div>
+                            ${studio.frozen ? '<span class="studio-frozen-label">已冻结</span>' : ''}
                         </div>
                         <div id="${getStudioListId(studio.id)}" class="studio-summary">
                             <p class="empty-message">暂无预约</p>
@@ -182,7 +187,7 @@ function renderStudioOptions(selectId, includeAll = false) {
     const allOption = includeAll ? '<option value="all">所有影棚</option>' : '';
     select.innerHTML = allOption + STUDIO_GROUPS.map(group => `
         <optgroup label="${group.optionLabel}">
-            ${group.studios.map(studio => `<option value="${escapeHtml(studio.id)}">${studio.id}</option>`).join('')}
+            ${group.studios.map(studio => `<option value="${escapeHtml(studio.id)}"${studio.frozen && !includeAll ? ' disabled' : ''}>${studio.id}${studio.frozen && !includeAll ? '（已冻结）' : ''}</option>`).join('')}
         </optgroup>
     `).join('');
 }
@@ -999,10 +1004,11 @@ function renderBookings() {
 
         const studioBookings = getStudioBookingsForDates(studio.id, displayDates);
         const studioCard = studioSummary.closest('.studio-overview-card');
-        const fullyBooked = isStudioFullyBooked(studio.id, displayDates);
+        const frozen = isStudioFrozen(studio.id);
+        const fullyBooked = !frozen && isStudioFullyBooked(studio.id, displayDates);
         if (studioCard) {
             studioCard.classList.toggle('studio-fully-booked', fullyBooked);
-            studioCard.title = fullyBooked ? '当前日期已约满' : '';
+            studioCard.title = frozen ? '该棚位暂时冻结，无法预约' : fullyBooked ? '当前日期已约满' : '';
         }
 
         studioSummary.innerHTML = createStudioSummary(studio, studioBookings);
@@ -1476,6 +1482,11 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null) {
         alert('游客模式不能预约，请登录后操作。');
         return;
     }
+    const normalizedDefaultStudio = defaultStudio ? normalizeStudioName(defaultStudio) : '';
+    if (!bookingToEdit && normalizedDefaultStudio && isStudioFrozen(normalizedDefaultStudio)) {
+        showToast('该影棚暂时冻结，无法预约', 'error');
+        return;
+    }
     editingBookingId = bookingToEdit?.id || null;
     document.getElementById('bookingModalTitle').textContent = editingBookingId ? '修改预约时间' : '预约';
     document.getElementById('bookingSubmitButton').textContent = editingBookingId ? '保存修改' : '确认预约';
@@ -1484,7 +1495,7 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null) {
     // 重置表单
     const studioSelect = document.getElementById('studioSelect');
     if (defaultStudio) {
-        studioSelect.value = normalizeStudioName(defaultStudio);
+        studioSelect.value = normalizedDefaultStudio;
     } else {
         studioSelect.value = getDefaultStudioId();
     }
@@ -1623,6 +1634,11 @@ async function addBooking() {
 
     if (!getStudioById(studio)) {
         showToast('请选择有效的影棚', 'error');
+        return;
+    }
+
+    if (isStudioFrozen(studio)) {
+        showToast('该影棚暂时冻结，无法预约', 'error');
         return;
     }
 

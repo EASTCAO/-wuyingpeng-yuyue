@@ -20,6 +20,7 @@ const STUDIO_IDS = [
   '小无影棚4',
   '6F无影棚'
 ];
+const FROZEN_STUDIO_IDS = new Set(['小无影棚1', '小无影棚2']);
 const DEFAULT_USER_NAMES = [
   '周旭欣', '曹东', '曹玉', '程维跃', '付国俊', '何雨涵', '李冬梅', '卢圣林',
   '吕书悦', '阮静', '沈磊', '涂萱', '王斐雯', '王思琪', '王羽', '魏钰涵',
@@ -298,6 +299,7 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
     }
 
     if (!STUDIO_IDS.includes(studio)) return res.status(400).json({ error: '影棚无效' });
+    if (FROZEN_STUDIO_IDS.has(studio)) return res.status(400).json({ error: '该影棚暂时冻结，无法预约' });
     if (!isValidBookingDate(date)) return res.status(400).json({ error: '只能预约今天或明天' });
     if (!isValidBookingRange(startTime, endTime)) return res.status(400).json({ error: '时间必须在营业时段内，且按15分钟预约' });
 
@@ -358,6 +360,7 @@ app.put('/api/bookings/:id', requireAuth, async (req, res) => {
       return res.status(400).json({ error: '缺少必填字段' });
     }
     if (!STUDIO_IDS.includes(studio)) return res.status(400).json({ error: '影棚无效' });
+    if (FROZEN_STUDIO_IDS.has(studio)) return res.status(400).json({ error: '该影棚暂时冻结，无法预约' });
     if (!isValidBookingDate(date)) return res.status(400).json({ error: '只能预约今天或明天' });
     if (!isValidBookingRange(startTime, endTime)) {
       return res.status(400).json({ error: '时间必须在营业时段内，且按15分钟预约' });
