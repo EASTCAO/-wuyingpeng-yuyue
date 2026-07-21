@@ -3058,6 +3058,10 @@ body {
     font-size: 14px;
 }
 
+.studio-overview-card[data-studio-group="small"]:not(.studio-frozen) .studio-section-header h2 {
+    font-size: 15px;
+}
+
 .studio-section-header h2 small {
     font-size: 11px;
     font-weight: 400;
@@ -3067,12 +3071,16 @@ body {
 
 .studio-section-header h2 .studio-card-location {
     display: inline;
-    margin-left: 2px;
-    color: #475569;
+    margin-left: 4px;
+    color: #1D4ED8;
     font-size: 12px;
     line-height: inherit;
     font-weight: 500;
     white-space: nowrap;
+}
+
+.studio-overview-card[data-studio-group="small"] .studio-card-location {
+    color: #047857;
 }
 
 .studio-overview-card .studio-section-header h2::before {

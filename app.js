@@ -122,7 +122,7 @@ function renderStudioSections() {
                             <div>
                                 <h2>
                                     ${escapeHtml(studio.title)}
-                                    ${(group.key === 'large' || (group.key === 'small' && !studio.frozen)) && studio.location ? `<small class="studio-card-location">（${escapeHtml(studio.location)}）</small>` : ''}
+                                    ${(group.key === 'large' || (group.key === 'small' && !studio.frozen)) && studio.location ? `<small class="studio-card-location">· ${escapeHtml(studio.location)}</small>` : ''}
                                 </h2>
                             </div>
                             ${studio.frozen ? '<span class="studio-frozen-label">已冻结</span>' : ''}
