@@ -72,12 +72,20 @@ function readToken(token) {
   }
 }
 
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   const authorization = req.headers.authorization || '';
-  const user = readToken(authorization.startsWith('Bearer ') ? authorization.slice(7) : '');
-  if (!user) return res.status(401).json({ error: '请先登录' });
-  req.user = user;
-  next();
+  const tokenUser = readToken(authorization.startsWith('Bearer ') ? authorization.slice(7) : '');
+  if (!tokenUser) return res.status(401).json({ error: '请先登录' });
+
+  try {
+    const result = await pool.query('SELECT username, role FROM users WHERE username = $1', [tokenUser.username]);
+    const user = result.rows[0];
+    if (!user) return res.status(401).json({ error: '登录已失效，请重新登录' });
+    req.user = user;
+    next();
+  } catch (error) {
+    next(error);
+  }
 }
 
 function requireAdmin(req, res, next) {
@@ -366,22 +374,28 @@ app.put('/api/bookings/:id', requireAuth, async (req, res) => {
       return res.status(400).json({ error: '时间必须在营业时段内，且按15分钟预约' });
     }
 
-    const existing = await pool.query('SELECT * FROM bookings WHERE id = $1', [id]);
-    if (existing.rows.length === 0) return res.status(404).json({ error: '预约不存在' });
-    const booking = existing.rows[0];
-    if (req.user.role !== 'admin' && booking.photographer !== req.user.username) {
-      return res.status(403).json({ error: '只能修改自己的预约' });
-    }
-    if (!isEditableBooking(booking)) {
-      return res.status(400).json({ error: '已过期预约不能修改' });
-    }
-
     const client = await pool.connect();
     let transactionStarted = false;
     try {
       await client.query('BEGIN');
       transactionStarted = true;
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`${studio}:${date}`]);
+
+      const existing = await client.query('SELECT * FROM bookings WHERE id = $1 FOR UPDATE', [id]);
+      if (existing.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: '预约不存在' });
+      }
+      const booking = existing.rows[0];
+      if (req.user.role !== 'admin' && booking.photographer !== req.user.username) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ error: '只能修改自己的预约' });
+      }
+      if (!isEditableBooking(booking)) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: '已过期预约不能修改' });
+      }
+
       const conflicts = await client.query(
         `SELECT id FROM bookings
          WHERE studio = $1 AND date = $2 AND id <> $3
@@ -417,24 +431,40 @@ app.put('/api/bookings/:id', requireAuth, async (req, res) => {
 
 // 删除预约
 app.delete('/api/bookings/:id', requireAuth, async (req, res) => {
+  let client;
+  let transactionStarted = false;
   try {
     const { id } = req.params;
-    const existing = await pool.query('SELECT photographer FROM bookings WHERE id = $1', [id]);
-    if (existing.rows.length === 0) return res.status(404).json({ error: '预约不存在' });
+    client = await pool.connect();
+    await client.query('BEGIN');
+    transactionStarted = true;
+
+    const existing = await client.query('SELECT photographer FROM bookings WHERE id = $1 FOR UPDATE', [id]);
+    if (existing.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: '预约不存在' });
+    }
     const booking = existing.rows[0];
     if (req.user.role !== 'admin' && booking.photographer !== req.user.username) {
+      await client.query('ROLLBACK');
       return res.status(403).json({ error: '只能取消自己的预约' });
     }
-    const result = await pool.query('DELETE FROM bookings WHERE id = $1', [id]);
+    const result = await client.query('DELETE FROM bookings WHERE id = $1', [id]);
 
     if (result.rowCount === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: '预约不存在' });
     }
 
+    await client.query('COMMIT');
+    transactionStarted = false;
     res.json({ message: '删除成功' });
   } catch (error) {
+    if (transactionStarted) await client.query('ROLLBACK').catch(() => {});
     console.error('删除预约失败:', error);
     res.status(500).json({ error: '取消预约失败' });
+  } finally {
+    client?.release();
   }
 });
 
