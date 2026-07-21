@@ -848,6 +848,12 @@ function showMainPage() {
         el.style.display = currentUser === 'admin' ? '' : 'none';
     });
 
+    if (currentUser !== 'admin' && currentDateRange === 'yesterday') {
+        currentDateRange = 'today';
+        document.querySelectorAll('.date-btn').forEach(button => button.classList.remove('active'));
+        document.getElementById('todayDateButton')?.classList.add('active');
+    }
+
     // 确保移动端侧边栏初始状态为隐藏
     initMobileSidebar();
 
@@ -1480,6 +1486,9 @@ function formatDate(dateStr) {
 function showAddBookingForm(defaultStudio, bookingToEdit = null) {
     if (currentUser && currentUser.startsWith('游客')) {
         alert('游客模式不能预约，请登录后操作。');
+        return;
+    }
+    if (!bookingToEdit && currentDateRange === 'yesterday') {
         return;
     }
     const normalizedDefaultStudio = defaultStudio ? normalizeStudioName(defaultStudio) : '';
@@ -2314,6 +2323,8 @@ function getBookingsForHourSlot(studio, dates, hour, bookingsToUse = allBookings
 // 获取要显示的日期
 function getDisplayDates() {
     switch (currentDateRange) {
+        case 'yesterday':
+            return [getChinaDate(-1)];
         case 'today':
             return [getChinaDate()];
         case 'tomorrow':

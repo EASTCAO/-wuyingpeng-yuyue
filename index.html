@@ -193,7 +193,8 @@
                 <div class="toolbar">
                     <!-- 日期筛选 -->
                     <div class="date-nav">
-                        <button class="date-btn active" onclick="selectDateRange('today', this)">今天</button>
+                        <button id="yesterdayDateButton" class="date-btn admin-only" style="display:none;" onclick="selectDateRange('yesterday', this)">昨天</button>
+                        <button id="todayDateButton" class="date-btn active" onclick="selectDateRange('today', this)">今天</button>
                         <button class="date-btn" onclick="selectDateRange('tomorrow', this)">明天</button>
                         <span class="nav-divider"></span>
                         <button class="view-btn active" onclick="switchView('list')">大厅</button>
@@ -421,7 +422,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=20260721-location-dot"></script>
+    <script src="app.js?v=20260721-admin-yesterday"></script>
 
     <!-- PWA Service Worker 注册 -->
     <script>
