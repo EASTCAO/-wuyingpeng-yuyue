@@ -2414,8 +2414,15 @@ function getBookingStatus(booking) {
     // 今天的预约，判断时间
     const startTime = booking.startTime.split(':');
     const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+    const endTime = booking.endTime.split(':');
+    const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+
+    if (endMinutes <= currentMinutes) {
+        return 'completed'; // 已结束
+    }
+
     if (startMinutes <= currentMinutes) {
-        return 'completed'; // 开始时间已到
+        return 'ongoing'; // 进行中
     }
 
     return 'upcoming'; // 未开始
