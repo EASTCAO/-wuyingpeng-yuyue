@@ -13,6 +13,8 @@ let soundEnabled = true;
 let globalAudioContext = null; // 全局 AudioContext
 let authToken = null;
 let editingBookingId = null;
+let bookingSaveInFlight = false;
+let bookingDeleteInFlight = false;
 
 // ============ 影棚配置 ============
 // 所有影棚入口、下拉框、统计筛选和时间轴都从这里生成。
@@ -329,6 +331,7 @@ let autoRefreshInterval = null;
 function startAutoRefresh() {
     if (isCloudMode() && !autoRefreshInterval) {
         autoRefreshInterval = setInterval(async () => {
+            if (bookingSaveInFlight || bookingDeleteInFlight) return;
             console.log('🔄 自动刷新数据...');
             await loadBookings();
         }, 30000); // 30秒刷新一次
@@ -937,11 +940,7 @@ async function loadBookings() {
             allBookings = await response.json();
 
             // 标准化字段名：后端使用 notes，前端使用 note
-            allBookings = allBookings.map(booking => ({
-                ...booking,
-                studio: normalizeStudioName(booking.studio),
-                note: booking.notes || booking.note || ''
-            }));
+            allBookings = allBookings.map(normalizeBookingRecord);
 
             sortBookings();
             renderAllViews();
@@ -966,6 +965,43 @@ async function loadBookings() {
             allBookings = [];
         }
     }
+}
+
+function cloneBookings(bookings = allBookings) {
+    return bookings.map(booking => ({ ...booking }));
+}
+
+function normalizeBookingRecord(booking) {
+    const note = booking.notes || booking.note || '';
+    return {
+        ...booking,
+        studio: normalizeStudioName(booking.studio),
+        note,
+        notes: note
+    };
+}
+
+function upsertLocalBooking(booking) {
+    const normalizedBooking = normalizeBookingRecord(booking);
+    const index = allBookings.findIndex(item => item.id === normalizedBooking.id);
+    if (index >= 0) {
+        allBookings[index] = normalizedBooking;
+    } else {
+        allBookings.push(normalizedBooking);
+    }
+    sortBookings();
+    renderAllViews();
+}
+
+function removeLocalBooking(bookingId) {
+    allBookings = allBookings.filter(booking => booking.id !== bookingId);
+    renderAllViews();
+}
+
+function restoreLocalBookings(snapshot) {
+    allBookings = cloneBookings(snapshot);
+    sortBookings();
+    renderAllViews();
 }
 
 // 保存预约数据到 localStorage（仅本地模式使用）
@@ -1622,6 +1658,8 @@ function closeAddBookingForm() {
 async function addBooking() {
     console.log('=== addBooking 函数被调用 ===');
 
+    if (bookingSaveInFlight) return;
+
     const studio = document.getElementById('studioSelect').value;
     const date = document.getElementById('bookingDate').value;
     const startTime = document.getElementById('startTime').value;
@@ -1682,9 +1720,10 @@ async function addBooking() {
     const originalBooking = editingBookingId
         ? allBookings.find(booking => booking.id === editingBookingId)
         : null;
-    const isEditing = Boolean(editingBookingId);
+    const activeEditingId = editingBookingId;
+    const isEditing = Boolean(activeEditingId);
     const newBooking = {
-        id: editingBookingId || String(Date.now()), // 修改时保留原预约 ID
+        id: activeEditingId || String(Date.now()), // 修改时保留原预约 ID
         studio: studio,
         date: date,
         startTime: startTime,
@@ -1696,12 +1735,25 @@ async function addBooking() {
         createdAt: new Date().toISOString() // 使用 ISO 格式
     };
 
+    const previousBookings = cloneBookings();
+    const submitButton = document.getElementById('bookingSubmitButton');
+
     try {
+        bookingSaveInFlight = true;
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = isEditing ? '保存中...' : '预约中...';
+        }
+
         if (isCloudMode()) {
+            upsertLocalBooking(newBooking);
+            closeAddBookingForm();
+            showToast(isEditing ? '正在同步修改...' : '正在同步预约...', 'success');
+
             // 云端模式：调用 API
             console.log('正在保存预约到云端...');
-            const response = await apiFetch(editingBookingId ? `/api/bookings/${editingBookingId}` : '/api/bookings', {
-                method: editingBookingId ? 'PUT' : 'POST',
+            const response = await apiFetch(activeEditingId ? `/api/bookings/${activeEditingId}` : '/api/bookings', {
+                method: activeEditingId ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newBooking)
             });
@@ -1711,29 +1763,29 @@ async function addBooking() {
                 throw new Error(errorData.error || `服务器错误: ${response.status}`);
             }
 
-            // 重新加载数据以获取最新状态
-            await loadBookings();
+            const savedBooking = await response.json().catch(() => newBooking);
+            upsertLocalBooking(savedBooking);
         } else {
             // 本地模式：保存到 localStorage
             console.log('正在保存预约到 localStorage...');
-            if (editingBookingId) {
-                const index = allBookings.findIndex(booking => booking.id === editingBookingId);
-                if (index >= 0) allBookings[index] = newBooking;
-            } else {
-                allBookings.push(newBooking);
-            }
+            upsertLocalBooking(newBooking);
             saveBookings();
-            sortBookings();
-            renderAllViews();
+            closeAddBookingForm();
         }
 
         console.log('✅ 预约保存成功');
         showToast(isEditing ? '预约时间已修改' : '预约成功', 'success');
-        closeAddBookingForm();
 
     } catch (error) {
+        restoreLocalBookings(previousBookings);
         console.error('❌ 预约失败:', error);
         showToast('预约失败：' + error.message, 'error');
+    } finally {
+        bookingSaveInFlight = false;
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = isEditing ? '保存修改' : '确认预约';
+        }
     }
 }
 
@@ -1955,6 +2007,7 @@ async function deleteBooking() {
 
 async function deleteBookingById(bookingId, options = {}) {
     if (!bookingId) return false;
+    if (bookingDeleteInFlight) return false;
 
     const { closeAfterDelete = true, onDeleted = null } = options;
     const booking = allBookings.find(item => item.id === bookingId);
@@ -1967,7 +2020,19 @@ async function deleteBookingById(bookingId, options = {}) {
         return false;
     }
 
+    const previousBookings = cloneBookings();
+
     try {
+        bookingDeleteInFlight = true;
+        removeLocalBooking(bookingId);
+        if (typeof onDeleted === 'function') {
+            onDeleted();
+        }
+        if (closeAfterDelete) {
+            closeDetailModal();
+        }
+        showToast('正在同步取消...', 'success');
+
         if (isCloudMode()) {
             // 云端模式：调用 API
             const response = await apiFetch(`/api/bookings/${bookingId}`, {
@@ -1978,28 +2043,20 @@ async function deleteBookingById(bookingId, options = {}) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.error || `删除失败: ${response.status}`);
             }
-
-            // 重新加载数据
-            await loadBookings();
         } else {
             // 本地模式：从数组中删除
-            allBookings = allBookings.filter(b => b.id !== bookingId);
             saveBookings();
-            renderAllViews();
         }
 
         showToast('预约已取消', 'success');
-        if (typeof onDeleted === 'function') {
-            onDeleted();
-        }
-        if (closeAfterDelete) {
-            closeDetailModal();
-        }
         return true;
     } catch (error) {
+        restoreLocalBookings(previousBookings);
         console.error('取消预约失败:', error);
         showToast('取消预约失败，请重试', 'error');
         return false;
+    } finally {
+        bookingDeleteInFlight = false;
     }
 }
 
