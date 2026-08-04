@@ -86,6 +86,7 @@ renderStudioSections = function renderStudioLayoutSections() {
         } else {
             seventhFloorZone?.remove();
             sixthFloorZone?.querySelector('.studio-map-zone-header')?.remove();
+            sixthFloorZone?.querySelector('.studio-section-header')?.remove();
         }
 
         studioMap?.classList.add('preview-single-floor-map');
