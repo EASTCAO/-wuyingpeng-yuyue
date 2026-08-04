@@ -76,7 +76,8 @@ npm test -- https://wuhanphotoyy.zeabur.app
 
 ## 部署
 
-- 前端：`https://wuyingpeng-yuyue.vercel.app`
+- 前端：`https://photowhyy.zeabur.app`
+- Vercel 镜像：`https://wuyingpeng-yuyue.vercel.app`
 - 后端：`https://wuhanphotoyy.zeabur.app`
 - 仓库：`https://github.com/EASTCAO/-wuyingpeng-yuyue`
 
