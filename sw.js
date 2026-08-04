@@ -1,13 +1,16 @@
 // Service Worker：用于缓存资源，让应用即使在断网情况下也能打开（PWA 必须组件）
 // 提升版本号可强制客户端更新缓存（例如修改 API 域名后）
-const CACHE_NAME = 'studio-booking-v72-snappy-booking';
+const CACHE_NAME = 'studio-booking-v98-studio-layout';
 const urlsToCache = [
   './',
   './index.html',
   './style.css',
+  './studio-layout.css',
   './app.js',
+  './studio-layout.js',
   './manifest.json',
-  './favicon.svg'
+  './favicon.svg',
+  './assets/real-studio/laundry.webp'
 ];
 
 self.addEventListener('install', event => {
@@ -48,7 +51,7 @@ self.addEventListener('fetch', event => {
   }
 
   event.respondWith(
-    caches.match(event.request)
+    caches.match(event.request, { ignoreSearch: true })
       .then(response => {
         // 如果在缓存中找到，直接返回缓存
         if (response) {

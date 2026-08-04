@@ -1,144 +1,170 @@
 #!/usr/bin/env node
 
-/**
- * 后端 API 测试脚本
- * 用于验证 API 端点的功能
- */
+const crypto = require('crypto');
 
-const API_BASE_URL = process.argv[2] || 'http://localhost:3000';
-
-console.log('🧪 开始测试后端 API...');
-console.log(`📍 API 地址: ${API_BASE_URL}\n`);
-
-// 测试用例
-const tests = [
-  {
-    name: '健康检查',
-    method: 'GET',
-    url: '/health',
-    expected: { status: 'ok' }
-  },
-  {
-    name: '获取空预约列表',
-    method: 'GET',
-    url: '/api/bookings',
-    expected: []
-  },
-  {
-    name: '创建预约',
-    method: 'POST',
-    url: '/api/bookings',
-    body: {
-      id: 'test-' + Date.now(),
-      studio: '无影棚1号',
-      date: '2026-01-28',
-      startTime: '10:00',
-      endTime: '12:00',
-      photographer: '测试摄影师',
-      contact: '13800138000',
-      notes: '自动化测试'
-    }
-  },
-  {
-    name: '获取预约列表（应有1条）',
-    method: 'GET',
-    url: '/api/bookings'
-  },
-  {
-    name: '测试时间冲突',
-    method: 'POST',
-    url: '/api/bookings',
-    body: {
-      id: 'test-conflict-' + Date.now(),
-      studio: '无影棚1号',
-      date: '2026-01-28',
-      startTime: '11:00',
-      endTime: '13:00',
-      photographer: '测试摄影师2',
-      contact: '13900139000',
-      notes: '冲突测试'
-    },
-    expectError: true,
-    expectedStatus: 409
-  }
+const API_BASE_URL = (process.argv[2] || 'http://localhost:3000').replace(/\/$/, '');
+const TEST_USERNAME = process.env.TEST_USERNAME || '';
+const TEST_PASSWORD = process.env.TEST_PASSWORD || '';
+const BOOKABLE_PERIODS = [
+  { start: '08:30', end: '12:30' },
+  { start: '14:00', end: '18:30' }
+];
+const STUDIO_IDS = [
+  '大无影棚1（工位对面）', '大无影棚2（鄢军隔壁）',
+  '小无影棚3', '小无影棚4', '6F无影棚',
+  '小木屋景', '卧室景', '酒吧景', '书房景', '客厅景',
+  '木纹台面-厨房景', '儿童房景/户外下午茶景', '工具台景',
+  '洗衣房景别', '黑色台面-厨房景', '浴室景'
 ];
 
-async function runTests() {
-  let passed = 0;
-  let failed = 0;
-  let createdId = null;
+let authToken = '';
+let passed = 0;
+let failed = 0;
 
-  for (const test of tests) {
-    try {
-      console.log(`\n📝 测试: ${test.name}`);
+function getChinaDate(offsetDays = 0) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(new Date(Date.now() + offsetDays * 86400000));
+}
 
-      const options = {
-        method: test.method,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      };
+function timeToMinutes(time) {
+  const [hour, minute] = time.split(':').map(Number);
+  return hour * 60 + minute;
+}
 
-      if (test.body) {
-        options.body = JSON.stringify(test.body);
-        if (test.name === '创建预约') {
-          createdId = test.body.id;
-        }
+function minutesToTime(value) {
+  return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
+}
+
+async function request(path, options = {}) {
+  const headers = new Headers(options.headers || {});
+  if (authToken) headers.set('Authorization', `Bearer ${authToken}`);
+  if (options.body) headers.set('Content-Type', 'application/json');
+  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+  const data = await response.json().catch(() => ({}));
+  return { response, data };
+}
+
+async function test(name, callback) {
+  try {
+    await callback();
+    passed += 1;
+    console.log(`通过: ${name}`);
+  } catch (error) {
+    failed += 1;
+    console.error(`失败: ${name} - ${error.message}`);
+  }
+}
+
+function expectStatus(result, status) {
+  if (result.response.status !== status) {
+    throw new Error(`期望 ${status}，实际 ${result.response.status}: ${JSON.stringify(result.data)}`);
+  }
+}
+
+function findFreeSlot(bookings, date) {
+  for (const studio of STUDIO_IDS) {
+    const studioBookings = bookings.filter(booking => booking.studio === studio && booking.date === date);
+    for (const period of BOOKABLE_PERIODS) {
+      for (let start = timeToMinutes(period.start); start < timeToMinutes(period.end); start += 15) {
+        const startTime = minutesToTime(start);
+        const endTime = minutesToTime(start + 15);
+        const conflict = studioBookings.some(booking => !(endTime <= booking.startTime || startTime >= booking.endTime));
+        if (!conflict) return { studio, startTime, endTime };
       }
-
-      const response = await fetch(`${API_BASE_URL}${test.url}`, options);
-      const data = await response.json();
-
-      if (test.expectError) {
-        if (response.status === test.expectedStatus) {
-          console.log(`✅ 通过 - 正确返回错误状态码 ${test.expectedStatus}`);
-          console.log(`   错误信息: ${data.error}`);
-          passed++;
-        } else {
-          console.log(`❌ 失败 - 期望状态码 ${test.expectedStatus}，实际 ${response.status}`);
-          failed++;
-        }
-      } else {
-        if (response.ok) {
-          console.log(`✅ 通过`);
-          console.log(`   响应:`, JSON.stringify(data, null, 2).substring(0, 200));
-          passed++;
-        } else {
-          console.log(`❌ 失败 - 状态码: ${response.status}`);
-          console.log(`   错误:`, data);
-          failed++;
-        }
-      }
-    } catch (error) {
-      console.log(`❌ 失败 - ${error.message}`);
-      failed++;
     }
   }
+  return null;
+}
 
-  // 清理测试数据
-  if (createdId) {
-    console.log(`\n🧹 清理测试数据...`);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/bookings/${createdId}`, {
-        method: 'DELETE'
+async function run() {
+  console.log(`API: ${API_BASE_URL}`);
+
+  await test('健康检查包含数据库状态', async () => {
+    const result = await request('/health');
+    expectStatus(result, 200);
+    if (result.data.status !== 'ok' || result.data.database !== 'ok') {
+      throw new Error(`健康状态异常: ${JSON.stringify(result.data)}`);
+    }
+  });
+
+  await test('未登录不能读取预约', async () => {
+    const result = await request('/api/bookings');
+    expectStatus(result, 401);
+  });
+
+  await test('错误账号不能登录', async () => {
+    const result = await request('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username: `test_${Date.now()}`, password: 'invalid-password' })
+    });
+    expectStatus(result, 401);
+  });
+
+  if (!TEST_USERNAME || !TEST_PASSWORD) {
+    console.log('未设置 TEST_USERNAME/TEST_PASSWORD，跳过需要登录的增删改测试。');
+  } else {
+    await test('账号登录', async () => {
+      const result = await request('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ username: TEST_USERNAME, password: TEST_PASSWORD })
       });
-      if (response.ok) {
-        console.log(`✅ 测试数据已清理`);
+      expectStatus(result, 200);
+      if (!result.data.token) throw new Error('响应中没有登录令牌');
+      authToken = result.data.token;
+    });
+
+    let createdId = '';
+    try {
+      let bookings = [];
+      await test('登录后读取预约', async () => {
+        const result = await request('/api/bookings');
+        expectStatus(result, 200);
+        if (!Array.isArray(result.data)) throw new Error('预约列表格式错误');
+        bookings = result.data;
+      });
+
+      const date = getChinaDate(1);
+      const slot = findFreeSlot(bookings, date);
+      if (!slot) throw new Error('没有可用于测试的空闲时段');
+      createdId = `smoke-${crypto.randomUUID()}`;
+      const payload = { id: createdId, date, notes: '自动化冒烟测试', ...slot };
+
+      await test('创建预约', async () => {
+        const result = await request('/api/bookings', { method: 'POST', body: JSON.stringify(payload) });
+        expectStatus(result, 201);
+      });
+
+      await test('阻止重叠预约', async () => {
+        const result = await request('/api/bookings', {
+          method: 'POST',
+          body: JSON.stringify({ ...payload, id: `smoke-conflict-${crypto.randomUUID()}` })
+        });
+        expectStatus(result, 409);
+      });
+
+      await test('阻止午休时间预约', async () => {
+        const result = await request('/api/bookings', {
+          method: 'POST',
+          body: JSON.stringify({ ...payload, id: `smoke-lunch-${crypto.randomUUID()}`, startTime: '12:30', endTime: '14:00' })
+        });
+        expectStatus(result, 400);
+      });
+    } finally {
+      if (createdId) {
+        await test('清理测试预约', async () => {
+          const result = await request(`/api/bookings/${encodeURIComponent(createdId)}`, { method: 'DELETE' });
+          expectStatus(result, 200);
+        });
       }
-    } catch (error) {
-      console.log(`⚠️  清理失败: ${error.message}`);
     }
   }
 
-  // 总结
-  console.log(`\n${'='.repeat(50)}`);
-  console.log(`📊 测试结果: ${passed} 通过, ${failed} 失败`);
-  console.log(`${'='.repeat(50)}\n`);
-
+  console.log(`测试完成: ${passed} 通过, ${failed} 失败`);
   process.exit(failed > 0 ? 1 : 0);
 }
 
-runTests().catch(error => {
-  console.error('❌ 测试执行失败:', error);
+run().catch(error => {
+  console.error(`测试中止: ${error.message}`);
   process.exit(1);
 });

@@ -18,7 +18,18 @@ const STUDIO_IDS = [
   '小无影棚2',
   '小无影棚3',
   '小无影棚4',
-  '6F无影棚'
+  '6F无影棚',
+  '小木屋景',
+  '卧室景',
+  '酒吧景',
+  '书房景',
+  '客厅景',
+  '木纹台面-厨房景',
+  '儿童房景/户外下午茶景',
+  '工具台景',
+  '洗衣房景别',
+  '黑色台面-厨房景',
+  '浴室景'
 ];
 const FROZEN_STUDIO_IDS = new Set(['小无影棚1', '小无影棚2']);
 const DEFAULT_USER_NAMES = [
@@ -29,8 +40,14 @@ const DEFAULT_USER_NAMES = [
 ];
 
 // 中间件
+app.disable('x-powered-by');
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '32kb' }));
+app.use((req, res, next) => {
+  res.set('X-Content-Type-Options', 'nosniff');
+  if (req.path.startsWith('/api/')) res.set('Cache-Control', 'no-store');
+  next();
+});
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
   const hash = crypto.scryptSync(password, salt, 64).toString('hex');
@@ -216,6 +233,9 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body || {};
     if (!username || !password) return res.status(400).json({ error: '请输入用户名和密码' });
+    if (String(username).length > 20 || String(password).length > 100) {
+      return res.status(400).json({ error: '用户名或密码格式不正确' });
+    }
     const result = await pool.query('SELECT username, "passwordHash", role FROM users WHERE username = $1', [username]);
     const user = result.rows[0];
     if (!user || !verifyPassword(password, user.passwordHash)) {
@@ -247,6 +267,9 @@ app.post('/api/users', requireAuth, requireAdmin, async (req, res) => {
     const username = String(req.body?.username || '').trim();
     if (!username || username.length > 20) return res.status(400).json({ error: '用户名格式不正确' });
     const password = String(req.body?.password || DEFAULT_USER_PASSWORD);
+    if (password.length < 6 || password.length > 100) {
+      return res.status(400).json({ error: '密码长度需要为6到100位' });
+    }
     const result = await pool.query(
       `INSERT INTO users (username, "passwordHash", role, "createdAt")
        VALUES ($1, $2, 'photographer', $3) RETURNING username, role, "createdAt"`,
@@ -261,17 +284,22 @@ app.post('/api/users', requireAuth, requireAdmin, async (req, res) => {
 });
 
 app.delete('/api/users/:username', requireAuth, requireAdmin, async (req, res) => {
-  const username = decodeURIComponent(req.params.username);
-  if (username === 'admin') return res.status(400).json({ error: '不能删除管理员' });
-  const result = await pool.query('DELETE FROM users WHERE username = $1', [username]);
-  if (result.rowCount === 0) return res.status(404).json({ error: '用户不存在' });
-  res.json({ message: '用户已删除' });
+  try {
+    const username = req.params.username;
+    if (username === 'admin') return res.status(400).json({ error: '不能删除管理员' });
+    const result = await pool.query('DELETE FROM users WHERE username = $1', [username]);
+    if (result.rowCount === 0) return res.status(404).json({ error: '用户不存在' });
+    res.json({ message: '用户已删除' });
+  } catch (error) {
+    console.error('删除用户失败:', error);
+    res.status(500).json({ error: '删除用户失败' });
+  }
 });
 
 app.post('/api/auth/change-password', requireAuth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body || {};
-    if (!currentPassword || !newPassword || newPassword.length < 4) {
+    if (!currentPassword || !newPassword || newPassword.length < 6 || newPassword.length > 100) {
       return res.status(400).json({ error: '密码格式不正确' });
     }
     const result = await pool.query('SELECT "passwordHash" FROM users WHERE username = $1', [req.user.username]);
@@ -469,14 +497,22 @@ app.delete('/api/bookings/:id', requireAuth, async (req, res) => {
 });
 
 // 健康检查
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.get('/health', async (req, res) => {
+  if (!AUTH_SECRET) return res.status(503).json({ status: 'error', error: '认证配置不可用' });
+  try {
+    await databaseReady;
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', database: 'ok' });
+  } catch (error) {
+    console.error('健康检查失败:', error);
+    res.status(503).json({ status: 'error', error: '数据库不可用' });
+  }
 });
 
 // 根路径
 app.get('/', (req, res) => {
   res.json({
-    name: '无影棚预约系统 API',
+    name: '影棚预约系统 API',
     version: '1.0.0',
     endpoints: {
       health: 'GET /health',

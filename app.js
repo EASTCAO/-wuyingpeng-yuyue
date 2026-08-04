@@ -15,6 +15,7 @@ let authToken = null;
 let editingBookingId = null;
 let bookingSaveInFlight = false;
 let bookingDeleteInFlight = false;
+let currentStudioCategory = 'cyclorama';
 
 // ============ 影棚配置 ============
 // 所有影棚入口、下拉框、统计筛选和时间轴都从这里生成。
@@ -47,6 +48,7 @@ const STUDIO_GROUPS = [
     },
     {
         key: 'sixth-floor',
+        category: 'cyclorama',
         title: '6F',
         subtitle: '跨楼层备用棚',
         optionLabel: '6F',
@@ -56,11 +58,34 @@ const STUDIO_GROUPS = [
             { id: '6F无影棚', title: '6F无影棚', location: '6F' }
         ]
     },
+    {
+        key: 'real-scene',
+        category: 'real-scene',
+        title: '7F 实景棚',
+        subtitle: '7F 实景棚',
+        optionLabel: '7F 实景棚',
+        cardClass: 'studio-section-real',
+        buttonClass: 'btn-primary',
+        studios: [
+            { id: '小木屋景', title: '小木屋景', location: '7F 实景棚', mapArea: 'main-cabin' },
+            { id: '卧室景', title: '卧室景', location: '7F 实景棚', mapArea: 'main-bedroom' },
+            { id: '酒吧景', title: '酒吧景', location: '7F 实景棚', mapArea: 'main-bar' },
+            { id: '书房景', title: '书房景', location: '7F 实景棚', mapArea: 'main-study' },
+            { id: '客厅景', title: '客厅景', location: '7F 实景棚', mapArea: 'main-living' },
+            { id: '工具台景', title: '工具台景', location: '7F 实景棚', mapArea: 'main-workbench' },
+            { id: '木纹台面-厨房景', title: '木纹台面-厨房景', location: '7F 实景棚', mapArea: 'main-wood-kitchen' },
+            { id: '儿童房景/户外下午茶景', title: '儿童房景/户外下午茶景', location: '7F 实景棚', mapArea: 'main-kids-tea' },
+            { id: '洗衣房景别', title: '洗衣房景别', location: '7F 实景棚', mapArea: 'service-laundry' },
+            { id: '浴室景', title: '浴室景', location: '7F 实景棚', mapArea: 'service-bathroom' },
+            { id: '黑色台面-厨房景', title: '黑色台面-厨房景', location: '7F 实景棚', mapArea: 'service-black-kitchen' }
+        ]
+    }
 ];
 
 function getAllStudios() {
     return STUDIO_GROUPS.flatMap(group => group.studios.map(studio => ({
         ...studio,
+        category: group.category || 'cyclorama',
         groupKey: group.key,
         groupTitle: group.title,
         groupOptionLabel: group.optionLabel,
@@ -103,24 +128,40 @@ function inlineJsString(value) {
 function renderStudioSections() {
     const container = document.getElementById('studioGroups');
     if (!container) return;
+    document.getElementById('listView')?.classList.toggle('real-scene-active', currentStudioCategory === 'real-scene');
 
-    const renderGroup = group => `
+    const renderGroup = (group, animationOffset = 0) => {
+        const isRealScene = group.category === 'real-scene';
+        return `
         <section class="studio-floor-zone studio-map-zone studio-map-zone-${group.key}">
             <div class="studio-map-zone-header">
                 <h3>${escapeHtml(group.title)}</h3>
             </div>
-            <div class="studio-map-cards">
-                ${group.studios.map(studio => `
+            <div class="studio-map-cards${isRealScene ? ` real-floor-map real-floor-map-${group.key.replace('real-', '')}` : ''}">
+                ${group.studios.map((studio, index) => `
                     <div
-                        class="studio-section studio-overview-card ${group.cardClass}${studio.frozen ? ' studio-frozen' : ''}"
+                        class="studio-section studio-overview-card ${group.cardClass}${studio.frozen ? ' studio-frozen' : ''}${isRealScene ? ' real-scene-card' : ''}"
                         data-studio-id="${escapeHtml(studio.id)}"
                         data-studio-group="${group.key}"
+                        ${isRealScene ? `data-map-area="${escapeHtml(studio.mapArea)}"` : ''}
+                        ${isRealScene ? `style="--scene-index: ${animationOffset + index}"` : ''}
                         ${studio.frozen ? 'aria-disabled="true"' : `onclick="showAddBookingForm('${escapeHtml(studio.id)}')"`}
                         role="${studio.frozen ? 'group' : 'button'}"
                         tabindex="${studio.frozen ? '-1' : '0'}"
                         ${studio.frozen ? '' : `onkeydown="handleStudioCardKeydown(event, '${escapeHtml(studio.id)}')"`}
                     >
-                        <div class="studio-section-header">
+                        ${isRealScene ? `
+                            <div class="real-scene-room">
+                                <span class="real-scene-status-label">可预约</span>
+                                <div class="real-scene-title">
+                                    <h2>${escapeHtml(studio.title)}</h2>
+                                </div>
+                                <div class="real-scene-occupancy" aria-label="已预约时段占比 0%">
+                                    <span class="real-scene-occupancy-track"><i></i></span>
+                                    <small>0%</small>
+                                </div>
+                            </div>
+                        ` : `<div class="studio-section-header">
                             <div>
                                 <h2>
                                     ${escapeHtml(studio.title)}
@@ -128,20 +169,50 @@ function renderStudioSections() {
                                 </h2>
                             </div>
                             ${studio.frozen ? '<span class="studio-frozen-label">已冻结</span>' : ''}
-                        </div>
-                        <div id="${getStudioListId(studio.id)}" class="studio-summary">
-                            <p class="empty-message">暂无预约</p>
+                        </div>`}
+                        <div id="${getStudioListId(studio.id)}" class="studio-summary${isRealScene ? ' real-scene-summary' : ''}">
+                            ${isRealScene ? '' : '<p class="empty-message">暂无预约</p>'}
                         </div>
                     </div>
                 `).join('')}
             </div>
         </section>
     `;
+    };
+
+    const categoryTabs = `
+        <div class="studio-category-tabs" role="tablist" aria-label="影棚类型">
+            <button type="button" class="studio-category-tab${currentStudioCategory === 'cyclorama' ? ' active' : ''}" onclick="switchStudioCategory('cyclorama')" role="tab" aria-selected="${currentStudioCategory === 'cyclorama'}">无影棚</button>
+            <button type="button" class="studio-category-tab${currentStudioCategory === 'real-scene' ? ' active' : ''}" onclick="switchStudioCategory('real-scene')" role="tab" aria-selected="${currentStudioCategory === 'real-scene'}">实景棚</button>
+        </div>
+    `;
+
+    if (currentStudioCategory === 'real-scene') {
+        const realSceneGroup = STUDIO_GROUPS.find(group => group.key === 'real-scene');
+        container.innerHTML = `
+            ${categoryTabs}
+            <section class="real-studio-floor">
+                <div class="real-studio-floor-header">
+                    <h3>7F 实景棚</h3>
+                    <div class="real-studio-legend" aria-label="预约状态">
+                        <span><i class="real-studio-legend-swatch available" aria-hidden="true"></i>可预约</span>
+                        <span><i class="real-studio-legend-swatch partial" aria-hidden="true"></i>部分预约</span>
+                        <span><i class="real-studio-legend-swatch full" aria-hidden="true"></i>已约满</span>
+                    </div>
+                </div>
+                <div class="real-studio-layout">
+                    ${realSceneGroup ? renderGroup(realSceneGroup) : ''}
+                </div>
+            </section>
+        `;
+        return;
+    }
 
     const seventhFloorGroups = STUDIO_GROUPS.filter(group => group.key === 'large' || group.key === 'small');
     const sixthFloorGroup = STUDIO_GROUPS.find(group => group.key === 'sixth-floor');
 
     container.innerHTML = `
+        ${categoryTabs}
         <div class="studio-map">
             <section class="studio-map-zone studio-map-zone-seventh-floor">
                 <div class="studio-map-zone-header studio-floor-header">
@@ -180,6 +251,13 @@ function renderStudioSections() {
             ` : ''}
         </div>
     `;
+}
+
+function switchStudioCategory(category) {
+    if (!['cyclorama', 'real-scene'].includes(category) || category === currentStudioCategory) return;
+    currentStudioCategory = category;
+    renderStudioSections();
+    renderBookings();
 }
 
 function renderStudioOptions(selectId, includeAll = false) {
@@ -317,6 +395,8 @@ async function apiFetch(path, options = {}) {
         authToken = null;
         localStorage.removeItem('authToken');
         localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('authToken');
+        sessionStorage.removeItem('currentUser');
         currentUser = null;
         stopAutoRefresh();
         document.getElementById('loginPage')?.classList.remove('hidden');
@@ -399,8 +479,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('touchstart', unlockAudio, { once: false });
 
     // 云端模式必须通过服务端会话恢复登录，本地预览保留原来的本地模式。
-    authToken = localStorage.getItem('authToken');
-    const savedUser = localStorage.getItem('currentUser');
+    authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    const savedUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+    if (isCloudMode()) {
+        // 线上登录只保存会话令牌和用户名，清理旧版本可能遗留的明文密码。
+        localStorage.removeItem('savedPassword');
+    }
     if (!isCloudMode() && savedUser) {
         currentUser = savedUser;
         showMainPage();
@@ -421,11 +505,18 @@ window.addEventListener('DOMContentLoaded', async () => {
             if (response.ok) {
                 const data = await response.json();
                 currentUser = data.user.username;
-                localStorage.setItem('currentUser', currentUser);
+                if (localStorage.getItem('authToken')) {
+                    localStorage.setItem('currentUser', currentUser);
+                } else {
+                    sessionStorage.setItem('currentUser', currentUser);
+                }
                 showMainPage();
             } else {
                 authToken = null;
                 localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUser');
+                sessionStorage.removeItem('authToken');
+                sessionStorage.removeItem('currentUser');
             }
         } catch (error) {
             console.error('恢复登录失败:', error);
@@ -675,16 +766,23 @@ async function login() {
             if (!response.ok) throw new Error(data.error || '用户名或密码错误');
             authToken = data.token;
             currentUser = data.user.username;
-            localStorage.setItem('authToken', authToken);
-            localStorage.setItem('currentUser', currentUser);
 
             if (rememberMe) {
-            localStorage.setItem('savedUsername', name);
-            localStorage.setItem('rememberMe', 'true');
+                localStorage.setItem('authToken', authToken);
+                localStorage.setItem('currentUser', currentUser);
+                localStorage.setItem('savedUsername', name);
+                localStorage.setItem('rememberMe', 'true');
+                localStorage.removeItem('savedPassword');
+                sessionStorage.removeItem('authToken');
+                sessionStorage.removeItem('currentUser');
             } else {
-            localStorage.removeItem('savedUsername');
-            localStorage.removeItem('savedPassword');
-            localStorage.removeItem('rememberMe');
+                sessionStorage.setItem('authToken', authToken);
+                sessionStorage.setItem('currentUser', currentUser);
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('savedUsername');
+                localStorage.removeItem('savedPassword');
+                localStorage.removeItem('rememberMe');
             }
             showMainPage();
             showToast('登录成功', 'success');
@@ -776,7 +874,7 @@ function changePassword() {
     }
 
     if (isCloudMode()) {
-        if (newPassword.length < 4 || newPassword !== confirmPassword) {
+        if (newPassword.length < 6 || newPassword !== confirmPassword) {
             showToast('请检查新密码', 'error');
             return;
         }
@@ -805,8 +903,8 @@ function changePassword() {
         return;
     }
 
-    if (newPassword.length < 4) {
-        showToast('新密码至少需要4位', 'error');
+    if (newPassword.length < 6) {
+        showToast('新密码至少需要6位', 'error');
         return;
     }
 
@@ -832,6 +930,8 @@ function logout() {
         authToken = null;
         localStorage.removeItem('currentUser');
         localStorage.removeItem('authToken');
+        sessionStorage.removeItem('currentUser');
+        sessionStorage.removeItem('authToken');
         stopAutoRefresh(); // 停止自动刷新
         document.getElementById('loginPage').classList.remove('hidden');
         document.getElementById('mainPage').classList.add('hidden');
@@ -1048,13 +1148,55 @@ function renderBookings() {
         const studioCard = studioSummary.closest('.studio-overview-card');
         const frozen = isStudioFrozen(studio.id);
         const fullyBooked = !frozen && isStudioFullyBooked(studio.id, displayDates);
+        const partiallyBooked = !frozen && !fullyBooked && studioBookings.length > 0;
+        const bookedPercentage = getStudioBookedPercentage(studioBookings, displayDates);
         if (studioCard) {
             studioCard.classList.toggle('studio-fully-booked', fullyBooked);
-            studioCard.title = frozen ? '该棚位暂时冻结，无法预约' : fullyBooked ? '当前日期已约满' : '';
+            studioCard.classList.toggle('studio-partially-booked', partiallyBooked);
+            studioCard.classList.toggle('has-bookings', studioBookings.length > 0);
+            studioCard.title = frozen
+                ? '该棚位暂时冻结，无法预约'
+                : fullyBooked
+                    ? '当前日期已约满'
+                    : partiallyBooked
+                        ? '当前日期已有预约，仍有可预约时间'
+                        : '';
+
+            const statusLabel = studioCard.querySelector('.real-scene-status-label');
+            if (statusLabel) {
+                statusLabel.textContent = fullyBooked ? '已约满' : partiallyBooked ? '部分预约' : '可预约';
+            }
+
+            const occupancy = studioCard.querySelector('.real-scene-occupancy');
+            const occupancyFill = occupancy?.querySelector('i');
+            const occupancyText = occupancy?.querySelector('small');
+            if (occupancy && occupancyFill && occupancyText) {
+                occupancy.setAttribute('aria-label', `已预约时段占比 ${bookedPercentage}%`);
+                occupancyFill.style.width = `${bookedPercentage}%`;
+                occupancyText.textContent = `${bookedPercentage}%`;
+            }
         }
 
         studioSummary.innerHTML = createStudioSummary(studio, studioBookings);
     });
+}
+
+function getStudioBookedPercentage(studioBookings, dates) {
+    const startTimes = BOOKABLE_PERIODS.flatMap(period =>
+        getTimeOptions(period.start, period.end).slice(0, -1)
+    );
+    const totalSlots = startTimes.length * dates.length;
+    if (totalSlots === 0 || studioBookings.length === 0) return 0;
+
+    const bookedSlots = dates.reduce((total, date) => total + startTimes.filter(startTime => {
+        const endTime = minutesToTime(timeToMinutes(startTime) + BOOKING_INTERVAL_MINUTES);
+        return studioBookings.some(booking =>
+            getDateOnly(booking.date) === date
+            && !(endTime <= booking.startTime || startTime >= booking.endTime)
+        );
+    }).length, 0);
+
+    return Math.round((bookedSlots / totalSlots) * 100);
 }
 
 function getStudioBookingsForDates(studioId, dates, bookingsToUse = allBookings) {
@@ -1364,15 +1506,28 @@ function renderAvailabilityPanel() {
             && time === state.booking.startTime
             && selectedStartTime < time;
         const canSelect = state.type === 'free' || state.type === 'closing' || canSelectBookedBoundary;
-        const slotClass = `availability-${state.type}${canSelectBookedBoundary ? ' availability-booked-boundary' : ''}${selectedClass}`;
+        const canManageBooking = state.type === 'booked'
+            && state.booking
+            && canCancelBooking(state.booking)
+            && !canSelectBookedBoundary;
+        const slotClass = `availability-${state.type}${canSelectBookedBoundary ? ' availability-booked-boundary' : ''}${canManageBooking ? ' availability-owned-booking' : ''}${selectedClass}`;
+        const photographerName = state.type === 'booked' && state.booking
+            ? escapeHtml(state.booking.photographer || '')
+            : '';
+        const clickAction = canSelect
+            ? `selectAvailabilityTime('${time}')`
+            : canManageBooking
+                ? `openAvailabilityBooking(${inlineJsString(state.booking.id)})`
+                : '';
         return `
             <button
                 type="button"
                 class="availability-slot ${slotClass}"
-                ${canSelect ? `onclick="selectAvailabilityTime('${time}')"` : 'disabled'}
+                ${clickAction ? `onclick="${clickAction}"` : 'disabled'}
                 title="${escapeHtml(state.label)}"
             >
                 <span>${time}</span>
+                ${photographerName ? `<small>${photographerName}</small>` : ''}
             </button>
         `;
     };
@@ -1407,13 +1562,31 @@ function renderAvailabilityPanel() {
         return;
     }
 
-    bookingsList.innerHTML = existingBookings.map(booking => `
-        <div class="availability-booking-item">
+    bookingsList.innerHTML = existingBookings.map(booking => {
+        const content = `
             <strong>${booking.startTime}-${booking.endTime}</strong>
             <span>${escapeHtml(booking.photographer)}</span>
             ${getBookingNote(booking) ? `<em>${escapeHtml(getBookingNote(booking))}</em>` : ''}
-        </div>
-    `).join('');
+        `;
+        if (!canCancelBooking(booking)) {
+            return `<div class="availability-booking-item">${content}</div>`;
+        }
+        return `
+            <button
+                type="button"
+                class="availability-booking-item manageable"
+                onclick="openAvailabilityBooking(${inlineJsString(booking.id)})"
+                title="点击修改或取消该预约"
+            >${content}</button>
+        `;
+    }).join('');
+}
+
+function openAvailabilityBooking(bookingId) {
+    const booking = allBookings.find(item => item.id === bookingId);
+    if (!booking || !canCancelBooking(booking)) return;
+    closeAddBookingForm();
+    showBookingDetail(bookingId);
 }
 
 function selectAvailabilityTime(time) {
@@ -1555,8 +1728,6 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null) {
     dateInput.value = defaultDate;
     document.getElementById('startTime').value = bookingToEdit?.startTime || '';
     document.getElementById('endTime').value = bookingToEdit?.endTime || '';
-    document.getElementById('bookingNote').value = bookingToEdit ? getBookingNote(bookingToEdit) : '';
-
     const startTimeSelect = document.getElementById('startTime');
     const endTimeSelect = document.getElementById('endTime');
     renderTimeSelectOptions();
@@ -1664,7 +1835,10 @@ async function addBooking() {
     const date = document.getElementById('bookingDate').value;
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
-    const note = document.getElementById('bookingNote').value.trim();
+    const originalBooking = editingBookingId
+        ? allBookings.find(booking => booking.id === editingBookingId)
+        : null;
+    const note = originalBooking ? getBookingNote(originalBooking) : '';
 
     console.log('提交预约:', { studio, date, startTime, endTime, note });
 
@@ -1675,7 +1849,7 @@ async function addBooking() {
     }
 
     if (!isBookableDate(date)) {
-        showToast('只能预约今天或明天的无影棚', 'error');
+        showToast('只能预约今天或明天的影棚', 'error');
         return;
     }
 
@@ -1717,9 +1891,6 @@ async function addBooking() {
     }
 
     // 创建新预约对象
-    const originalBooking = editingBookingId
-        ? allBookings.find(booking => booking.id === editingBookingId)
-        : null;
     const activeEditingId = editingBookingId;
     const isEditing = Boolean(activeEditingId);
     const newBooking = {

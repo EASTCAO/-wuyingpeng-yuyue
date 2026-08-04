@@ -1,231 +1,91 @@
-# 无影棚预约系统
+# 影棚预约系统
 
-一个轻量级的影棚预约管理系统，支持多影棚、多用户的预约管理。
+面向摄影团队的影棚预约系统，覆盖 6F、7F 无影棚和 7F 实景棚。正式前端部署在 Vercel，预约数据与账号由 Zeabur 上的 Node.js API 和 PostgreSQL 统一管理。
 
-## 功能特点
+## 当前功能
 
-- 📅 **多影棚管理**：支持7个影棚（2个大棚 + 4个小棚 + 1个6F棚）
-- 👥 **多用户支持**：每个用户独立登录，查看自己的预约
-- 🔄 **云端同步**：支持后端 API，实现多用户实时数据同步
-- 📊 **多视图展示**：列表视图和时间轴视图
-- 💾 **双模式存储**：支持本地 localStorage 或云端数据库
-- 📱 **PWA 支持**：支持离线使用和桌面安装
-- 🔔 **预约提醒**：自动提醒即将开始的预约
-
-## 技术栈
-
-**前端**
-- 纯前端实现：HTML + CSS + JavaScript
-- 无需构建工具，开箱即用
-- PWA 技术支持离线访问
-- 响应式设计，支持移动端
-
-**后端**
-- Node.js + Express
-- PostgreSQL 数据库
-- RESTful API
-- CORS 跨域支持
+- 6F / 7F 楼层切换，以及无影棚 / 实景棚分类切换。
+- 7 个无影棚和 11 个实景场景独立预约。
+- 预约范围仅限今天和明天。
+- 营业时间为上午 08:30-12:30、下午 14:00-18:30，间隔 15 分钟。
+- 同一场景自动阻止重叠预约，不同场景可以同时预约。
+- 摄影师可以修改或取消自己的预约，管理员可以管理全部预约和用户。
+- 管理员可以查看昨天的预约记录。
+- 小无影棚 1、2 当前处于冻结状态。
+- 洗衣房景别支持鼠标悬停查看场景示意图。
 
 ## 项目结构
 
-```
+```text
 .
-├── index.html          # 主页面
-├── app.js             # 业务逻辑
-├── style.css          # 样式文件
-├── sw.js              # Service Worker
-├── manifest.json      # PWA 配置
-├── api/               # 后端 API
-│   ├── server.js      # Express 服务器
-│   ├── migrate.js     # 数据库迁移脚本
-│   ├── test.js        # API 测试脚本
-│   ├── package.json   # 依赖配置
-│   └── zbpack.json    # Zeabur 构建配置
-├── CLAUDE.md          # Claude Code 项目指导
-└── README.md          # 项目说明
+├── index.html                 # 正式页面
+├── app.js                     # 预约、登录和数据逻辑
+├── style.css                  # 基础界面样式
+├── studio-layout.js           # 6F/7F 与实景棚总览布局
+├── studio-layout.css          # 总览布局样式
+├── assets/real-studio/        # 场景示意图
+├── manifest.json              # PWA 配置
+├── sw.js                      # 离线缓存
+└── api/
+    ├── server.js              # Express API
+    ├── test.js                # API 冒烟测试
+    ├── migrate.js             # 数据迁移脚本
+    └── package.json
 ```
 
 ## 本地运行
 
-### 前端
+前端本地地址会自动使用浏览器本地存储，不连接线上 API：
 
-```bash
-# 使用 Python 启动本地服务器
-python -m http.server 8000
-
-# 或使用 Node.js
-npx http-server -p 8000
-
-# 访问 http://localhost:8000
+```powershell
+python -m http.server 8080
 ```
 
-### 后端（可选）
+打开 `http://127.0.0.1:8080/index.html`。
 
-```bash
+后端需要 PostgreSQL：
+
+```powershell
 cd api
 npm install
+$env:DATABASE_URL="postgresql://user:password@host:5432/database"
+$env:AUTH_SECRET="replace-with-a-long-random-secret"
 npm start
-
-# 后端运行在 http://localhost:3000
 ```
+
+## 检查与测试
+
+```powershell
+node --check app.js
+node --check studio-layout.js
+node --check api/server.js
+cd api
+npm audit --omit=dev
+npm test -- https://wuhanphotoyy.zeabur.app
+```
+
+不设置测试账号时，API 测试只执行健康检查、未登录访问保护和错误登录检查。需要执行完整的预约创建、冲突和清理测试时：
+
+```powershell
+$env:TEST_USERNAME="测试账号"
+$env:TEST_PASSWORD="测试密码"
+npm test -- https://wuhanphotoyy.zeabur.app
+```
+
+完整测试会创建一条带 `smoke-` 前缀的临时预约，并在结束时自动删除。
 
 ## 部署
 
-### 前端部署
+- 前端：`https://wuyingpeng-yuyue.vercel.app`
+- 后端：`https://wuhanphotoyy.zeabur.app`
+- 仓库：`https://github.com/EASTCAO/-wuyingpeng-yuyue`
 
-**Vercel / Netlify / GitHub Pages**
-- 直接上传项目根目录
-- 无需构建步骤
+推送 `main` 分支后，Vercel 和 Zeabur 会自动构建部署。后端生产环境至少需要配置：
 
-### 后端部署到 Zeabur
-
-1. **创建 PostgreSQL 服务**
-   - 在 Zeabur 控制台创建 PostgreSQL 服务
-
-2. **部署后端服务**
-   - 连接 GitHub 仓库
-   - 设置根目录为 `api`
-   - 配置环境变量：
-     ```
-     DATABASE_URL=postgresql://user:password@host:port/database
-     NODE_ENV=development
-     PORT=${WEB_PORT}
-     ```
-
-3. **更新前端配置**
-   - 修改 `app.js` 中的 `API_BASE_URL` 为后端地址
-   - 重新部署前端
-
-详细部署指南请查看 `zeabur-env-config-guide.html`
-
-## API 文档
-
-### 端点
-
-- `GET /health` - 健康检查
-- `GET /api/bookings` - 获取所有预约
-- `POST /api/bookings` - 创建新预约
-- `PUT /api/bookings/:id` - 修改自己的预约时间
-- `DELETE /api/bookings/:id` - 删除预约
-
-### 测试
-
-```bash
-cd api
-node test.js https://your-backend-url.zeabur.app
+```text
+DATABASE_URL=postgresql://...
+AUTH_SECRET=长度足够的随机字符串
+NODE_ENV=production
 ```
 
-## 开发
-
-### 数据库迁移
-
-如果需要重建数据库表结构：
-
-```bash
-cd api
-node migrate.js "postgresql://connection-string"
-```
-
-## License
-
-MIT
-python -m http.server 8000
-
-# 或使用 Node.js
-npx serve
-
-# 然后访问 http://localhost:8000
-```
-
-## 部署
-
-### 模式选择
-
-**单机模式（仅本地存储）**
-- 使用 localStorage 存储数据
-- 无需后端，部署简单
-- 每个用户的数据独立，无法互相看到其他人的预约
-- 适合个人使用或单设备使用
-
-**云端模式（多用户同步）**
-- 使用后端 API + 数据库
-- 多用户实时数据同步
-- 所有用户看到相同的预约信息
-- 适合团队协作使用
-
-### 部署到 Zeabur
-
-#### 1. 部署前端（必需）
-
-```bash
-# 提交代码
-git add .
-git commit -m "Deploy frontend"
-git push
-
-# 在 Zeabur 创建新服务
-# 选择你的 Git 仓库
-# Zeabur 会自动识别为静态网站
-```
-
-前端部署完成后，你会得到一个域名，例如：`https://your-app.zeabur.app`
-
-#### 2. 部署后端（可选，用于多用户同步）
-
-```bash
-# 在 Zeabur 创建另一个服务
-# 选择同一个 Git 仓库
-# 设置根目录为 'api' 或让 Zeabur 自动检测
-```
-
-后端部署完成后，你会得到另一个域名，例如：`https://your-api.zeabur.app`
-
-#### 3. 配置云端同步
-
-编辑 `app.js` 文件，将后端域名填入：
-
-```javascript
-const API_BASE_URL = 'https://your-api.zeabur.app'; // 改为你的后端域名
-```
-
-然后重新提交并部署前端：
-
-```bash
-git add app.js
-git commit -m "Configure backend URL"
-git push
-```
-
-#### 4. 测试同步功能
-
-- 在不同浏览器或设备打开应用
-- 创建预约，查看是否能在其他设备实时看到
-- 删除预约，查看是否能在其他设备同步删除
-
-### 其他部署平台
-
-项目也可以部署到：
-- Vercel
-- Netlify
-- GitHub Pages
-- Cloudflare Pages
-
-**注意**：如果使用其他平台部署后端，需要单独部署 Node.js 应用（api 目录）。
-
-## 使用说明
-
-1. **登录**：输入用户名和密码（支持记住密码）
-2. **查看预约**：切换列表视图或时间轴视图
-3. **新建预约**：选择影棚、日期、时间段
-4. **管理预约**：查看、删除自己的预约
-
-## 影棚配置
-
-- **大棚**：大无影棚1（工位对面）、大无影棚2（鄢军隔壁）
-- **小棚**：小无影棚1、小无影棚2、小无影棚3、小无影棚4
-- **6F**：6F无影棚
-- **营业时间**：9:00 - 18:00
-
-## 许可证
-
-MIT License
+`DEFAULT_USER_PASSWORD` 仅用于首次创建默认账号，正式环境应配置后再由用户及时修改密码。
