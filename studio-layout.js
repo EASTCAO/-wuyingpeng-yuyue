@@ -110,6 +110,7 @@ renderStudioSections = function renderStudioLayoutSections() {
             <div id="studioPreviewContent" class="preview-content"></div>
         </section>
     `;
+    renderRealSceneOverview();
 };
 
 renderBookings = function renderStudioLayoutBookings() {
