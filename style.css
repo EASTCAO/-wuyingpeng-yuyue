@@ -1079,11 +1079,16 @@ body {
     transform: translateY(-1px);
 }
 
-.availability-past {
+.availability-past,
+.availability-slot.availability-past:hover,
+.availability-slot.availability-past.selected-start,
+.availability-slot.availability-past.selected-end,
+.availability-slot.availability-past.selected-range {
     color: #6B7280;
     background: #E5E7EB;
     border-color: #D1D5DB;
     cursor: not-allowed;
+    transform: none;
 }
 
 .availability-slot.selected-start,

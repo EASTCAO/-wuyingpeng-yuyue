@@ -1363,6 +1363,7 @@ function getAvailabilitySlotState(time, selectedDate, existingBookings) {
     const today = getChinaDate();
     const currentTime = getChinaCurrentTime();
     const isPeriodEnd = BOOKABLE_PERIODS.some(period => period.end === time);
+    const isPast = selectedDate === today && time < currentTime;
 
     const booking = existingBookings.find(item =>
         time >= item.startTime && (time < item.endTime || (isPeriodEnd && time === item.endTime))
@@ -1371,11 +1372,12 @@ function getAvailabilitySlotState(time, selectedDate, existingBookings) {
         return {
             type: 'booked',
             label: `${booking.startTime}-${booking.endTime} ${booking.photographer}`,
-            booking
+            booking,
+            isPast
         };
     }
 
-    if (selectedDate === today && time < currentTime) {
+    if (isPast) {
         return { type: 'past', label: '已过' };
     }
 
@@ -1501,6 +1503,7 @@ function renderAvailabilityPanel() {
             isEnd ? ' selected-end' : ''
         ].join('');
         const canSelectBookedBoundary = state.type === 'booked'
+            && !state.isPast
             && selectedStartTime
             && state.booking
             && time === state.booking.startTime
@@ -1510,7 +1513,7 @@ function renderAvailabilityPanel() {
             && state.booking
             && canCancelBooking(state.booking)
             && !canSelectBookedBoundary;
-        const slotClass = `availability-${state.type}${canSelectBookedBoundary ? ' availability-booked-boundary' : ''}${canManageBooking ? ' availability-owned-booking' : ''}${selectedClass}`;
+        const slotClass = `availability-${state.type}${state.isPast ? ' availability-past' : ''}${canSelectBookedBoundary ? ' availability-booked-boundary' : ''}${canManageBooking ? ' availability-owned-booking' : ''}${selectedClass}`;
         const photographerName = state.type === 'booked' && state.booking
             ? escapeHtml(state.booking.photographer || '')
             : '';
