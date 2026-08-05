@@ -180,6 +180,7 @@ async function ensureDatabase() {
         "createdAt" TEXT NOT NULL
       )
     `);
+    await client.query('CREATE INDEX IF NOT EXISTS bookings_date_start_idx ON bookings (date, "startTime")');
 
     const studioMigrations = [
       ['无影棚1号', '大无影棚1（工位对面）'],
@@ -317,7 +318,22 @@ app.post('/api/auth/change-password', requireAuth, async (req, res) => {
 // 获取所有预约
 app.get('/api/bookings', requireAuth, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM bookings ORDER BY date, "startTime"');
+    const fromDate = String(req.query.from || '');
+    const toDate = String(req.query.to || '');
+    let result;
+    if (fromDate || toDate) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(fromDate)
+        || !/^\d{4}-\d{2}-\d{2}$/.test(toDate)
+        || fromDate > toDate) {
+        return res.status(400).json({ error: '日期范围无效' });
+      }
+      result = await pool.query(
+        'SELECT * FROM bookings WHERE date >= $1 AND date <= $2 ORDER BY date, "startTime"',
+        [fromDate, toDate]
+      );
+    } else {
+      result = await pool.query('SELECT * FROM bookings ORDER BY date, "startTime"');
+    }
     res.json(result.rows);
   } catch (error) {
     console.error('获取预约失败:', error);

@@ -16,6 +16,8 @@ let editingBookingId = null;
 let bookingSaveInFlight = false;
 let bookingDeleteInFlight = false;
 let currentStudioCategory = 'cyclorama';
+let bookingsLoaded = false;
+let bookingHistoryLoaded = false;
 
 // ============ 影棚配置 ============
 // 所有影棚入口、下拉框、统计筛选和时间轴都从这里生成。
@@ -171,7 +173,7 @@ function renderStudioSections() {
                             ${studio.frozen ? '<span class="studio-frozen-label">已冻结</span>' : ''}
                         </div>`}
                         <div id="${getStudioListId(studio.id)}" class="studio-summary${isRealScene ? ' real-scene-summary' : ''}">
-                            ${isRealScene ? '' : '<p class="empty-message">暂无预约</p>'}
+                            ${isRealScene ? '' : `<p class="studio-booking-loading">${bookingsLoaded ? '暂无预约' : '预约加载中'}</p>`}
                         </div>
                     </div>
                 `).join('')}
@@ -242,7 +244,7 @@ function renderStudioSections() {
                                     <div><h2>${escapeHtml(studio.title.replace(/^6F/, ''))}</h2></div>
                                 </div>
                                 <div id="${getStudioListId(studio.id)}" class="studio-summary">
-                                    <p class="empty-message">暂无预约</p>
+                                    <p class="studio-booking-loading">${bookingsLoaded ? '暂无预约' : '预约加载中'}</p>
                                 </div>
                             </div>
                         `).join('')}
@@ -928,6 +930,9 @@ function logout() {
     if (confirm('确定要退出吗？')) {
         currentUser = null;
         authToken = null;
+        allBookings = [];
+        bookingsLoaded = false;
+        bookingHistoryLoaded = false;
         localStorage.removeItem('currentUser');
         localStorage.removeItem('authToken');
         sessionStorage.removeItem('currentUser');
@@ -941,6 +946,9 @@ function logout() {
 
 // 显示主页面
 function showMainPage() {
+    allBookings = [];
+    bookingsLoaded = false;
+    bookingHistoryLoaded = false;
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('mainPage').classList.remove('hidden');
     document.getElementById('currentUser').textContent = currentUser;
@@ -1027,13 +1035,17 @@ function migrateStudioNames() {
     }
 }
 
-async function loadBookings() {
+async function loadBookings({ includeHistory = bookingHistoryLoaded } = {}) {
     console.log('开始加载预约数据...');
 
     if (isCloudMode()) {
         // 云端模式：从 API 加载
+        const previousBookings = allBookings;
         try {
-            const response = await apiFetch('/api/bookings');
+            const bookingPath = includeHistory
+                ? '/api/bookings'
+                : `/api/bookings?from=${getChinaDate(-1)}&to=${getChinaDate(1)}`;
+            const response = await apiFetch(bookingPath);
             if (!response.ok) {
                 throw new Error(`加载失败: ${response.status}`);
             }
@@ -1041,14 +1053,20 @@ async function loadBookings() {
 
             // 标准化字段名：后端使用 notes，前端使用 note
             allBookings = allBookings.map(normalizeBookingRecord);
+            bookingsLoaded = true;
+            if (includeHistory) bookingHistoryLoaded = true;
 
             sortBookings();
             renderAllViews();
             console.log('✅ 从云端加载了', allBookings.length, '条预约');
+            return true;
         } catch (error) {
             console.error('从云端加载预约失败:', error);
             showToast('加载数据失败，请检查网络', 'error');
-            allBookings = [];
+            allBookings = previousBookings;
+            bookingsLoaded = true;
+            renderAllViews();
+            return false;
         }
     } else {
         // 本地模式：从 localStorage 加载
@@ -1056,13 +1074,19 @@ async function loadBookings() {
             const stored = localStorage.getItem('bookings');
             allBookings = stored ? JSON.parse(stored) : [];
             migrateStudioNames();
+            bookingsLoaded = true;
+            bookingHistoryLoaded = true;
             sortBookings();
             renderAllViews();
             console.log('✅ 从本地加载了', allBookings.length, '条预约');
+            return true;
         } catch (error) {
             console.error('加载预约失败:', error);
             showToast('加载数据失败', 'error');
             allBookings = [];
+            bookingsLoaded = true;
+            renderAllViews();
+            return false;
         }
     }
 }
@@ -2293,7 +2317,7 @@ window.addEventListener('click', (e) => {
 // ============ 新增功能：时间轴视图 ============
 
 // 切换视图
-function switchView(view) {
+async function switchView(view) {
     currentView = view;
 
     // 更新桌面端按钮状态
@@ -2324,6 +2348,11 @@ function switchView(view) {
         renderBookings();
     } else if (view === 'stats') {
         document.getElementById('statsView').classList.remove('hidden');
+        if (isCloudMode() && !bookingHistoryLoaded) {
+            showStatsLoading();
+            await loadBookings({ includeHistory: true });
+            return;
+        }
         initStatsView();
         renderStatsView();
     } else if (view === 'users') {
@@ -2332,6 +2361,17 @@ function switchView(view) {
             renderUserManagement();
         }
     }
+}
+
+function showStatsLoading() {
+    const totalBookings = document.getElementById('totalBookings');
+    const totalHours = document.getElementById('totalHours');
+    const totalPhotographers = document.getElementById('totalPhotographers');
+    const tableBody = document.getElementById('statsTableBody');
+    if (totalBookings) totalBookings.textContent = '...';
+    if (totalHours) totalHours.textContent = '...';
+    if (totalPhotographers) totalPhotographers.textContent = '...';
+    if (tableBody) tableBody.innerHTML = '<tr><td colspan="6" class="empty-message">正在加载统计数据...</td></tr>';
 }
 
 // 选择日期范围

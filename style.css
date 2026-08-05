@@ -3395,6 +3395,37 @@ body {
     min-height: 58px;
 }
 
+.studio-booking-loading {
+    align-self: center;
+    justify-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    color: #64748B;
+    font-size: 13px;
+}
+
+.studio-booking-loading::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border: 2px solid #D9E3F5;
+    border-top-color: #4F7DE8;
+    border-radius: 50%;
+    animation: studio-booking-spin 0.7s linear infinite;
+}
+
+@keyframes studio-booking-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .studio-booking-loading::before {
+        animation: none;
+    }
+}
+
 .studio-summary-status {
     display: inline-flex;
     align-items: center;
