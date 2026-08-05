@@ -9,7 +9,7 @@ const STUDIO_SCENE_REFERENCES = {
 };
 
 let currentStudioFloor = '7F';
-currentStudioCategory = 'real-scene';
+currentStudioCategory = 'cyclorama';
 
 function renderFloorTabs() {
     return `
