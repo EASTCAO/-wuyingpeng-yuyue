@@ -790,6 +790,51 @@
         padding: 12px;
     }
 
+    .studio-booking-page .list-view.preview-cyclorama-active,
+    .studio-booking-page .list-view.preview-cyclorama-active #studioGroups {
+        display: block;
+    }
+
+    .studio-booking-page .list-view.preview-cyclorama-active .preview-single-floor-map {
+        min-height: 0;
+        flex: none;
+    }
+
+    .studio-booking-page .list-view.preview-cyclorama-active .studio-map-zone-seventh-floor,
+    .studio-booking-page .list-view.preview-cyclorama-active .studio-map-zone-seventh-floor .studio-floor-zones,
+    .studio-booking-page .list-view.preview-cyclorama-active .studio-map-zone-seventh-floor .studio-floor-zones > .studio-map-zone,
+    .studio-booking-page .list-view.preview-sixth-floor-active .studio-map-zone-sixth-floor,
+    .studio-booking-page .list-view.preview-sixth-floor-active .studio-map-zone-sixth-floor .studio-map-cards,
+    .studio-booking-page .list-view.preview-sixth-floor-active .studio-overview-card[data-studio-group="sixth-floor"] {
+        height: auto;
+    }
+
+    .studio-booking-page .list-view.preview-cyclorama-active .studio-map-zone-seventh-floor .studio-map-cards,
+    .studio-booking-page .list-view.preview-sixth-floor-active .studio-map-zone-sixth-floor .studio-map-cards {
+        grid-template-rows: none;
+        grid-auto-rows: auto;
+        align-content: start;
+    }
+
+    .studio-booking-page .list-view.preview-cyclorama-active .studio-map-zone-small .studio-map-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .preview-single-floor-map .studio-floor-zones > .studio-map-zone-small {
+        padding-top: 12px;
+        padding-left: 0;
+        border-top: 1px solid #E1E7ED;
+        border-left: 0;
+    }
+
+    .preview-single-floor-map .studio-map-zone-seventh-floor .studio-map-cards {
+        gap: 10px;
+    }
+
+    .preview-single-floor-map .studio-map-zone-seventh-floor .studio-overview-card {
+        height: auto;
+    }
+
     .preview-lobby-toolbar {
         align-items: flex-start;
         flex-wrap: wrap;
