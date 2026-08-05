@@ -595,6 +595,22 @@
     white-space: nowrap;
 }
 
+.preview-scene-expired-label {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    padding: 3px 7px;
+    border: 1px solid #D1D5DB;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.88);
+    color: #6B7280;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
 .preview-scene-card.partial .preview-scene-progress-track,
 .preview-scene-card.full .preview-scene-progress-track {
     background: rgba(207, 105, 48, 0.2);

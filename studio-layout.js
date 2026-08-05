@@ -154,12 +154,13 @@ function getRealSceneState(studio, date) {
     const occupiedSegments = STUDIO_OVERVIEW_SEGMENTS - remainingSegments;
     const occupiedPercentage = Math.round((occupiedSegments / STUDIO_OVERVIEW_SEGMENTS) * 100);
     const isPastDate = date < getChinaDate();
-    const isEndedToday = date === getChinaDate() && getChinaCurrentTime() >= BOOKING_END_TIME;
+    const lastBookableStart = minutesToTime(timeToMinutes(BOOKING_END_TIME) - BOOKING_INTERVAL_MINUTES);
+    const isEndedToday = date === getChinaDate() && getChinaCurrentTime() > lastBookableStart;
 
     if (isPastDate || isEndedToday) {
         return {
             type: 'ended',
-            label: '已结束',
+            label: '已过期',
             bookings,
             availableRanges: [],
             remainingSegments,
@@ -215,7 +216,9 @@ function renderRealSceneCard(studio, state, index) {
             <div class="preview-scene-card-top">
                 <h4>${escapeHtml(studio.title)}</h4>
             </div>
-            ${state.bookings.length > 0 && state.type === 'full' ? `
+            ${state.type === 'ended' ? `
+                <span class="preview-scene-expired-label" role="status">已过期</span>
+            ` : state.bookings.length > 0 && state.type === 'full' ? `
                 <span class="preview-scene-full-label" role="status" aria-label="当前日期已约满">已约满</span>
             ` : state.bookings.length > 0 ? `
                 <div
