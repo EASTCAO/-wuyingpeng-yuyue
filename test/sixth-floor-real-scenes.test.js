@@ -49,8 +49,8 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
 
     assert.doesNotMatch(layoutSource, /走廊|街道|海洋背景墙/);
     assert.doesNotMatch(layoutStyles, /sixth-floor-corridor|sixth-floor-street/);
-    assert.match(htmlSource, /studio-layout\.js\?v=20260810-canvas-v6/);
-    assert.match(serviceWorkerSource, /studio-booking-v111-sixth-floor-reference-layout/);
+    assert.match(htmlSource, /studio-layout\.js\?v=20260810-canvas-v7/);
+    assert.match(serviceWorkerSource, /studio-booking-v112-sixth-floor-card-bounds/);
 });
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
@@ -89,4 +89,16 @@ test('6F 默认布局按参考图分成左中右三段户型区域', () => {
     assert.match(layoutSource, /'sixth-greenery':\s*\{\s*x:\s*40,\s*y:\s*170,\s*width:\s*200,\s*height:\s*500/);
     assert.match(layoutSource, /'sixth-study':\s*\{\s*x:\s*840,\s*y:\s*170/);
     assert.match(layoutSource, /'sixth-vintage-dining':\s*\{\s*x:\s*1440,\s*y:\s*170/);
+});
+
+test('6F 已保存和拖动中的卡片坐标都会被限制在画布内', () => {
+    assert.match(layoutSource, /function clampSixthFloorCardPosition/);
+    assert.match(layoutSource, /Math\.min\(SIXTH_FLOOR_CANVAS_SIZE\.width - card\.width/);
+    assert.match(layoutSource, /clampSixthFloorLayout/);
+    assert.match(layoutSource, /clampSixthFloorCardPosition\(\{[\s\S]*\.\.\.next/);
+});
+
+test('6F 拖动后的点击抑制标记会自动清理', () => {
+    assert.match(layoutSource, /setTimeout\(\(\) => \{\s*sixthFloorSuppressClick = false;/);
+    assert.match(layoutSource, /pointercancel/);
 });

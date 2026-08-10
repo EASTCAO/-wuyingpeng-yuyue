@@ -46,15 +46,27 @@ function canEditSixthFloorLayout() {
     return Boolean(currentUser && !currentUser.startsWith('游客'));
 }
 
+function clampSixthFloorCardPosition(card) {
+    return {
+        ...card,
+        x: Math.max(0, Math.min(SIXTH_FLOOR_CANVAS_SIZE.width - card.width, card.x)),
+        y: Math.max(0, Math.min(SIXTH_FLOOR_CANVAS_SIZE.height - card.height, card.y))
+    };
+}
+
+function clampSixthFloorLayout(layout) {
+    return Object.fromEntries(Object.entries(layout).map(([key, card]) => [key, clampSixthFloorCardPosition(card)]));
+}
+
 function loadSixthFloorLayout() {
-    if (!canEditSixthFloorLayout()) return structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT);
+    if (!canEditSixthFloorLayout()) return clampSixthFloorLayout(structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT));
     try {
         const stored = JSON.parse(localStorage.getItem(getSixthFloorLayoutStorageKey()) || 'null');
-        return stored?.version === SIXTH_FLOOR_LAYOUT_VERSION && stored.layout
+        return clampSixthFloorLayout(stored?.version === SIXTH_FLOOR_LAYOUT_VERSION && stored.layout
             ? { ...structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT), ...stored.layout }
-            : structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT);
+            : structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT));
     } catch {
-        return structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT);
+        return clampSixthFloorLayout(structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT));
     }
 }
 
@@ -390,8 +402,13 @@ function bindSixthFloorCanvas() {
         if (Math.abs(dx) + Math.abs(dy) > 4) state.moved = true;
         if (state.type === 'card') {
             const next = layout[state.key];
-            next.x = Math.round((state.originX + dx / sixthFloorViewport.scale) / 12) * 12;
-            next.y = Math.round((state.originY + dy / sixthFloorViewport.scale) / 12) * 12;
+            const bounded = clampSixthFloorCardPosition({
+                ...next,
+                x: Math.round((state.originX + dx / sixthFloorViewport.scale) / 12) * 12,
+                y: Math.round((state.originY + dy / sixthFloorViewport.scale) / 12) * 12
+            });
+            next.x = bounded.x;
+            next.y = bounded.y;
             state.card.style.setProperty('--card-x', `${next.x}px`);
             state.card.style.setProperty('--card-y', `${next.y}px`);
             state.card.classList.add('is-dragging');
@@ -409,8 +426,18 @@ function bindSixthFloorCanvas() {
             if (state.moved) {
                 sixthFloorSuppressClick = true;
                 saveSixthFloorLayout(layout);
+                setTimeout(() => {
+                    sixthFloorSuppressClick = false;
+                }, 0);
             }
         }
+        sixthFloorDragState = null;
+        if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
+    });
+    viewport.addEventListener('pointercancel', event => {
+        const state = sixthFloorDragState;
+        if (!state) return;
+        if (state.type === 'card') state.card.classList.remove('is-dragging');
         sixthFloorDragState = null;
         if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
     });
