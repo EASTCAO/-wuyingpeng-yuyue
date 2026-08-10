@@ -265,7 +265,6 @@ function renderRealSceneMap(scenes) {
                         <button type="button" data-canvas-action="reset">复位</button>
                     </div>` : ''}
                     <div class="sixth-floor-canvas" data-sixth-floor-canvas style="width:${SIXTH_FLOOR_CANVAS_SIZE.width}px;height:${SIXTH_FLOOR_CANVAS_SIZE.height}px;transform:translate(calc(-50% + ${sixthFloorViewport.x}px), calc(-50% + ${sixthFloorViewport.y}px)) scale(${sixthFloorViewport.scale})">
-                        <div class="sixth-floor-corridor">走廊 · 海洋背景墙</div><div class="sixth-floor-street">街道</div>
                         ${scenes.map(({ studio, state }, index) => renderRealSceneCard(studio, state, index, layout)).join('')}
                     </div>
                 </div>
@@ -338,10 +337,21 @@ function applySixthFloorViewport() {
     if (zoom) zoom.textContent = `${Math.round(sixthFloorViewport.scale * 100)}%`;
 }
 
+function fitSixthFloorCanvasToViewport() {
+    const viewport = document.querySelector('[data-canvas-viewport]');
+    if (!viewport) return;
+    const availableWidth = Math.max(viewport.clientWidth - 24, 320);
+    const availableHeight = Math.max(viewport.clientHeight - 24, 320);
+    const fittedScale = Math.min(1, availableWidth / SIXTH_FLOOR_CANVAS_SIZE.width, availableHeight / SIXTH_FLOOR_CANVAS_SIZE.height);
+    sixthFloorViewport = { ...sixthFloorViewport, scale: Number(Math.max(0.55, fittedScale).toFixed(2)) };
+    applySixthFloorViewport();
+}
+
 function bindSixthFloorCanvas() {
     const viewport = document.querySelector('[data-canvas-viewport]');
     const canvas = document.querySelector('[data-sixth-floor-canvas]');
     if (!viewport || !canvas) return;
+    fitSixthFloorCanvasToViewport();
     if (!canEditSixthFloorLayout()) return;
     const layout = loadSixthFloorLayout();
     viewport.addEventListener('wheel', event => {

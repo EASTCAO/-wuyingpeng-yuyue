@@ -28,8 +28,7 @@ test('6F 实景棚可以在楼层预览中展示', () => {
 
 test('6F 小屏预览保留横向户型图而不是降级为卡片列表', () => {
     assert.match(layoutStyles, /\.preview-content-6f\s*{[^}]*overflow-x:\s*auto/s);
-    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*{[^}]*grid-template-columns:\s*repeat\(24/s);
-    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*{[^}]*min-width:\s*1180px/s);
+    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*{[\s\S]*?min-width:\s*0;/);
 });
 
 test('6F 自由画布具备默认坐标、用户隔离存储和游客只读规则', () => {
@@ -39,4 +38,19 @@ test('6F 自由画布具备默认坐标、用户隔离存储和游客只读规�
     assert.match(layoutSource, /data-layout-key/);
     assert.match(layoutSource, /resetSixthFloorLayout/);
     assert.match(layoutStyles, /sixth-floor-canvas/);
+});
+
+test('6F 自由画布不显示走廊和街道，并使用当前资源版本', () => {
+    const htmlSource = fs.readFileSync('index.html', 'utf8');
+    const serviceWorkerSource = fs.readFileSync('sw.js', 'utf8');
+
+    assert.doesNotMatch(layoutSource, /走廊|街道|海洋背景墙/);
+    assert.doesNotMatch(layoutStyles, /sixth-floor-corridor|sixth-floor-street/);
+    assert.match(htmlSource, /studio-layout\.js\?v=20260810-canvas-v1/);
+    assert.match(serviceWorkerSource, /studio-booking-v106-sixth-floor-canvas/);
+});
+
+test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
+    assert.match(layoutSource, /fitSixthFloorCanvasToViewport/);
+    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?min-width:\s*0;/);
 });
