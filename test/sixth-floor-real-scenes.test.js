@@ -25,3 +25,9 @@ test('6F 实景棚可以在楼层预览中展示', () => {
     assert.match(layoutSource, /preview-floor-map-sixth-floor/);
     assert.match(layoutStyles, /preview-floor-map-sixth-floor/);
 });
+
+test('6F 小屏预览保留横向户型图而不是降级为卡片列表', () => {
+    assert.match(layoutStyles, /\.preview-content-6f\s*{[^}]*overflow-x:\s*auto/s);
+    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*{[^}]*grid-template-columns:\s*repeat\(24/s);
+    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*{[^}]*min-width:\s*1180px/s);
+});
