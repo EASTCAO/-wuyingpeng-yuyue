@@ -31,3 +31,12 @@ test('6F 小屏预览保留横向户型图而不是降级为卡片列表', () =>
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*{[^}]*grid-template-columns:\s*repeat\(24/s);
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*{[^}]*min-width:\s*1180px/s);
 });
+
+test('6F 自由画布具备默认坐标、用户隔离存储和游客只读规则', () => {
+    assert.match(layoutSource, /SIXTH_FLOOR_DEFAULT_LAYOUT/);
+    assert.match(layoutSource, /studio-layout:6F:/);
+    assert.match(layoutSource, /currentUser\.startsWith\('游客'\)/);
+    assert.match(layoutSource, /data-layout-key/);
+    assert.match(layoutSource, /resetSixthFloorLayout/);
+    assert.match(layoutStyles, /sixth-floor-canvas/);
+});

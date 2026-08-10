@@ -309,13 +309,12 @@
 }
 
 .preview-floor-map-sixth-floor {
-    grid-template-columns: repeat(24, minmax(0, 1fr));
-    grid-template-rows: repeat(12, minmax(0, 1fr));
-    gap: 12px;
-    padding: 18px 22px 24px;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
+    display: block;
+    width: 100%;
+    height: calc(100vh - 294px);
+    min-height: 540px;
+    padding: 0;
+    overflow: hidden;
 }
 
 .preview-floor-map-sixth-floor::before {
@@ -344,33 +343,93 @@
     pointer-events: none;
 }
 
-.sixth-floor-corridor {
-    grid-column: 1 / -1;
-    grid-row: 2;
+.sixth-floor-canvas-viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #F8FAFC;
+    cursor: grab;
 }
 
-.sixth-floor-street {
-    grid-column: 4 / 25;
-    grid-row: 7;
-    background: rgba(238, 224, 203, 0.48);
+.sixth-floor-canvas-viewport:active { cursor: grabbing; }
+
+.sixth-floor-canvas-toolbar {
+    position: absolute;
+    z-index: 30;
+    top: 14px;
+    right: 18px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+    border: 1px solid #E1E7ED;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 4px 12px rgba(42, 51, 61, 0.08);
 }
 
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-greenery"] { grid-column: 1 / 4; grid-row: 3 / 11; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-kids"] { grid-column: 4 / 7; grid-row: 3 / 5; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-classroom"] { grid-column: 7 / 11; grid-row: 3 / 5; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-clinic"] { grid-column: 4 / 11; grid-row: 5 / 7; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-study"] { grid-column: 11 / 15; grid-row: 3 / 7; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-vintage-living"] { grid-column: 15 / 19; grid-row: 3 / 7; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-vintage-dining"] { grid-column: 19 / 25; grid-row: 3 / 7; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-modern-living"] { grid-column: 4 / 9; grid-row: 8 / 11; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-modern-dining"] { grid-column: 9 / 14; grid-row: 8 / 11; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-outdoor-cafe"] { grid-column: 14 / 19; grid-row: 8 / 11; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-bedroom"] { grid-column: 19 / 25; grid-row: 8 / 11; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-bathroom"] { grid-column: 4 / 8; grid-row: 11 / 13; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-bar"] { grid-column: 8 / 12; grid-row: 11 / 13; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-chinese"] { grid-column: 12 / 16; grid-row: 11 / 13; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-workshop"] { grid-column: 16 / 20; grid-row: 11 / 13; }
-.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-modern-kitchen"] { grid-column: 20 / 25; grid-row: 11 / 13; }
+.sixth-floor-canvas-toolbar button {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 7px;
+    border: 0;
+    border-radius: 5px;
+    background: #F4F6F8;
+    color: #4B5563;
+    cursor: pointer;
+}
+
+.sixth-floor-canvas-toolbar button:hover { background: #E8EEF8; }
+.sixth-floor-canvas-toolbar span { min-width: 42px; color: #687483; font-size: 11px; text-align: center; }
+
+.sixth-floor-canvas {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: center center;
+    background: transparent;
+}
+
+.sixth-floor-canvas .sixth-floor-corridor {
+    position: absolute;
+    left: 16px;
+    top: 42px;
+    width: 1168px;
+    height: 38px;
+}
+
+.sixth-floor-canvas .sixth-floor-street {
+    position: absolute;
+    left: 184px;
+    top: 370px;
+    width: 1000px;
+    height: 42px;
+    background: rgba(241, 245, 249, 0.72);
+}
+
+.sixth-floor-layout-card {
+    position: absolute;
+    left: var(--card-x);
+    top: var(--card-y);
+    width: var(--card-width);
+    height: var(--card-height);
+    min-height: 0;
+    margin: 0;
+    z-index: 2;
+    touch-action: none;
+}
+
+.sixth-floor-layout-card.is-dragging { z-index: 20; opacity: 0.86; }
+
+.sixth-floor-layout-card[data-draggable="true"] { cursor: move; }
+.sixth-floor-layout-card:not([data-draggable="true"]) { cursor: pointer; }
+
+.sixth-floor-layout-card .preview-scene-card-top { pointer-events: none; }
+
+.preview-floor-map-sixth-floor .preview-scene-card h4 {
+    color: #252B33;
+}
 
 .preview-floor-map-sixth-floor .preview-scene-card {
     min-height: 0;

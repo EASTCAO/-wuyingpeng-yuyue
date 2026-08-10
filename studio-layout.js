@@ -8,6 +8,63 @@ const STUDIO_SCENE_REFERENCES = {
     }
 };
 
+const SIXTH_FLOOR_LAYOUT_VERSION = 1;
+const SIXTH_FLOOR_CANVAS_SIZE = { width: 1200, height: 720 };
+const SIXTH_FLOOR_DEFAULT_LAYOUT = {
+    'sixth-greenery': { x: 16, y: 120, width: 150, height: 470 },
+    'sixth-kids': { x: 184, y: 120, width: 150, height: 115 },
+    'sixth-classroom': { x: 350, y: 120, width: 205, height: 115 },
+    'sixth-clinic': { x: 184, y: 250, width: 371, height: 115 },
+    'sixth-study': { x: 570, y: 120, width: 190, height: 245 },
+    'sixth-vintage-living': { x: 775, y: 120, width: 190, height: 245 },
+    'sixth-vintage-dining': { x: 980, y: 120, width: 205, height: 245 },
+    'sixth-modern-living': { x: 184, y: 430, width: 205, height: 145 },
+    'sixth-modern-dining': { x: 410, y: 430, width: 205, height: 145 },
+    'sixth-outdoor-cafe': { x: 636, y: 430, width: 205, height: 145 },
+    'sixth-bedroom': { x: 862, y: 430, width: 323, height: 145 },
+    'sixth-bathroom': { x: 16, y: 610, width: 150, height: 90 },
+    'sixth-bar': { x: 184, y: 610, width: 150, height: 90 },
+    'sixth-chinese': { x: 350, y: 610, width: 150, height: 90 },
+    'sixth-workshop': { x: 516, y: 610, width: 150, height: 90 },
+    'sixth-modern-kitchen': { x: 682, y: 610, width: 205, height: 90 }
+};
+
+let sixthFloorViewport = { x: 0, y: 0, scale: 1 };
+let sixthFloorDragState = null;
+let sixthFloorSuppressClick = false;
+
+function getSixthFloorLayoutStorageKey() {
+    return `studio-layout:6F:${currentUser || '游客'}`;
+}
+
+function canEditSixthFloorLayout() {
+    return Boolean(currentUser && !currentUser.startsWith('游客'));
+}
+
+function loadSixthFloorLayout() {
+    if (!canEditSixthFloorLayout()) return structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT);
+    try {
+        const stored = JSON.parse(localStorage.getItem(getSixthFloorLayoutStorageKey()) || 'null');
+        return stored?.version === SIXTH_FLOOR_LAYOUT_VERSION && stored.layout
+            ? { ...structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT), ...stored.layout }
+            : structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT);
+    } catch {
+        return structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT);
+    }
+}
+
+function saveSixthFloorLayout(layout) {
+    if (!canEditSixthFloorLayout()) return;
+    localStorage.setItem(getSixthFloorLayoutStorageKey(), JSON.stringify({ version: SIXTH_FLOOR_LAYOUT_VERSION, layout }));
+}
+
+function resetSixthFloorLayout() {
+    if (!canEditSixthFloorLayout()) return;
+    localStorage.removeItem(getSixthFloorLayoutStorageKey());
+    sixthFloorViewport = { x: 0, y: 0, scale: 1 };
+    renderRealSceneOverview();
+}
+
 let currentStudioFloor = '7F';
 currentStudioCategory = 'cyclorama';
 
@@ -190,27 +247,46 @@ function renderRealSceneOverview() {
 
     content.className = `preview-content preview-content-${currentStudioFloor.toLowerCase()}`;
     content.innerHTML = renderRealSceneMap(scenes);
+    if (currentStudioFloor === '6F') bindSixthFloorCanvas();
 }
 
 function renderRealSceneMap(scenes) {
     const floorClass = currentStudioFloor === '6F' ? ' preview-floor-map-sixth-floor' : '';
+    const isSixthFloor = currentStudioFloor === '6F';
+    const layout = isSixthFloor ? loadSixthFloorLayout() : null;
     return `
         <div class="preview-floor-map${floorClass}" aria-label="${currentStudioFloor} 实景棚平面总览">
-            ${currentStudioFloor === '6F' ? '<div class="sixth-floor-corridor">走廊 · 海洋背景墙</div><div class="sixth-floor-street">街道</div>' : ''}
-            ${scenes.map(({ studio, state }, index) => renderRealSceneCard(studio, state, index)).join('')}
+            ${isSixthFloor ? `
+                <div class="sixth-floor-canvas-viewport" data-canvas-viewport>
+                    ${canEditSixthFloorLayout() ? `<div class="sixth-floor-canvas-toolbar" aria-label="画布工具">
+                        <button type="button" data-canvas-action="zoom-out" aria-label="缩小">−</button>
+                        <span data-canvas-zoom>100%</span>
+                        <button type="button" data-canvas-action="zoom-in" aria-label="放大">+</button>
+                        <button type="button" data-canvas-action="reset">复位</button>
+                    </div>` : ''}
+                    <div class="sixth-floor-canvas" data-sixth-floor-canvas style="width:${SIXTH_FLOOR_CANVAS_SIZE.width}px;height:${SIXTH_FLOOR_CANVAS_SIZE.height}px;transform:translate(calc(-50% + ${sixthFloorViewport.x}px), calc(-50% + ${sixthFloorViewport.y}px)) scale(${sixthFloorViewport.scale})">
+                        <div class="sixth-floor-corridor">走廊 · 海洋背景墙</div><div class="sixth-floor-street">街道</div>
+                        ${scenes.map(({ studio, state }, index) => renderRealSceneCard(studio, state, index, layout)).join('')}
+                    </div>
+                </div>
+            ` : scenes.map(({ studio, state }, index) => renderRealSceneCard(studio, state, index)).join('')}
         </div>
     `;
 }
 
-function renderRealSceneCard(studio, state, index) {
+function renderRealSceneCard(studio, state, index, layout = null) {
     const reference = STUDIO_SCENE_REFERENCES[studio.id];
+    const position = layout?.[studio.mapArea];
+    const editable = Boolean(position && canEditSixthFloorLayout());
     return `
         <article
-            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference ? ' has-scene-reference' : ''}"
+            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference ? ' has-scene-reference' : ''}${position ? ' sixth-floor-layout-card' : ''}"
             data-map-area="${escapeHtml(studio.mapArea)}"
             data-studio-id="${escapeHtml(studio.id)}"
-            style="--preview-index:${index}"
-            onclick="openRealSceneCard('${escapeHtml(studio.id)}')"
+            ${position ? `style="--preview-index:${index};--card-x:${position.x}px;--card-y:${position.y}px;--card-width:${position.width}px;--card-height:${position.height}px"` : ''}
+            ${position ? `data-layout-key="${escapeHtml(studio.mapArea)}"` : ''}
+            onclick="handleSixthFloorCardClick(event, '${escapeHtml(studio.id)}')"
+            ${editable ? 'data-draggable="true"' : ''}
             onkeydown="handleRealSceneCardKeydown(event, '${escapeHtml(studio.id)}')"
             role="button"
             tabindex="0"
@@ -243,6 +319,86 @@ function renderRealSceneCard(studio, state, index) {
             ` : ''}
         </article>
     `;
+}
+
+function handleSixthFloorCardClick(event, studioId) {
+    if (sixthFloorSuppressClick) {
+        sixthFloorSuppressClick = false;
+        event.preventDefault();
+        return;
+    }
+    openRealSceneCard(studioId);
+}
+
+function applySixthFloorViewport() {
+    const canvas = document.querySelector('[data-sixth-floor-canvas]');
+    if (!canvas) return;
+    canvas.style.transform = `translate(calc(-50% + ${sixthFloorViewport.x}px), calc(-50% + ${sixthFloorViewport.y}px)) scale(${sixthFloorViewport.scale})`;
+    const zoom = document.querySelector('[data-canvas-zoom]');
+    if (zoom) zoom.textContent = `${Math.round(sixthFloorViewport.scale * 100)}%`;
+}
+
+function bindSixthFloorCanvas() {
+    const viewport = document.querySelector('[data-canvas-viewport]');
+    const canvas = document.querySelector('[data-sixth-floor-canvas]');
+    if (!viewport || !canvas) return;
+    if (!canEditSixthFloorLayout()) return;
+    const layout = loadSixthFloorLayout();
+    viewport.addEventListener('wheel', event => {
+        event.preventDefault();
+        const delta = event.deltaY < 0 ? 0.1 : -0.1;
+        sixthFloorViewport.scale = Math.min(1.5, Math.max(0.55, Number((sixthFloorViewport.scale + delta).toFixed(2))));
+        applySixthFloorViewport();
+    }, { passive: false });
+    viewport.querySelectorAll('[data-canvas-action]').forEach(button => button.addEventListener('click', () => {
+        const action = button.dataset.canvasAction;
+        if (action === 'reset') return resetSixthFloorLayout();
+        sixthFloorViewport.scale = Math.min(1.5, Math.max(0.55, Number((sixthFloorViewport.scale + (action === 'zoom-in' ? 0.1 : -0.1)).toFixed(2))));
+        applySixthFloorViewport();
+    }));
+    canvas.addEventListener('pointerdown', event => {
+        const card = event.target.closest('[data-draggable="true"]');
+        if (card) {
+            const key = card.dataset.layoutKey;
+            const start = layout[key];
+            sixthFloorDragState = { type: 'card', card, key, startX: event.clientX, startY: event.clientY, originX: start.x, originY: start.y, moved: false };
+        } else if (!event.target.closest('.sixth-floor-canvas-toolbar')) {
+            sixthFloorDragState = { type: 'canvas', startX: event.clientX, startY: event.clientY, originX: sixthFloorViewport.x, originY: sixthFloorViewport.y, moved: false };
+        }
+        if (sixthFloorDragState) viewport.setPointerCapture(event.pointerId);
+    });
+    viewport.addEventListener('pointermove', event => {
+        if (!sixthFloorDragState) return;
+        const state = sixthFloorDragState;
+        const dx = event.clientX - state.startX;
+        const dy = event.clientY - state.startY;
+        if (Math.abs(dx) + Math.abs(dy) > 4) state.moved = true;
+        if (state.type === 'card') {
+            const next = layout[state.key];
+            next.x = Math.round((state.originX + dx / sixthFloorViewport.scale) / 12) * 12;
+            next.y = Math.round((state.originY + dy / sixthFloorViewport.scale) / 12) * 12;
+            state.card.style.setProperty('--card-x', `${next.x}px`);
+            state.card.style.setProperty('--card-y', `${next.y}px`);
+            state.card.classList.add('is-dragging');
+        } else {
+            sixthFloorViewport.x = state.originX + dx;
+            sixthFloorViewport.y = state.originY + dy;
+            applySixthFloorViewport();
+        }
+    });
+    viewport.addEventListener('pointerup', event => {
+        const state = sixthFloorDragState;
+        if (!state) return;
+        if (state.type === 'card') {
+            state.card.classList.remove('is-dragging');
+            if (state.moved) {
+                sixthFloorSuppressClick = true;
+                saveSixthFloorLayout(layout);
+            }
+        }
+        sixthFloorDragState = null;
+        if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
+    });
 }
 
 function openRealSceneCard(studioId) {
