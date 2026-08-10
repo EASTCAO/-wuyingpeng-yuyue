@@ -308,6 +308,83 @@
     padding: 14px 20px 22px;
 }
 
+.preview-floor-map-sixth-floor {
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+    grid-template-rows: repeat(12, minmax(0, 1fr));
+    gap: 12px;
+    padding: 18px 22px 24px;
+    border: 1px solid #E8DCCB;
+    border-radius: 14px;
+    background:
+        linear-gradient(180deg, rgba(255, 251, 243, 0.96), rgba(248, 242, 231, 0.96)),
+        repeating-linear-gradient(0deg, transparent 0 38px, rgba(177, 147, 100, 0.04) 39px 40px);
+}
+
+.preview-floor-map-sixth-floor::before {
+    content: "6F 实景棚 · 户型总览";
+    grid-column: 1 / -1;
+    grid-row: 1;
+    align-self: start;
+    padding: 3px 8px;
+    color: #8A6A43;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    pointer-events: none;
+}
+
+.sixth-floor-corridor,
+.sixth-floor-street {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9A8061;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    border: 1px dashed #D4B98F;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.52);
+    pointer-events: none;
+}
+
+.sixth-floor-corridor {
+    grid-column: 1 / -1;
+    grid-row: 2;
+}
+
+.sixth-floor-street {
+    grid-column: 4 / 25;
+    grid-row: 7;
+    background: rgba(238, 224, 203, 0.48);
+}
+
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-greenery"] { grid-column: 1 / 4; grid-row: 3 / 11; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-kids"] { grid-column: 4 / 7; grid-row: 3 / 5; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-classroom"] { grid-column: 7 / 11; grid-row: 3 / 5; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-clinic"] { grid-column: 4 / 11; grid-row: 5 / 7; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-study"] { grid-column: 11 / 15; grid-row: 3 / 7; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-vintage-living"] { grid-column: 15 / 19; grid-row: 3 / 7; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-vintage-dining"] { grid-column: 19 / 25; grid-row: 3 / 7; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-modern-living"] { grid-column: 4 / 9; grid-row: 8 / 11; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-modern-dining"] { grid-column: 9 / 14; grid-row: 8 / 11; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-outdoor-cafe"] { grid-column: 14 / 19; grid-row: 8 / 11; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-bedroom"] { grid-column: 19 / 25; grid-row: 8 / 11; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-bathroom"] { grid-column: 4 / 8; grid-row: 11 / 13; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-bar"] { grid-column: 8 / 12; grid-row: 11 / 13; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-chinese"] { grid-column: 12 / 16; grid-row: 11 / 13; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-workshop"] { grid-column: 16 / 20; grid-row: 11 / 13; }
+.preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-modern-kitchen"] { grid-column: 20 / 25; grid-row: 11 / 13; }
+
+.preview-floor-map-sixth-floor .preview-scene-card {
+    min-height: 0;
+    padding: 12px;
+    border-color: #D9C7AE;
+    background: linear-gradient(145deg, #FFFDF8 0%, #F4EBDD 100%);
+}
+
+.preview-floor-map-sixth-floor .preview-scene-card h4 {
+    color: #5F4A35;
+}
+
 .preview-scene-card {
     --scene-base: #F1F4F7;
     --state-wash: rgba(255, 255, 255, 0);
@@ -799,6 +876,35 @@
     .preview-scene-card h4 {
         font-size: 12px;
     }
+
+    .preview-floor-map-sixth-floor {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+        min-height: 540px;
+    }
+
+    .preview-floor-map-sixth-floor::before,
+    .preview-floor-map-sixth-floor .sixth-floor-corridor,
+    .preview-floor-map-sixth-floor .sixth-floor-street {
+        display: none;
+    }
+
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-greenery"] { grid-column: 1; grid-row: 1; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-kids"] { grid-column: 2; grid-row: 1; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-classroom"] { grid-column: 3; grid-row: 1; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-clinic"] { grid-column: 4; grid-row: 1; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-study"] { grid-column: 1; grid-row: 2; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-vintage-living"] { grid-column: 2; grid-row: 2; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-vintage-dining"] { grid-column: 3; grid-row: 2; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-modern-living"] { grid-column: 4; grid-row: 2; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-modern-dining"] { grid-column: 1; grid-row: 3; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-outdoor-cafe"] { grid-column: 2; grid-row: 3; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-bedroom"] { grid-column: 3; grid-row: 3; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-bathroom"] { grid-column: 4; grid-row: 3; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-bar"] { grid-column: 1; grid-row: 4; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-chinese"] { grid-column: 2; grid-row: 4; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-workshop"] { grid-column: 3; grid-row: 4; }
+    .preview-floor-map-sixth-floor .preview-scene-card[data-map-area="sixth-modern-kitchen"] { grid-column: 4; grid-row: 4; }
 }
 
 @media (max-width: 768px) {
@@ -872,6 +978,18 @@
         gap: 10px;
         height: auto;
         padding: 0;
+    }
+
+    .preview-floor-map-sixth-floor {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: none;
+        min-height: 0;
+    }
+
+    .preview-floor-map-sixth-floor::before,
+    .preview-floor-map-sixth-floor .sixth-floor-corridor,
+    .preview-floor-map-sixth-floor .sixth-floor-street {
+        display: none;
     }
 
     .preview-scene-card {

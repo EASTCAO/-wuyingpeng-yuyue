@@ -21,11 +21,10 @@ function renderFloorTabs() {
 }
 
 function renderStudioCategoryTabs() {
-    const realSceneDisabled = currentStudioFloor === '6F';
     return `
         <div class="studio-category-tabs preview-category-tabs" role="tablist" aria-label="影棚类型">
             <button type="button" class="studio-category-tab${currentStudioCategory === 'cyclorama' ? ' active' : ''}" onclick="switchStudioCategory('cyclorama')" role="tab" aria-selected="${currentStudioCategory === 'cyclorama'}">无影棚</button>
-            <button type="button" class="studio-category-tab${currentStudioCategory === 'real-scene' ? ' active' : ''}" onclick="switchStudioCategory('real-scene')" role="tab" aria-selected="${currentStudioCategory === 'real-scene'}"${realSceneDisabled ? ' disabled aria-disabled="true" title="6F暂无实景棚"' : ''}>实景棚</button>
+            <button type="button" class="studio-category-tab${currentStudioCategory === 'real-scene' ? ' active' : ''}" onclick="switchStudioCategory('real-scene')" role="tab" aria-selected="${currentStudioCategory === 'real-scene'}">实景棚</button>
         </div>
     `;
 }
@@ -50,14 +49,12 @@ function renderStudioToolbar(includeLegend = false) {
 function switchStudioFloor(floor) {
     if (!['6F', '7F'].includes(floor) || floor === currentStudioFloor) return;
     currentStudioFloor = floor;
-    if (floor === '6F') currentStudioCategory = 'cyclorama';
     renderStudioSections();
     renderBookings();
 }
 
 switchStudioCategory = function switchStudioLayoutCategory(category) {
     if (!['cyclorama', 'real-scene'].includes(category) || category === currentStudioCategory) return;
-    if (currentStudioFloor === '6F' && category === 'real-scene') return;
     currentStudioCategory = category;
     renderStudioSections();
     renderBookings();
@@ -124,7 +121,10 @@ renderBookings = function renderStudioLayoutBookings() {
 };
 
 function getRealSceneStudios() {
-    return getAllStudios().filter(studio => studio.category === 'real-scene');
+    return getAllStudios().filter(studio =>
+        studio.category === 'real-scene'
+        && (currentStudioFloor === '6F' ? studio.groupKey === 'real-scene-sixth-floor' : studio.groupKey === 'real-scene')
+    );
 }
 
 function getStudioOverviewDate() {
@@ -188,13 +188,15 @@ function renderRealSceneOverview() {
         state: getRealSceneState(studio, date)
     }));
 
-    content.className = 'preview-content';
+    content.className = `preview-content preview-content-${currentStudioFloor.toLowerCase()}`;
     content.innerHTML = renderRealSceneMap(scenes);
 }
 
 function renderRealSceneMap(scenes) {
+    const floorClass = currentStudioFloor === '6F' ? ' preview-floor-map-sixth-floor' : '';
     return `
-        <div class="preview-floor-map" aria-label="7F 实景棚平面总览">
+        <div class="preview-floor-map${floorClass}" aria-label="${currentStudioFloor} 实景棚平面总览">
+            ${currentStudioFloor === '6F' ? '<div class="sixth-floor-corridor">走廊 · 海洋背景墙</div><div class="sixth-floor-street">街道</div>' : ''}
             ${scenes.map(({ studio, state }, index) => renderRealSceneCard(studio, state, index)).join('')}
         </div>
     `;

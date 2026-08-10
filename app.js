@@ -81,6 +81,34 @@ const STUDIO_GROUPS = [
             { id: '浴室景', title: '浴室景', location: '7F 实景棚', mapArea: 'service-bathroom' },
             { id: '黑色台面-厨房景', title: '黑色台面-厨房景', location: '7F 实景棚', mapArea: 'service-black-kitchen' }
         ]
+    },
+    {
+        key: 'real-scene-sixth-floor',
+        category: 'real-scene',
+        floor: '6F',
+        title: '6F 实景棚',
+        subtitle: '6F 实景棚',
+        optionLabel: '6F 实景棚',
+        cardClass: 'studio-section-real',
+        buttonClass: 'btn-primary',
+        studios: [
+            { id: '6F·绿植房景', title: '绿植房景', location: '6F 实景棚', mapArea: 'sixth-greenery' },
+            { id: '6F·儿童房景', title: '儿童房景', location: '6F 实景棚', mapArea: 'sixth-kids' },
+            { id: '6F·教室景', title: '教室景', location: '6F 实景棚', mapArea: 'sixth-classroom' },
+            { id: '6F·医护室景', title: '医护室景', location: '6F 实景棚', mapArea: 'sixth-clinic' },
+            { id: '6F·书房景', title: '书房景', location: '6F 实景棚', mapArea: 'sixth-study' },
+            { id: '6F·复古客厅景', title: '复古客厅景', location: '6F 实景棚', mapArea: 'sixth-vintage-living' },
+            { id: '6F·复古餐厅景', title: '复古餐厅景', location: '6F 实景棚', mapArea: 'sixth-vintage-dining' },
+            { id: '6F·现代客厅景', title: '现代客厅景', location: '6F 实景棚', mapArea: 'sixth-modern-living' },
+            { id: '6F·现代餐厅景', title: '现代餐厅景', location: '6F 实景棚', mapArea: 'sixth-modern-dining' },
+            { id: '6F·户外咖啡景', title: '户外咖啡景', location: '6F 实景棚', mapArea: 'sixth-outdoor-cafe' },
+            { id: '6F·卧室景', title: '卧室景', location: '6F 实景棚', mapArea: 'sixth-bedroom' },
+            { id: '6F·洗浴室景', title: '洗浴室景', location: '6F 实景棚', mapArea: 'sixth-bathroom' },
+            { id: '6F·吧台景', title: '吧台景', location: '6F 实景棚', mapArea: 'sixth-bar' },
+            { id: '6F·国风景', title: '国风景', location: '6F 实景棚', mapArea: 'sixth-chinese' },
+            { id: '6F·工具间景', title: '工具间景', location: '6F 实景棚', mapArea: 'sixth-workshop' },
+            { id: '6F·现代厨房景', title: '现代厨房景', location: '6F 实景棚', mapArea: 'sixth-modern-kitchen' }
+        ]
     }
 ];
 
