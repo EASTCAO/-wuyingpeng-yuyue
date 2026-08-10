@@ -8,7 +8,7 @@ const STUDIO_SCENE_REFERENCES = {
     }
 };
 
-const SIXTH_FLOOR_LAYOUT_VERSION = 1;
+const SIXTH_FLOOR_LAYOUT_VERSION = 2;
 const SIXTH_FLOOR_CANVAS_SIZE = { width: 1400, height: 820 };
 const SIXTH_FLOOR_DEFAULT_LAYOUT = {
     'sixth-corridor': { x: 16, y: 16, width: 260, height: 82 },

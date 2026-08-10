@@ -49,8 +49,8 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
 
     assert.doesNotMatch(layoutSource, /走廊|街道|海洋背景墙/);
     assert.doesNotMatch(layoutStyles, /sixth-floor-corridor|sixth-floor-street/);
-    assert.match(htmlSource, /studio-layout\.js\?v=20260810-canvas-v2/);
-    assert.match(serviceWorkerSource, /studio-booking-v107-sixth-floor-scenes/);
+    assert.match(htmlSource, /studio-layout\.js\?v=20260810-canvas-v3/);
+    assert.match(serviceWorkerSource, /studio-booking-v108-sixth-floor-layout-v2/);
 });
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
@@ -69,4 +69,9 @@ test('6F 户型图中的所有文字场景都作为可预约卡片', () => {
     assert.equal(expectedSceneIds.length, 21);
     expectedSceneIds.forEach(sceneId => assert.match(appSource, new RegExp(`mapArea: '${sceneId}'`)));
     expectedSceneIds.forEach(sceneId => assert.match(layoutSource, new RegExp(`'${sceneId}'`)));
+});
+
+test('6F 场景结构变化后拒绝读取旧版个人布局', () => {
+    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*2/);
+    assert.match(layoutSource, /stored\?\.version === SIXTH_FLOOR_LAYOUT_VERSION/);
 });
