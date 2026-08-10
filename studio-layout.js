@@ -9,8 +9,13 @@ const STUDIO_SCENE_REFERENCES = {
 };
 
 const SIXTH_FLOOR_LAYOUT_VERSION = 1;
-const SIXTH_FLOOR_CANVAS_SIZE = { width: 1200, height: 720 };
+const SIXTH_FLOOR_CANVAS_SIZE = { width: 1400, height: 820 };
 const SIXTH_FLOOR_DEFAULT_LAYOUT = {
+    'sixth-corridor': { x: 16, y: 16, width: 260, height: 82 },
+    'sixth-wood-wall': { x: 292, y: 16, width: 260, height: 82 },
+    'sixth-greenery-wall': { x: 568, y: 16, width: 260, height: 82 },
+    'sixth-ocean-wall': { x: 844, y: 16, width: 260, height: 82 },
+    'sixth-street': { x: 1120, y: 16, width: 260, height: 82 },
     'sixth-greenery': { x: 16, y: 120, width: 150, height: 470 },
     'sixth-kids': { x: 184, y: 120, width: 150, height: 115 },
     'sixth-classroom': { x: 350, y: 120, width: 205, height: 115 },

@@ -6,17 +6,20 @@ const appSource = fs.readFileSync('app.js', 'utf8');
 const layoutSource = fs.readFileSync('studio-layout.js', 'utf8');
 const layoutStyles = fs.readFileSync('studio-layout.css', 'utf8');
 
-test('6F 实景棚包含户型图中的 16 个可预约空间', () => {
+test('6F 实景棚包含户型图中的 21 个可预约空间', () => {
     const expectedScenes = [
+        '6F·走廊景', '6F·木墙景', '6F·绿植背景墙景',
         '6F·绿植房景', '6F·儿童房景', '6F·教室景', '6F·医护室景',
+        '6F·海洋背景墙景',
         '6F·书房景', '6F·复古客厅景', '6F·复古餐厅景', '6F·现代客厅景',
-        '6F·现代餐厅景', '6F·户外咖啡景', '6F·卧室景', '6F·洗浴室景',
+        '6F·现代餐厅景', '6F·街道景', '6F·户外咖啡景', '6F·卧室景', '6F·洗浴室景',
         '6F·吧台景', '6F·国风景', '6F·工具间景', '6F·现代厨房景'
     ];
 
     for (const scene of expectedScenes) {
         assert.match(appSource, new RegExp(`id: '${scene}'`));
     }
+    assert.equal(expectedScenes.length, 21);
 });
 
 test('6F 实景棚可以在楼层预览中展示', () => {
@@ -46,11 +49,24 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
 
     assert.doesNotMatch(layoutSource, /走廊|街道|海洋背景墙/);
     assert.doesNotMatch(layoutStyles, /sixth-floor-corridor|sixth-floor-street/);
-    assert.match(htmlSource, /studio-layout\.js\?v=20260810-canvas-v1/);
-    assert.match(serviceWorkerSource, /studio-booking-v106-sixth-floor-canvas/);
+    assert.match(htmlSource, /studio-layout\.js\?v=20260810-canvas-v2/);
+    assert.match(serviceWorkerSource, /studio-booking-v107-sixth-floor-scenes/);
 });
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
     assert.match(layoutSource, /fitSixthFloorCanvasToViewport/);
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?min-width:\s*0;/);
+});
+
+test('6F 户型图中的所有文字场景都作为可预约卡片', () => {
+    const expectedSceneIds = [
+        'sixth-corridor', 'sixth-wood-wall', 'sixth-greenery-wall', 'sixth-greenery',
+        'sixth-kids', 'sixth-classroom', 'sixth-clinic', 'sixth-ocean-wall',
+        'sixth-study', 'sixth-vintage-living', 'sixth-vintage-dining', 'sixth-modern-living',
+        'sixth-modern-dining', 'sixth-street', 'sixth-outdoor-cafe', 'sixth-bedroom',
+        'sixth-bathroom', 'sixth-bar', 'sixth-chinese', 'sixth-workshop', 'sixth-modern-kitchen'
+    ];
+    assert.equal(expectedSceneIds.length, 21);
+    expectedSceneIds.forEach(sceneId => assert.match(appSource, new RegExp(`mapArea: '${sceneId}'`)));
+    expectedSceneIds.forEach(sceneId => assert.match(layoutSource, new RegExp(`'${sceneId}'`)));
 });
