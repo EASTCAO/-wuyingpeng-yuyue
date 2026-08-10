@@ -49,8 +49,8 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
 
     assert.doesNotMatch(layoutSource, /走廊|街道|海洋背景墙/);
     assert.doesNotMatch(layoutStyles, /sixth-floor-corridor|sixth-floor-street/);
-    assert.match(htmlSource, /studio-layout\.js\?v=20260810-canvas-v5/);
-    assert.match(serviceWorkerSource, /studio-booking-v110-sixth-floor-absolute-cards/);
+    assert.match(htmlSource, /studio-layout\.js\?v=20260810-canvas-v6/);
+    assert.match(serviceWorkerSource, /studio-booking-v111-sixth-floor-reference-layout/);
 });
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
@@ -72,7 +72,7 @@ test('6F 户型图中的所有文字场景都作为可预约卡片', () => {
 });
 
 test('6F 场景结构变化后拒绝读取旧版个人布局', () => {
-    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*2/);
+    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*3/);
     assert.match(layoutSource, /stored\?\.version === SIXTH_FLOOR_LAYOUT_VERSION/);
 });
 
@@ -82,4 +82,11 @@ test('6F 卡片拖动时不会选中文字', () => {
 
 test('6F 卡片使用高优先级绝对定位而不会落入普通文档流', () => {
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s+\.sixth-floor-layout-card\s*\{[\s\S]*?position:\s*absolute;/);
+});
+
+test('6F 默认布局按参考图分成左中右三段户型区域', () => {
+    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*3/);
+    assert.match(layoutSource, /'sixth-greenery':\s*\{\s*x:\s*40,\s*y:\s*170,\s*width:\s*200,\s*height:\s*500/);
+    assert.match(layoutSource, /'sixth-study':\s*\{\s*x:\s*840,\s*y:\s*170/);
+    assert.match(layoutSource, /'sixth-vintage-dining':\s*\{\s*x:\s*1440,\s*y:\s*170/);
 });
