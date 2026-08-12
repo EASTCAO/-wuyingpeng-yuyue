@@ -59,6 +59,10 @@ test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?min-width:\s*0;/);
 });
 
+test('6F 自由画布按户型图比例铺满可用宽度', () => {
+    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?width:\s*100%;[\s\S]*?height:\s*auto;[\s\S]*?aspect-ratio:\s*2\s*\/\s*1;/);
+});
+
 test('6F 户型图中的所有文字场景都作为可预约卡片', () => {
     const expectedSceneIds = [
         'sixth-corridor', 'sixth-wood-wall', 'sixth-greenery-wall', 'sixth-greenery',
