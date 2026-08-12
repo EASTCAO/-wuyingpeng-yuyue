@@ -2232,11 +2232,6 @@ body {
     flex-direction: column;
     align-items: flex-end;
     gap: 6px;
-    padding: 7px;
-    border: 1px solid rgba(209, 216, 226, 0.9);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.92);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 .week-date-list {

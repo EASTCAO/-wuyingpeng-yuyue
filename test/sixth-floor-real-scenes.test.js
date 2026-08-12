@@ -115,7 +115,9 @@ test('楼层和影棚类型切换控件固定在预览卡片右上角', () => {
     assert.match(pageStyles, /\.studio-toolbar-controls\s*\{/);
     assert.match(pageStyles, /display:\s*flex;/);
     assert.match(pageStyles, /justify-content:\s*flex-end;/);
-    assert.match(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[\s\S]*?flex-direction:\s*column;[\s\S]*?border-radius:\s*14px;[\s\S]*?box-shadow:/);
+    assert.match(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[\s\S]*?flex-direction:\s*column;[\s\S]*?align-items:\s*flex-end;/);
+    assert.doesNotMatch(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[^}]*border:/);
+    assert.doesNotMatch(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[^}]*box-shadow:/);
     assert.match(pageStyles, /\.studio-toolbar-controls \.preview-category-tabs\s*\{[\s\S]*?width:\s*118px;[\s\S]*?align-self:\s*flex-end;/);
 });
 
