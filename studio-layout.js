@@ -109,7 +109,7 @@ function renderStudioToolbarControls() {
     toolbarControls.innerHTML = `
         <div class="studio-toolbar-tabs-grid">
             ${renderFloorTabs()}
-            ${renderStudioCategoryTabs()}
+            ${currentStudioFloor === '6F' ? renderStudioCategoryTabs() : ''}
         </div>
     `;
 }
@@ -127,6 +127,7 @@ function renderPreviewStatusLegend() {
 function switchStudioFloor(floor) {
     if (!['6F', '7F'].includes(floor) || floor === currentStudioFloor) return;
     currentStudioFloor = floor;
+    if (currentStudioFloor === '7F') currentStudioCategory = 'cyclorama';
     renderStudioToolbarControls();
     renderStudioSections();
     renderBookings();
