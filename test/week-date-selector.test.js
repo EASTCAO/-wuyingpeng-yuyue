@@ -28,6 +28,6 @@ test('顶部工具栏使用每周日期选择器结构', () => {
     assert.match(styleSource, /\.week-date-list/);
     assert.match(styleSource, /\.week-date-item\.active/);
     assert.match(htmlSource, /week-date-selector\.js\?v=20260812-week-date-v1/);
-    assert.match(serviceWorkerSource, /studio-booking-v119-legend-offset/);
+    assert.match(serviceWorkerSource, /studio-booking-v120-toolbar-card/);
     assert.doesNotMatch(htmlSource, /<button class="view-btn active" onclick="switchView\('list'\)">大厅<\/button>/);
 });

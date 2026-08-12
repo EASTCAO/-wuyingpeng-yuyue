@@ -2230,8 +2230,13 @@ body {
 .studio-toolbar-tabs-stack {
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: 7px;
+    align-items: flex-end;
+    gap: 6px;
+    padding: 7px;
+    border: 1px solid rgba(209, 216, 226, 0.9);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 .week-date-list {
@@ -2343,19 +2348,28 @@ body {
 }
 
 .studio-toolbar-controls .preview-floor-tabs {
-    width: 116px;
+    width: 128px;
 }
 
 .studio-toolbar-controls .preview-category-tabs {
-    width: 142px;
+    width: 118px;
     align-self: flex-end;
-    opacity: 0.92;
-    transform: scale(0.94);
-    transform-origin: right top;
+    opacity: 0.86;
 }
 
 .studio-toolbar-controls .studio-category-tabs {
     margin-bottom: 0;
+}
+
+.studio-toolbar-controls .preview-floor-tabs .studio-category-tab {
+    min-height: 28px;
+    font-size: 13px;
+}
+
+.studio-toolbar-controls .preview-category-tabs .studio-category-tab {
+    min-height: 24px;
+    padding: 2px 7px;
+    font-size: 12px;
 }
 
 .time-settings {
