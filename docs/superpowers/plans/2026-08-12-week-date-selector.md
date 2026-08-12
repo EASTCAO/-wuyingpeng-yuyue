@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 将大厅顶部的“今天 / 明天”替换为按周一至周日展示、可前后切周的单日选择器。
+**Goal:** 将顶部的“今天 / 明天”替换为按周一至周日展示、可前后切周的单日选择器。
 
 **Architecture:** 保留现有 `selectedDate`、`currentDateRange` 和 `getDisplayDates()` 数据流；新增纯日期计算函数生成周日期，并由一个渲染函数更新顶部日期条。点击日期后继续调用现有预约渲染流程。
 
@@ -28,7 +28,7 @@
 - Modify: `app.js`
 - Modify: `style.css`
 
-- [ ] 将原“今天 / 明天”按钮替换为日期条容器、左右切周按钮和保留的“大厅”按钮。
+- [ ] 将原“今天 / 明天”按钮替换为日期条容器和左右切周按钮。
 - [ ] 增加 `renderWeekDateSelector()`、`selectWeekDate()` 和 `shiftWeek()`，登录进入主页时渲染本周。
 - [ ] 增加桌面及窄屏样式，保证 7 天按钮尺寸稳定、移动端可横向查看。
 - [ ] 扩展测试验证页面结构和样式类存在。

@@ -103,7 +103,7 @@ function renderStudioCategoryTabs() {
     `;
 }
 
-function renderStudioToolbar(includeLegend = false) {
+function renderPreviewCardControls(includeLegend = false) {
     const statusLegend = includeLegend ? `
         <div class="preview-status-legend" aria-label="预约状态颜色说明">
             <span class="preview-legend-item"><i class="preview-legend-swatch available"></i>可预约</span>
@@ -113,8 +113,11 @@ function renderStudioToolbar(includeLegend = false) {
     ` : '';
 
     return `
-        <div class="preview-lobby-toolbar">
-            ${renderFloorTabs()}
+        <div class="preview-card-controls" aria-label="预览筛选">
+            <div class="preview-card-tabs-grid">
+                ${renderFloorTabs()}
+                ${renderStudioCategoryTabs()}
+            </div>
             ${statusLegend}
         </div>
     `;
@@ -161,23 +164,16 @@ renderStudioSections = function renderStudioLayoutSections() {
         }
 
         studioMap?.classList.add('preview-single-floor-map');
-        container.insertAdjacentHTML('afterbegin', `
-            ${renderStudioToolbar()}
-            <div class="preview-workspace-header preview-category-header">
-                ${renderStudioCategoryTabs()}
-            </div>
-        `);
+        studioMap?.classList.add('preview-card-with-controls');
+        studioMap?.insertAdjacentHTML('afterbegin', renderPreviewCardControls());
         return;
     }
 
     document.getElementById('listView')?.classList.add('real-scene-active', 'studio-layout-active');
 
     container.innerHTML = `
-        ${renderStudioToolbar(true)}
-        <section class="preview-workspace">
-            <header class="preview-workspace-header preview-category-header">
-                ${renderStudioCategoryTabs()}
-            </header>
+        <section class="preview-workspace preview-card-with-controls">
+            ${renderPreviewCardControls(true)}
             <div id="studioPreviewContent" class="preview-content"></div>
         </section>
     `;

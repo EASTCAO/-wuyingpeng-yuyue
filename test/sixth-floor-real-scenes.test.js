@@ -50,7 +50,7 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
     assert.doesNotMatch(layoutSource, /走廊|街道|海洋背景墙/);
     assert.doesNotMatch(layoutStyles, /sixth-floor-corridor|sixth-floor-street/);
     assert.match(htmlSource, /studio-layout\.js\?v=20260810-canvas-v7/);
-    assert.match(serviceWorkerSource, /studio-booking-v112-sixth-floor-card-bounds/);
+    assert.match(serviceWorkerSource, /studio-booking-v113-week-date-selector/);
 });
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
@@ -101,4 +101,12 @@ test('6F 已保存和拖动中的卡片坐标都会被限制在画布内', () =>
 test('6F 拖动后的点击抑制标记会自动清理', () => {
     assert.match(layoutSource, /setTimeout\(\(\) => \{\s*sixthFloorSuppressClick = false;/);
     assert.match(layoutSource, /pointercancel/);
+});
+
+test('楼层和影棚类型切换控件固定在预览卡片右上角', () => {
+    assert.match(layoutSource, /preview-card-controls/);
+    assert.match(layoutSource, /preview-card-tabs-grid/);
+    assert.match(layoutStyles, /\.preview-card-controls\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*12px;[\s\S]*?right:\s*12px;[\s\S]*?display:\s*grid;/);
+    assert.match(layoutStyles, /\.preview-card-tabs-grid\s*\{[\s\S]*?display:\s*flex;[\s\S]*?gap:\s*12px;/);
+    assert.match(layoutStyles, /\.preview-card-with-controls\s*\{[\s\S]*?position:\s*relative;/);
 });

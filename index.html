@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="favicon.svg">
     
     <title>影棚预约系统</title>
-    <link rel="stylesheet" href="style.css?v=20260810-canvas-v7">
+    <link rel="stylesheet" href="style.css?v=20260812-week-date-v1">
     <link rel="stylesheet" href="studio-layout.css?v=20260810-canvas-v7">
 </head>
 <body class="studio-booking-page">
@@ -194,15 +194,15 @@
                 <div class="toolbar">
                     <!-- 日期筛选 -->
                     <div class="date-nav">
-                        <button id="yesterdayDateButton" class="date-btn admin-only" style="display:none;" onclick="selectDateRange('yesterday', this)">昨天</button>
-                        <button id="todayDateButton" class="date-btn active" onclick="selectDateRange('today', this)">今天</button>
-                        <button class="date-btn" onclick="selectDateRange('tomorrow', this)">明天</button>
-                        <span class="nav-divider"></span>
-                        <button class="view-btn active" onclick="switchView('list')">大厅</button>
+                        <div id="weekDateSelector" class="week-date-selector" aria-label="按周选择日期">
+                            <button type="button" class="week-nav-button" data-week-direction="previous" onclick="shiftWeek(-1)" aria-label="上一周">‹</button>
+                            <div id="weekDateList" class="week-date-list"></div>
+                            <button type="button" class="week-nav-button" data-week-direction="next" onclick="shiftWeek(1)" aria-label="下一周">›</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 大厅视图 -->
+                <!-- 预约列表视图 -->
                 <div id="listView" class="list-view">
                     <div id="studioGroups"></div>
                 </div>
@@ -274,7 +274,7 @@
         <div class="mobile-bottom-nav">
             <button class="nav-item active" onclick="switchView('list')" data-view="list">
                 <span class="nav-icon">📝</span>
-                <span class="nav-label">大厅</span>
+                <span class="nav-label">预约</span>
             </button>
             <button class="nav-item" onclick="switchView('stats')" data-view="stats">
                 <span class="nav-icon">📊</span>
@@ -416,7 +416,8 @@
         </div>
     </div>
 
-    <script src="app.js?v=20260810-canvas-v7"></script>
+    <script src="week-date-selector.js?v=20260812-week-date-v1"></script>
+    <script src="app.js?v=20260812-week-date-v1"></script>
     <script src="studio-layout.js?v=20260810-canvas-v7"></script>
 
     <!-- PWA Service Worker 注册 -->

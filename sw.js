@@ -1,11 +1,12 @@
 // Service Worker：用于缓存资源，让应用即使在断网情况下也能打开（PWA 必须组件）
 // 提升版本号可强制客户端更新缓存（例如修改 API 域名后）
-const CACHE_NAME = 'studio-booking-v112-sixth-floor-card-bounds';
+const CACHE_NAME = 'studio-booking-v113-week-date-selector';
 const urlsToCache = [
   './',
   './index.html',
   './style.css',
   './studio-layout.css',
+  './week-date-selector.js',
   './app.js',
   './studio-layout.js',
   './manifest.json',

@@ -5,6 +5,7 @@ let selectedBookingId = null;
 let currentView = 'list'; // 'list' or 'stats'
 let currentDateRange = 'today'; // 'today', 'tomorrow', 'week'
 let selectedDate = null;
+let visibleWeekDate = null;
 let pendingCancelBookingId = null;
 let pendingCancelStudioId = null;
 let reminderInterval = null;
@@ -993,6 +994,7 @@ function showMainPage() {
     document.getElementById('mainPage').classList.remove('hidden');
     document.getElementById('currentUser').textContent = currentUser;
     initStudioUI();
+    renderWeekDateSelector();
 
     // admin 用户显示用户管理入口
     document.querySelectorAll('.admin-only').forEach(el => {
@@ -1013,6 +1015,41 @@ function showMainPage() {
 
     // 云端模式下启动自动刷新
     startAutoRefresh();
+}
+
+function renderWeekDateSelector() {
+    const list = document.getElementById('weekDateList');
+    if (!list || !window.WeekDateSelector) return;
+
+    const today = getChinaDate();
+    const activeDate = selectedDate || today;
+    const weekDates = WeekDateSelector.getWeekDates(visibleWeekDate || activeDate);
+    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+
+    list.innerHTML = weekDates.map((date, index) => {
+        const [, month, day] = date.split('-');
+        const classes = ['week-date-item'];
+        if (date === activeDate) classes.push('active');
+        if (date === today) classes.push('today');
+        return `<button type="button" class="${classes.join(' ')}" onclick="selectWeekDate('${date}')" aria-pressed="${date === activeDate}">
+            <span>${weekdays[index]}</span>
+            <small>${Number(month)}.${Number(day)}</small>
+        </button>`;
+    }).join('');
+}
+
+function selectWeekDate(date) {
+    selectedDate = date;
+    visibleWeekDate = date;
+    currentDateRange = 'custom';
+    renderWeekDateSelector();
+    if (currentView === 'list') renderBookings();
+}
+
+function shiftWeek(direction) {
+    const anchor = visibleWeekDate || selectedDate || getChinaDate();
+    visibleWeekDate = WeekDateSelector.shiftDate(anchor, direction * 7);
+    renderWeekDateSelector();
 }
 
 // 初始化移动端侧边栏状态
@@ -2363,8 +2400,7 @@ async function switchView(view) {
     // 更新桌面端按钮状态
     document.querySelectorAll('.view-btn').forEach(btn => {
         btn.classList.remove('active');
-        // 简单的文本匹配检查
-        if (btn.textContent.includes(view === 'list' ? '大厅' : '统计')) {
+        if (btn.dataset.view === view) {
             btn.classList.add('active');
         }
     });

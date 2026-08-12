@@ -1891,6 +1891,39 @@ body {
     }
 
     /* 隐藏PC端的一些元素 */
+    .date-nav {
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .week-date-selector {
+        flex: 1 1 auto;
+        overflow: hidden;
+    }
+
+    .week-date-list {
+        flex: 1 1 auto;
+        overflow-x: auto;
+        scrollbar-width: none;
+        grid-template-columns: repeat(7, 48px);
+        gap: 4px;
+    }
+
+    .week-date-list::-webkit-scrollbar {
+        display: none;
+    }
+
+    .week-date-item {
+        width: 48px;
+        min-width: 48px;
+    }
+
+    .week-nav-button {
+        width: 30px;
+        height: 30px;
+        flex-basis: 30px;
+    }
+
     .date-btn {
         font-size: 12px;
         padding: 6px 12px;
@@ -2154,13 +2187,71 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
+    min-width: 0;
 }
 
-.nav-divider {
-    width: 1px;
-    height: 16px;
-    background: #E5E7EB;
-    margin: 0 12px;
+.week-date-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.week-date-list {
+    display: grid;
+    grid-template-columns: repeat(7, 54px);
+    gap: 8px;
+}
+
+.week-nav-button {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border: 0;
+    border-radius: 50%;
+    background: #eef6ff;
+    color: #2563eb;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.week-date-item {
+    width: 54px;
+    min-height: 48px;
+    padding: 5px 3px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #374151;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.week-date-item span {
+    font-size: 13px;
+}
+
+.week-date-item small {
+    color: #6b7280;
+    font-size: 11px;
+}
+
+.week-date-item.today:not(.active) {
+    background: #f3f4f6;
+}
+
+.week-date-item.active {
+    background: #e6f1ff;
+    color: #1677ff;
+    font-weight: 600;
+}
+
+.week-date-item.active small {
+    color: #1677ff;
 }
 
 .date-btn {
