@@ -1893,12 +1893,22 @@ body {
     /* 隐藏PC端的一些元素 */
     .date-nav {
         width: 100%;
-        overflow: hidden;
+        overflow: visible;
+        flex-wrap: wrap;
     }
 
     .week-date-selector {
         flex: 1 1 auto;
         overflow: hidden;
+    }
+
+    .studio-toolbar-controls {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .studio-toolbar-tabs-grid {
+        gap: 8px;
     }
 
     .week-date-list {
@@ -2186,8 +2196,10 @@ body {
 .date-nav {
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: space-between;
+    gap: 16px;
     min-width: 0;
+    width: 100%;
 }
 
 .week-date-selector {
@@ -2195,6 +2207,19 @@ body {
     align-items: center;
     gap: 8px;
     min-width: 0;
+}
+
+.studio-toolbar-controls {
+    display: flex;
+    justify-content: flex-end;
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.studio-toolbar-tabs-grid {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
 }
 
 .week-date-list {
@@ -2303,6 +2328,18 @@ body {
 
 .view-btn:hover:not(.active) {
     color: #4C7DFF;
+}
+
+.studio-toolbar-controls .preview-floor-tabs {
+    width: 116px;
+}
+
+.studio-toolbar-controls .preview-category-tabs {
+    width: 142px;
+}
+
+.studio-toolbar-controls .studio-category-tabs {
+    margin-bottom: 0;
 }
 
 .time-settings {

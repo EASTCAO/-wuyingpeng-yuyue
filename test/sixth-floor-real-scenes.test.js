@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const appSource = fs.readFileSync('app.js', 'utf8');
 const layoutSource = fs.readFileSync('studio-layout.js', 'utf8');
 const layoutStyles = fs.readFileSync('studio-layout.css', 'utf8');
+const pageStyles = fs.readFileSync('style.css', 'utf8');
 
 test('6F 实景棚包含户型图中的 21 个可预约空间', () => {
     const expectedScenes = [
@@ -49,8 +50,8 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
 
     assert.doesNotMatch(layoutSource, /走廊|街道|海洋背景墙/);
     assert.doesNotMatch(layoutStyles, /sixth-floor-corridor|sixth-floor-street/);
-    assert.match(htmlSource, /studio-layout\.js\?v=20260812-preview-controls-v1/);
-    assert.match(serviceWorkerSource, /studio-booking-v114-preview-controls/);
+    assert.match(htmlSource, /studio-layout\.js\?v=20260812-toolbar-controls-v1/);
+    assert.match(serviceWorkerSource, /studio-booking-v115-toolbar-controls/);
 });
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
@@ -104,9 +105,10 @@ test('6F 拖动后的点击抑制标记会自动清理', () => {
 });
 
 test('楼层和影棚类型切换控件固定在预览卡片右上角', () => {
-    assert.match(layoutSource, /preview-card-controls/);
-    assert.match(layoutSource, /preview-card-tabs-grid/);
-    assert.match(layoutStyles, /\.preview-card-controls\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*12px;[\s\S]*?right:\s*12px;[\s\S]*?display:\s*grid;/);
-    assert.match(layoutStyles, /\.preview-card-tabs-grid\s*\{[\s\S]*?display:\s*flex;[\s\S]*?gap:\s*12px;/);
-    assert.match(layoutStyles, /\.preview-card-with-controls\s*\{[\s\S]*?position:\s*relative;/);
+    assert.match(layoutSource, /studioToolbarControls/);
+    assert.match(layoutSource, /studio-toolbar-tabs-grid/);
+    assert.match(pageStyles, /\.studio-toolbar-controls\s*\{/);
+    assert.match(pageStyles, /display:\s*flex;/);
+    assert.match(pageStyles, /justify-content:\s*flex-end;/);
+    assert.match(pageStyles, /\.studio-toolbar-tabs-grid\s*\{[\s\S]*?display:\s*flex;[\s\S]*?gap:\s*10px;/);
 });

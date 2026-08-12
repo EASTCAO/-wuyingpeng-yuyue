@@ -16,8 +16,8 @@
     <link rel="apple-touch-icon" href="favicon.svg">
     
     <title>影棚预约系统</title>
-    <link rel="stylesheet" href="style.css?v=20260812-week-date-v1">
-    <link rel="stylesheet" href="studio-layout.css?v=20260812-preview-controls-v1">
+    <link rel="stylesheet" href="style.css?v=20260812-toolbar-controls-v1">
+    <link rel="stylesheet" href="studio-layout.css?v=20260812-toolbar-controls-v1">
 </head>
 <body class="studio-booking-page">
     <!-- 登录页面 -->
@@ -199,6 +199,7 @@
                             <div id="weekDateList" class="week-date-list"></div>
                             <button type="button" class="week-nav-button" data-week-direction="next" onclick="shiftWeek(1)" aria-label="下一周">›</button>
                         </div>
+                        <div id="studioToolbarControls" class="studio-toolbar-controls" aria-label="影棚筛选"></div>
                     </div>
                 </div>
 
@@ -417,8 +418,8 @@
     </div>
 
     <script src="week-date-selector.js?v=20260812-week-date-v1"></script>
-    <script src="app.js?v=20260812-week-date-v1"></script>
-    <script src="studio-layout.js?v=20260812-preview-controls-v1"></script>
+    <script src="app.js?v=20260812-toolbar-controls-v1"></script>
+    <script src="studio-layout.js?v=20260812-toolbar-controls-v1"></script>
 
     <!-- PWA Service Worker 注册 -->
     <script>

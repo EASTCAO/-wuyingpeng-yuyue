@@ -103,22 +103,23 @@ function renderStudioCategoryTabs() {
     `;
 }
 
-function renderPreviewCardControls(includeLegend = false) {
-    const statusLegend = includeLegend ? `
+function renderStudioToolbarControls() {
+    const toolbarControls = document.getElementById('studioToolbarControls');
+    if (!toolbarControls) return;
+    toolbarControls.innerHTML = `
+        <div class="studio-toolbar-tabs-grid">
+            ${renderFloorTabs()}
+            ${renderStudioCategoryTabs()}
+        </div>
+    `;
+}
+
+function renderPreviewStatusLegend() {
+    return `
         <div class="preview-status-legend" aria-label="预约状态颜色说明">
             <span class="preview-legend-item"><i class="preview-legend-swatch available"></i>可预约</span>
             <span class="preview-legend-item"><i class="preview-legend-swatch partial"></i>部分预约</span>
             <span class="preview-legend-item"><i class="preview-legend-swatch full"></i>已约满</span>
-        </div>
-    ` : '';
-
-    return `
-        <div class="preview-card-controls" aria-label="预览筛选">
-            <div class="preview-card-tabs-grid">
-                ${renderFloorTabs()}
-                ${renderStudioCategoryTabs()}
-            </div>
-            ${statusLegend}
         </div>
     `;
 }
@@ -126,6 +127,7 @@ function renderPreviewCardControls(includeLegend = false) {
 function switchStudioFloor(floor) {
     if (!['6F', '7F'].includes(floor) || floor === currentStudioFloor) return;
     currentStudioFloor = floor;
+    renderStudioToolbarControls();
     renderStudioSections();
     renderBookings();
 }
@@ -133,6 +135,7 @@ function switchStudioFloor(floor) {
 switchStudioCategory = function switchStudioLayoutCategory(category) {
     if (!['cyclorama', 'real-scene'].includes(category) || category === currentStudioCategory) return;
     currentStudioCategory = category;
+    renderStudioToolbarControls();
     renderStudioSections();
     renderBookings();
 };
@@ -140,6 +143,7 @@ switchStudioCategory = function switchStudioLayoutCategory(category) {
 renderStudioSections = function renderStudioLayoutSections() {
     const container = document.getElementById('studioGroups');
     if (!container) return;
+    renderStudioToolbarControls();
 
     const listView = document.getElementById('listView');
     const isCyclorama = currentStudioCategory === 'cyclorama';
@@ -164,16 +168,14 @@ renderStudioSections = function renderStudioLayoutSections() {
         }
 
         studioMap?.classList.add('preview-single-floor-map');
-        studioMap?.classList.add('preview-card-with-controls');
-        studioMap?.insertAdjacentHTML('afterbegin', renderPreviewCardControls());
         return;
     }
 
     document.getElementById('listView')?.classList.add('real-scene-active', 'studio-layout-active');
 
     container.innerHTML = `
-        <section class="preview-workspace preview-card-with-controls">
-            ${renderPreviewCardControls(true)}
+        <section class="preview-workspace">
+            ${renderPreviewStatusLegend()}
             <div id="studioPreviewContent" class="preview-content"></div>
         </section>
     `;
