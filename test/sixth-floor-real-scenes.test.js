@@ -49,8 +49,8 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
 
     assert.doesNotMatch(layoutSource, /走廊|街道|海洋背景墙/);
     assert.doesNotMatch(layoutStyles, /sixth-floor-corridor|sixth-floor-street/);
-    assert.match(htmlSource, /studio-layout\.js\?v=20260810-canvas-v7/);
-    assert.match(serviceWorkerSource, /studio-booking-v113-week-date-selector/);
+    assert.match(htmlSource, /studio-layout\.js\?v=20260812-preview-controls-v1/);
+    assert.match(serviceWorkerSource, /studio-booking-v114-preview-controls/);
 });
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
