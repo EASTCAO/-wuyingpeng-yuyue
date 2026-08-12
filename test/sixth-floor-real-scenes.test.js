@@ -50,8 +50,8 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
 
     assert.doesNotMatch(layoutSource, /走廊|街道|海洋背景墙/);
     assert.doesNotMatch(layoutStyles, /sixth-floor-corridor|sixth-floor-street/);
-    assert.match(htmlSource, /studio-layout\.js\?v=20260812-toolbar-controls-v1/);
-    assert.match(serviceWorkerSource, /studio-booking-v115-toolbar-controls/);
+    assert.match(htmlSource, /studio-layout\.js\?v=20260812-status-legend-v1/);
+    assert.match(serviceWorkerSource, /studio-booking-v116-status-legend/);
 });
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
@@ -111,4 +111,10 @@ test('楼层和影棚类型切换控件固定在预览卡片右上角', () => {
     assert.match(pageStyles, /display:\s*flex;/);
     assert.match(pageStyles, /justify-content:\s*flex-end;/);
     assert.match(pageStyles, /\.studio-toolbar-tabs-grid\s*\{[\s\S]*?display:\s*flex;[\s\S]*?gap:\s*10px;/);
+});
+
+test('预约状态说明固定在实景棚预览右上角且不撑满整行', () => {
+    assert.match(layoutStyles, /\.preview-workspace\s*\{[\s\S]*?position:\s*relative;/);
+    assert.match(layoutStyles, /\.preview-status-legend\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*10px;[\s\S]*?right:\s*12px;/);
+    assert.match(layoutStyles, /\.preview-status-legend\s*\{[\s\S]*?width:\s*max-content;/);
 });
