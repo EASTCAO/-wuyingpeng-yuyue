@@ -50,8 +50,8 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
 
     assert.doesNotMatch(layoutSource, /走廊|街道|海洋背景墙/);
     assert.doesNotMatch(layoutStyles, /sixth-floor-corridor|sixth-floor-street/);
-    assert.match(htmlSource, /studio-layout\.js\?v=20260812-floor-tabs-v1/);
-    assert.match(serviceWorkerSource, /studio-booking-v117-floor-tabs/);
+    assert.match(htmlSource, /studio-layout\.js\?v=20260812-toolbar-stack-v1/);
+    assert.match(serviceWorkerSource, /studio-booking-v118-toolbar-stack/);
 });
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
@@ -106,13 +106,13 @@ test('6F 拖动后的点击抑制标记会自动清理', () => {
 
 test('楼层和影棚类型切换控件固定在预览卡片右上角', () => {
     assert.match(layoutSource, /studioToolbarControls/);
-    assert.match(layoutSource, /studio-toolbar-tabs-grid/);
-    assert.match(layoutSource, /currentStudioFloor === '6F' \? renderStudioCategoryTabs\(\) : ''/);
-    assert.match(layoutSource, /if \(currentStudioFloor === '7F'\) currentStudioCategory = 'cyclorama';/);
+    assert.match(layoutSource, /studio-toolbar-tabs-stack/);
+    assert.match(layoutSource, /renderStudioCategoryTabs\(\)/);
     assert.match(pageStyles, /\.studio-toolbar-controls\s*\{/);
     assert.match(pageStyles, /display:\s*flex;/);
     assert.match(pageStyles, /justify-content:\s*flex-end;/);
-    assert.match(pageStyles, /\.studio-toolbar-tabs-grid\s*\{[\s\S]*?display:\s*flex;[\s\S]*?gap:\s*10px;/);
+    assert.match(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[\s\S]*?flex-direction:\s*column;/);
+    assert.match(pageStyles, /\.studio-toolbar-controls \.preview-category-tabs\s*\{[\s\S]*?align-self:\s*flex-end;[\s\S]*?transform:\s*scale\(0\.94\);/);
 });
 
 test('预约状态说明固定在实景棚预览右上角且不撑满整行', () => {

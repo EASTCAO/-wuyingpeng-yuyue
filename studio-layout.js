@@ -107,9 +107,9 @@ function renderStudioToolbarControls() {
     const toolbarControls = document.getElementById('studioToolbarControls');
     if (!toolbarControls) return;
     toolbarControls.innerHTML = `
-        <div class="studio-toolbar-tabs-grid">
+        <div class="studio-toolbar-tabs-stack">
             ${renderFloorTabs()}
-            ${currentStudioFloor === '6F' ? renderStudioCategoryTabs() : ''}
+            ${renderStudioCategoryTabs()}
         </div>
     `;
 }
@@ -127,7 +127,6 @@ function renderPreviewStatusLegend() {
 function switchStudioFloor(floor) {
     if (!['6F', '7F'].includes(floor) || floor === currentStudioFloor) return;
     currentStudioFloor = floor;
-    if (currentStudioFloor === '7F') currentStudioCategory = 'cyclorama';
     renderStudioToolbarControls();
     renderStudioSections();
     renderBookings();

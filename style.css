@@ -1911,6 +1911,11 @@ body {
         gap: 8px;
     }
 
+    .studio-toolbar-tabs-stack {
+        align-items: flex-end;
+        gap: 6px;
+    }
+
     .week-date-list {
         flex: 1 1 auto;
         overflow-x: auto;
@@ -2222,6 +2227,13 @@ body {
     gap: 10px;
 }
 
+.studio-toolbar-tabs-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+}
+
 .week-date-list {
     display: grid;
     grid-template-columns: repeat(7, 54px);
@@ -2336,6 +2348,10 @@ body {
 
 .studio-toolbar-controls .preview-category-tabs {
     width: 142px;
+    align-self: flex-end;
+    opacity: 0.92;
+    transform: scale(0.94);
+    transform-origin: right top;
 }
 
 .studio-toolbar-controls .studio-category-tabs {
