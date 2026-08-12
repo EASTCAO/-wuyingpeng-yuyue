@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { rateLimit } = require('express-rate-limit');
 const { Pool } = require('pg');
 const crypto = require('crypto');
 
@@ -29,7 +30,28 @@ const STUDIO_IDS = [
   '工具台景',
   '洗衣房景别',
   '黑色台面-厨房景',
-  '浴室景'
+  '浴室景',
+  '6F·走廊景',
+  '6F·木墙景',
+  '6F·绿植背景墙景',
+  '6F·绿植房景',
+  '6F·儿童房景',
+  '6F·教室景',
+  '6F·医护室景',
+  '6F·海洋背景墙景',
+  '6F·书房景',
+  '6F·复古客厅景',
+  '6F·复古餐厅景',
+  '6F·现代客厅景',
+  '6F·现代餐厅景',
+  '6F·街道景',
+  '6F·户外咖啡景',
+  '6F·卧室景',
+  '6F·洗浴室景',
+  '6F·吧台景',
+  '6F·国风景',
+  '6F·工具间景',
+  '6F·现代厨房景'
 ];
 const FROZEN_STUDIO_IDS = new Set(['小无影棚1', '小无影棚2']);
 const DEFAULT_USER_NAMES = [
@@ -39,9 +61,18 @@ const DEFAULT_USER_NAMES = [
   '叶雨婷', '程思盈', '魏伟', '谭金林', '徐优',
   '陈梦轲', '陈思', '樊瑾怡', '李梦涵', '向纯希', '夏姝敏', '周梓君', 'admin'
 ];
+const loginLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { error: '登录尝试过于频繁，请稍后再试' }
+});
 
 // 中间件
 app.disable('x-powered-by');
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json({ limit: '32kb' }));
 app.use((req, res, next) => {
@@ -231,7 +262,7 @@ app.use('/api', async (req, res, next) => {
 });
 
 // 登录与会话
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   try {
     const { username, password } = req.body || {};
     if (!username || !password) return res.status(400).json({ error: '请输入用户名和密码' });
@@ -484,7 +515,7 @@ app.delete('/api/bookings/:id', requireAuth, async (req, res) => {
     await client.query('BEGIN');
     transactionStarted = true;
 
-    const existing = await client.query('SELECT photographer FROM bookings WHERE id = $1 FOR UPDATE', [id]);
+    const existing = await client.query('SELECT * FROM bookings WHERE id = $1 FOR UPDATE', [id]);
     if (existing.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: '预约不存在' });
@@ -493,6 +524,10 @@ app.delete('/api/bookings/:id', requireAuth, async (req, res) => {
     if (req.user.role !== 'admin' && booking.photographer !== req.user.username) {
       await client.query('ROLLBACK');
       return res.status(403).json({ error: '只能取消自己的预约' });
+    }
+    if (!isEditableBooking(booking)) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: '已结束预约不能取消' });
     }
     const result = await client.query('DELETE FROM bookings WHERE id = $1', [id]);
 

@@ -1,6 +1,6 @@
 // Service Worker：用于缓存资源，让应用即使在断网情况下也能打开（PWA 必须组件）
 // 提升版本号可强制客户端更新缓存（例如修改 API 域名后）
-const CACHE_NAME = 'studio-booking-v122-floor-first';
+const CACHE_NAME = 'studio-booking-v124-network-first';
 const urlsToCache = [
   './',
   './index.html',
@@ -52,15 +52,16 @@ self.addEventListener('fetch', event => {
   }
 
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true })
-      .then(response => {
-        // 如果在缓存中找到，直接返回缓存
-        if (response) {
-          return response;
+    fetch(event.request)
+      .then(async response => {
+        if (response.ok && new URL(event.request.url).origin === self.location.origin) {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(event.request, response.clone());
         }
-        // 否则去网络请求
-        return fetch(event.request);
+        return response;
       })
+      .catch(async () => await caches.match(event.request)
+        || caches.match(event.request, { ignoreSearch: true }))
   );
 });
 

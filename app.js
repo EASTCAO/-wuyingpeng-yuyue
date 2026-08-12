@@ -364,6 +364,11 @@ function minutesToTime(minutes) {
     return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
+function createBookingId() {
+    if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 function getChinaDate(offsetDays = 0) {
     const date = new Date(Date.now() + offsetDays * 86400000);
     return new Intl.DateTimeFormat('en-CA', {
@@ -520,6 +525,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (isCloudMode()) {
         // 线上登录只保存会话令牌和用户名，清理旧版本可能遗留的明文密码。
         localStorage.removeItem('savedPassword');
+        document.getElementById('guestLoginButton')?.classList.add('hidden');
     }
     if (!isCloudMode() && savedUser) {
         currentUser = savedUser;
@@ -1023,22 +1029,36 @@ function renderWeekDateSelector() {
 
     const today = getChinaDate();
     const activeDate = selectedDate || today;
-    const weekDates = WeekDateSelector.getWeekDates(visibleWeekDate || activeDate);
+    const weekAnchor = visibleWeekDate || activeDate;
+    const weekDates = WeekDateSelector.getWeekDates(weekAnchor);
     const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    const minimumDate = currentUser === 'admin' ? getChinaDate(-1) : today;
+    const maximumDate = getChinaDate(1);
 
     list.innerHTML = weekDates.map((date, index) => {
         const [, month, day] = date.split('-');
         const classes = ['week-date-item'];
+        const isSelectable = date >= minimumDate && date <= maximumDate;
         if (date === activeDate) classes.push('active');
         if (date === today) classes.push('today');
-        return `<button type="button" class="${classes.join(' ')}" onclick="selectWeekDate('${date}')" aria-pressed="${date === activeDate}">
+        return `<button type="button" class="${classes.join(' ')}" onclick="selectWeekDate('${date}')" aria-pressed="${date === activeDate}"${isSelectable ? '' : ' disabled'}>
             <span>${weekdays[index]}</span>
             <small>${Number(month)}.${Number(day)}</small>
         </button>`;
     }).join('');
+
+    const canMoveToWeek = direction => WeekDateSelector.weekIntersectsRange(
+        WeekDateSelector.shiftDate(weekAnchor, direction * 7),
+        minimumDate,
+        maximumDate
+    );
+    document.querySelector('[data-week-direction="previous"]')?.toggleAttribute('disabled', !canMoveToWeek(-1));
+    document.querySelector('[data-week-direction="next"]')?.toggleAttribute('disabled', !canMoveToWeek(1));
 }
 
 function selectWeekDate(date) {
+    const minimumDate = currentUser === 'admin' ? getChinaDate(-1) : getChinaDate();
+    if (date < minimumDate || date > getChinaDate(1)) return;
     selectedDate = date;
     visibleWeekDate = date;
     currentDateRange = 'custom';
@@ -1048,7 +1068,11 @@ function selectWeekDate(date) {
 
 function shiftWeek(direction) {
     const anchor = visibleWeekDate || selectedDate || getChinaDate();
-    visibleWeekDate = WeekDateSelector.shiftDate(anchor, direction * 7);
+    const nextDate = WeekDateSelector.shiftDate(anchor, direction * 7);
+    const minimumDate = currentUser === 'admin' ? getChinaDate(-1) : getChinaDate();
+    const maximumDate = getChinaDate(1);
+    if (!WeekDateSelector.weekIntersectsRange(nextDate, minimumDate, maximumDate)) return;
+    visibleWeekDate = nextDate;
     renderWeekDateSelector();
 }
 
@@ -1998,7 +2022,7 @@ async function addBooking() {
     const activeEditingId = editingBookingId;
     const isEditing = Boolean(activeEditingId);
     const newBooking = {
-        id: activeEditingId || String(Date.now()), // 修改时保留原预约 ID
+        id: activeEditingId || createBookingId(), // 修改时保留原预约 ID
         studio: studio,
         date: date,
         startTime: startTime,
@@ -2142,7 +2166,18 @@ function handleStudioDetailBookingKeydown(event, bookingId) {
 }
 
 function canCancelBooking(booking) {
-    return Boolean(booking && currentUser && (booking.photographer === currentUser || currentUser === 'admin'));
+    return Boolean(
+        booking
+        && currentUser
+        && isBookingEditable(booking)
+        && (booking.photographer === currentUser || currentUser === 'admin')
+    );
+}
+
+function isBookingEditable(booking) {
+    const bookingDate = getDateOnly(booking?.date);
+    if (bookingDate === getChinaDate(1)) return true;
+    return bookingDate === getChinaDate() && booking.endTime > getChinaCurrentTime();
 }
 
 async function cancelBookingFromStudioDetail(event, bookingId, studioId) {
@@ -2154,7 +2189,7 @@ function showCancelBookingConfirm(bookingId, studioId = '') {
     const booking = allBookings.find(item => item.id === bookingId);
     if (!booking) return;
     if (!canCancelBooking(booking)) {
-        showToast('只能取消自己的预约', 'error');
+        showToast(getBookingStatus(booking) === 'completed' ? '已结束预约不能取消' : '只能取消自己的预约', 'error');
         return;
     }
 
@@ -2212,7 +2247,7 @@ function showBookingDetail(bookingId) {
 
     if (!booking) return;
 
-    const isMyBooking = canCancelBooking(booking);
+    const canManageBooking = canCancelBooking(booking);
 
     const detailHtml = `
         <div class="detail-item">
@@ -2242,7 +2277,7 @@ function showBookingDetail(bookingId) {
     document.getElementById('bookingDetailContent').innerHTML = detailHtml;
 
     // 如果是自己的预约，显示删除按钮
-    const actionsHtml = isMyBooking ? `
+    const actionsHtml = canManageBooking ? `
         <button onclick="editBooking()" class="btn btn-primary">修改时间</button>
         <button onclick="deleteBooking()" class="btn btn-danger">取消预约</button>
     ` : '';
@@ -2256,7 +2291,7 @@ function editBooking() {
     const booking = allBookings.find(item => item.id === selectedBookingId);
     if (!booking) return;
     if (!canCancelBooking(booking)) {
-        showToast('只能修改自己的预约', 'error');
+        showToast(getBookingStatus(booking) === 'completed' ? '已过期预约不能修改' : '只能修改自己的预约', 'error');
         return;
     }
     const bookingDate = getDateOnly(booking.date);
@@ -2291,7 +2326,7 @@ async function deleteBookingById(bookingId, options = {}) {
         return false;
     }
     if (!canCancelBooking(booking)) {
-        showToast('只能取消自己的预约', 'error');
+        showToast(getBookingStatus(booking) === 'completed' ? '已结束预约不能取消' : '只能取消自己的预约', 'error');
         return false;
     }
 
@@ -2685,14 +2720,6 @@ function getDisplayDates() {
     }
 }
 
-// 格式化日期为字符串
-function formatDateToString(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
 // 从日期字符串中提取日期部分（处理 ISO 格式）
 function getDateOnly(dateStr) {
     if (!dateStr) return '';
@@ -2744,9 +2771,8 @@ function createTimelineBookingItem(booking) {
 
 // 判断预约状态
 function getBookingStatus(booking) {
-    const now = new Date();
-    const todayStr = formatDateToString(now);
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const todayStr = getChinaDate();
+    const currentMinutes = timeToMinutes(getChinaCurrentTime());
 
     // 提取日期部分（处理 ISO 格式）
     const bookingDate = getDateOnly(booking.date);
@@ -2952,9 +2978,8 @@ function stopReminderCheck() {
 
 // 检查即将开始的预约
 function checkUpcomingBookings() {
-    const now = new Date();
-    const todayStr = formatDateToString(now);
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const todayStr = getChinaDate();
+    const currentMinutes = timeToMinutes(getChinaCurrentTime());
 
     // 获取今天我的预约
     const myTodayBookings = allBookings.filter(b =>

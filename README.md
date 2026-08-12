@@ -59,6 +59,7 @@ npm start
 node --check app.js
 node --check studio-layout.js
 node --check api/server.js
+node --test test/*.test.js
 cd api
 npm audit --omit=dev
 npm test -- https://wuhanphotoyy.zeabur.app
@@ -89,4 +90,4 @@ AUTH_SECRET=长度足够的随机字符串
 NODE_ENV=production
 ```
 
-`DEFAULT_USER_PASSWORD` 仅用于首次创建默认账号，正式环境应配置后再由用户及时修改密码。
+`AUTH_SECRET` 必须使用独立的高强度随机值，不要复用 `DATABASE_URL`。`DEFAULT_USER_PASSWORD` 仅用于首次创建默认账号，正式环境应配置后再由用户及时修改密码。

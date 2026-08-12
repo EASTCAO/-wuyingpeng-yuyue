@@ -25,5 +25,9 @@
         return Array.from({ length: 7 }, (_, index) => shiftDate(monday, index));
     }
 
-    return { shiftDate, getWeekDates };
+    function weekIntersectsRange(dateString, minimumDate, maximumDate) {
+        return getWeekDates(dateString).some(date => date >= minimumDate && date <= maximumDate);
+    }
+
+    return { shiftDate, getWeekDates, weekIntersectsRange };
 });
