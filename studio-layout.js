@@ -1,5 +1,6 @@
 const baseRenderStudioSections = renderStudioSections;
 const baseRenderBookings = renderBookings;
+const baseInitStudioUI = initStudioUI;
 const STUDIO_OVERVIEW_SEGMENTS = 18;
 const STUDIO_SCENE_REFERENCES = {
     '洗衣房景别': {
@@ -82,8 +83,14 @@ function resetSixthFloorLayout() {
     renderRealSceneOverview();
 }
 
-let currentStudioFloor = '7F';
-currentStudioCategory = 'cyclorama';
+let currentStudioFloor = null;
+currentStudioCategory = null;
+
+initStudioUI = function initStudioLayoutUI() {
+    currentStudioFloor = null;
+    currentStudioCategory = null;
+    baseInitStudioUI();
+};
 
 function renderFloorTabs() {
     return `
@@ -109,7 +116,7 @@ function renderStudioToolbarControls() {
     toolbarControls.innerHTML = `
         <div class="studio-toolbar-tabs-stack">
             ${renderFloorTabs()}
-            ${renderStudioCategoryTabs()}
+            ${currentStudioFloor ? renderStudioCategoryTabs() : ''}
         </div>
     `;
 }
@@ -127,6 +134,7 @@ function renderPreviewStatusLegend() {
 function switchStudioFloor(floor) {
     if (!['6F', '7F'].includes(floor) || floor === currentStudioFloor) return;
     currentStudioFloor = floor;
+    currentStudioCategory = null;
     renderStudioToolbarControls();
     renderStudioSections();
     renderBookings();
@@ -146,6 +154,12 @@ renderStudioSections = function renderStudioLayoutSections() {
     renderStudioToolbarControls();
 
     const listView = document.getElementById('listView');
+    if (!currentStudioFloor || !currentStudioCategory) {
+        listView?.classList.remove('preview-cyclorama-active', 'preview-sixth-floor-active', 'real-scene-active');
+        container.innerHTML = '';
+        return;
+    }
+
     const isCyclorama = currentStudioCategory === 'cyclorama';
     listView?.classList.toggle('preview-cyclorama-active', isCyclorama);
     listView?.classList.toggle('preview-sixth-floor-active', isCyclorama && currentStudioFloor === '6F');
@@ -183,6 +197,8 @@ renderStudioSections = function renderStudioLayoutSections() {
 };
 
 renderBookings = function renderStudioLayoutBookings() {
+    if (!currentStudioFloor || !currentStudioCategory) return;
+
     if (currentStudioCategory !== 'real-scene') {
         document.getElementById('listView')?.classList.add('studio-layout-active');
         baseRenderBookings();
