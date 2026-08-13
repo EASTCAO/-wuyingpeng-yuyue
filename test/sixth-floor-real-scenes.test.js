@@ -126,7 +126,7 @@ test('楼层和影棚类型切换控件固定在预览卡片右上角', () => {
     assert.match(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[\s\S]*?flex-direction:\s*column;[\s\S]*?align-items:\s*flex-end;/);
     assert.doesNotMatch(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[^}]*border:/);
     assert.doesNotMatch(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[^}]*box-shadow:/);
-    assert.match(pageStyles, /\.studio-toolbar-controls \.studio-category-tabs\s*\{[\s\S]*?width:\s*112px;[\s\S]*?padding:\s*2px;[\s\S]*?gap:\s*2px;/);
+    assert.match(pageStyles, /\.studio-toolbar-controls \.studio-category-tabs\s*\{[\s\S]*?width:\s*112px;[\s\S]*?padding:\s*0;[\s\S]*?gap:\s*2px;[\s\S]*?border:\s*0;[\s\S]*?background:\s*transparent;/);
     assert.match(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[\s\S]*?gap:\s*3px;/);
     assert.match(pageStyles, /\.studio-toolbar-controls \.preview-floor-tabs \.studio-category-tab\s*\{[\s\S]*?min-height:\s*24px;/);
     assert.match(pageStyles, /\.studio-toolbar-controls \.preview-category-tabs \.studio-category-tab\s*\{[\s\S]*?min-height:\s*22px;/);
