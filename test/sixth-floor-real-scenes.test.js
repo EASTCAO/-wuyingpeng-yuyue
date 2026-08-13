@@ -63,12 +63,14 @@ test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?min-width:\s*0;/);
 });
 
-test('6F 自由画布使用带安全边距的轻量画板', () => {
-    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?display:\s*flex;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;/);
-    assert.match(layoutStyles, /\.sixth-floor-canvas-viewport\s*\{[\s\S]*?box-sizing:\s*border-box;[\s\S]*?max-width:\s*100%;[\s\S]*?border:\s*1px solid #DCE3EA;[\s\S]*?border-radius:\s*8px;[\s\S]*?box-shadow:/);
+test('6F 自由画布使用无边框全尺寸视口', () => {
+    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?display:\s*block;/);
+    assert.match(layoutStyles, /\.sixth-floor-canvas-viewport\s*\{[\s\S]*?width:\s*100%;[\s\S]*?height:\s*100%;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;[\s\S]*?box-shadow:\s*none;/);
     assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f\s*\{[\s\S]*?padding:\s*0 0 4px;/);
     assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*4px;[\s\S]*?right:\s*178px;/);
-    assert.match(layoutSource, /viewport\.style\.width = `\$\{Math\.ceil\(bounds\.width \* sixthFloorViewport\.scale/);
+    assert.match(layoutSource, /viewport\.clientWidth - SIXTH_FLOOR_FRAME_INSETS\.left/);
+    assert.doesNotMatch(layoutSource, /viewport\.style\.width/);
+    assert.doesNotMatch(layoutSource, /viewport\.style\.height/);
     assert.match(layoutSource, /sixth-floor-canvas-viewport[\s\S]*renderPreviewStatusLegend\(\)/);
     assert.match(layoutSource, /preview-workspace-\$\{currentStudioFloor\.toLowerCase\(\)\}/);
 });

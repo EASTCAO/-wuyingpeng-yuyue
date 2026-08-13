@@ -383,18 +383,13 @@ function getSixthFloorLayoutBounds(layout) {
 function fitSixthFloorCanvasToViewport(layout) {
     const viewport = document.querySelector('[data-canvas-viewport]');
     if (!viewport) return;
-    const frame = viewport.parentElement;
     const bounds = getSixthFloorLayoutBounds(layout);
-    const availableWidth = Math.max(frame.clientWidth - SIXTH_FLOOR_FRAME_INSETS.left - SIXTH_FLOOR_FRAME_INSETS.right, 320);
-    const availableHeight = Math.max(frame.clientHeight - SIXTH_FLOOR_FRAME_INSETS.top - SIXTH_FLOOR_FRAME_INSETS.bottom, 320);
+    const availableWidth = Math.max(viewport.clientWidth - SIXTH_FLOOR_FRAME_INSETS.left - SIXTH_FLOOR_FRAME_INSETS.right, 320);
+    const availableHeight = Math.max(viewport.clientHeight - SIXTH_FLOOR_FRAME_INSETS.top - SIXTH_FLOOR_FRAME_INSETS.bottom, 320);
     const widthScale = availableWidth / bounds.width;
     const heightScale = availableHeight / bounds.height;
     const fittedScale = Math.min(SIXTH_FLOOR_DEFAULT_SCALE, widthScale, heightScale);
     sixthFloorViewport = { ...sixthFloorViewport, scale: Number(Math.max(0.55, fittedScale).toFixed(2)) };
-    if (window.matchMedia('(min-width: 769px)').matches) {
-        viewport.style.width = `${Math.ceil(bounds.width * sixthFloorViewport.scale + SIXTH_FLOOR_FRAME_INSETS.left + SIXTH_FLOOR_FRAME_INSETS.right)}px`;
-        viewport.style.height = `${Math.ceil(bounds.height * sixthFloorViewport.scale + SIXTH_FLOOR_FRAME_INSETS.top + SIXTH_FLOOR_FRAME_INSETS.bottom)}px`;
-    }
     applySixthFloorViewport();
 }
 
