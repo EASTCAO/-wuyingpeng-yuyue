@@ -4615,3 +4615,331 @@ body {
 .btn-danger:hover {
     background: #DC2626;
 }
+
+/* Cal.com-inspired visual system: booking UI only, no behavior changes. */
+:root {
+    --ui-ink: #111111;
+    --ui-body: #374151;
+    --ui-muted: #6B7280;
+    --ui-muted-soft: #898989;
+    --ui-hairline: #E5E7EB;
+    --ui-hairline-soft: #F3F4F6;
+    --ui-canvas: #FFFFFF;
+    --ui-surface: #F8F9FA;
+    --ui-surface-card: #F5F5F5;
+    --ui-focus: #3B82F6;
+}
+
+body {
+    color: var(--ui-body);
+    background: var(--ui-surface);
+}
+
+.header {
+    min-height: 56px;
+    padding: 10px 20px;
+    border-bottom-color: var(--ui-hairline);
+    box-shadow: none;
+}
+
+.header-left h1,
+.user-info span,
+.stats-header h2,
+.modal-header h2 {
+    color: var(--ui-ink);
+}
+
+.header-left h1,
+.user-info span {
+    font-weight: 600;
+}
+
+.btn-user {
+    padding: 8px 14px;
+    border-color: var(--ui-hairline);
+    border-radius: 8px;
+    background: var(--ui-canvas);
+    color: var(--ui-ink);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.btn-user:hover {
+    background: var(--ui-surface);
+}
+
+.main-content {
+    height: calc(100vh - 56px);
+}
+
+.sidebar {
+    border-right-color: var(--ui-hairline);
+    background: var(--ui-canvas);
+}
+
+.sidebar-link,
+.switch-row,
+.switch-label {
+    color: var(--ui-muted);
+}
+
+.sidebar-link:hover {
+    color: var(--ui-ink);
+}
+
+.switch-row input[type="checkbox"],
+.switch-label input[type="checkbox"] {
+    background: #D1D5DB;
+}
+
+.switch-row input[type="checkbox"]:checked,
+.switch-label input[type="checkbox"]:checked {
+    background: var(--ui-ink);
+}
+
+.toolbar {
+    padding: 10px 20px;
+    border-bottom-color: var(--ui-hairline);
+    background: var(--ui-canvas);
+}
+
+.week-nav-button {
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--ui-hairline);
+    background: var(--ui-canvas);
+    color: var(--ui-ink);
+}
+
+.week-date-item {
+    color: var(--ui-body);
+}
+
+.week-date-item small {
+    color: var(--ui-muted);
+}
+
+.week-date-item.today:not(.active) {
+    background: var(--ui-surface-card);
+}
+
+.week-date-item.active {
+    background: var(--ui-ink);
+    color: #FFFFFF;
+}
+
+.week-date-item.active small {
+    color: #D1D5DB;
+}
+
+.studio-toolbar-controls .studio-category-tabs,
+.studio-category-tabs {
+    border-color: var(--ui-hairline);
+    background: var(--ui-surface);
+}
+
+.studio-category-tab {
+    color: var(--ui-muted);
+}
+
+.studio-category-tab.active {
+    background: var(--ui-canvas);
+    color: var(--ui-ink);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.studio-category-tab:focus-visible,
+.week-date-item:focus-visible,
+.week-nav-button:focus-visible {
+    outline: 2px solid var(--ui-focus);
+    outline-offset: 2px;
+}
+
+.list-view,
+.stats-view,
+.timeline-view {
+    background: var(--ui-surface);
+}
+
+.btn {
+    min-height: 40px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.btn-primary,
+.btn-success {
+    border-color: var(--ui-ink);
+    background: var(--ui-ink);
+    color: #FFFFFF;
+    box-shadow: none;
+}
+
+.btn-primary:hover,
+.btn-success:hover {
+    border-color: #242424;
+    background: #242424;
+    color: #FFFFFF;
+    box-shadow: none;
+    transform: none;
+}
+
+.btn-secondary {
+    border-color: var(--ui-hairline);
+    background: var(--ui-canvas);
+    color: var(--ui-ink);
+}
+
+.btn-secondary:hover {
+    border-color: #D1D5DB;
+    background: var(--ui-surface);
+}
+
+.modal {
+    background: rgba(17, 17, 17, 0.42);
+}
+
+.modal-content {
+    border-color: var(--ui-hairline);
+    border-radius: 12px;
+    box-shadow: 0 18px 48px rgba(17, 17, 17, 0.14);
+}
+
+.modal-header {
+    border-bottom-color: var(--ui-hairline);
+}
+
+.modal-header h2 {
+    font-size: 20px;
+    letter-spacing: 0;
+}
+
+.form-group label {
+    color: var(--ui-body);
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea,
+.stats-filters select,
+.user-mgmt-add input {
+    border: 1px solid var(--ui-hairline);
+    border-radius: 8px;
+    background: var(--ui-canvas);
+    color: var(--ui-ink);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus,
+.stats-filters select:focus,
+.user-mgmt-add input:focus {
+    border-color: var(--ui-ink);
+    background: var(--ui-canvas);
+    box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08);
+}
+
+.stats-card,
+.stats-table-container {
+    border-color: var(--ui-hairline);
+    border-radius: 12px;
+    box-shadow: none;
+}
+
+.stats-card::before {
+    display: none;
+}
+
+.stats-card:hover {
+    box-shadow: 0 4px 12px rgba(17, 17, 17, 0.06);
+    transform: none;
+}
+
+.stats-card-label,
+.stats-table th {
+    color: var(--ui-muted);
+}
+
+.stats-card-value,
+.stats-table td {
+    color: var(--ui-ink);
+}
+
+.stats-table thead,
+.stats-table tbody tr:hover {
+    background: var(--ui-surface);
+}
+
+.stats-table td:first-child {
+    color: var(--ui-ink);
+}
+
+.stats-percentage {
+    background: var(--ui-surface-card);
+    color: var(--ui-ink);
+}
+
+.login-card {
+    border-color: var(--ui-hairline);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(17, 17, 17, 0.08);
+}
+
+.login-icon,
+.login-form input {
+    border-color: var(--ui-hairline);
+    background: var(--ui-canvas);
+}
+
+.login-form input:focus {
+    border-color: var(--ui-ink);
+    box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08);
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        height: calc(100vh - 50px);
+    }
+
+    .header {
+        min-height: 50px;
+        padding: 8px 12px;
+    }
+
+    .content-area,
+    .stats-view {
+        min-width: 0;
+    }
+
+    .stats-summary {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .stats-card {
+        min-width: 0;
+        padding: 14px 12px;
+    }
+
+    .stats-card-label {
+        margin-bottom: 8px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .stats-card-value {
+        font-size: 24px;
+        letter-spacing: 0;
+    }
+
+    .stats-table-container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+}
