@@ -122,7 +122,13 @@ test('楼层和影棚类型切换控件固定在预览卡片右上角', () => {
 });
 
 test('预约状态说明固定在实景棚预览右上角且不撑满整行', () => {
-    assert.match(layoutStyles, /\.preview-workspace\s*\{[\s\S]*?position:\s*relative;[\s\S]*?padding:\s*38px 0 8px;/);
-    assert.match(layoutStyles, /\.preview-status-legend\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*12px;[\s\S]*?right:\s*12px;/);
+    assert.match(layoutStyles, /\.preview-workspace\s*\{[\s\S]*?position:\s*relative;[\s\S]*?padding:\s*30px 0 8px;/);
+    assert.match(layoutStyles, /\.preview-status-legend\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*6px;[\s\S]*?right:\s*8px;/);
     assert.match(layoutStyles, /\.preview-status-legend\s*\{[\s\S]*?width:\s*max-content;/);
+});
+
+test('预约状态说明和画布工具在右上角紧凑排列', () => {
+    assert.match(layoutStyles, /\.preview-status-legend\s*\{[\s\S]*?gap:\s*8px;[\s\S]*?padding:\s*4px 7px;/);
+    assert.match(layoutStyles, /\.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*4px;[\s\S]*?right:\s*8px;[\s\S]*?gap:\s*3px;[\s\S]*?padding:\s*3px;/);
+    assert.match(layoutStyles, /\.sixth-floor-canvas-toolbar button\s*\{[\s\S]*?min-width:\s*24px;[\s\S]*?height:\s*24px;/);
 });
