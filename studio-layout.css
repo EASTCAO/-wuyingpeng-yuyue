@@ -198,6 +198,7 @@
 @media (min-width: 769px) {
     .studio-booking-page .list-view.real-scene-active {
         overflow: hidden;
+        padding: 8px 6px 0;
     }
 
     .studio-booking-page .list-view.real-scene-active #studioGroups,
@@ -210,11 +211,17 @@
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
+        padding: 22px 0 4px;
     }
 
     .studio-booking-page .list-view.real-scene-active .preview-content-6f {
         flex: 1;
         min-height: 0;
+    }
+
+    .studio-booking-page .list-view.real-scene-active .preview-status-legend {
+        top: 0;
+        right: 0;
     }
 }
 
@@ -351,22 +358,22 @@
 .sixth-floor-canvas-toolbar {
     position: absolute;
     z-index: 30;
-    top: 4px;
-    right: 8px;
+    top: 2px;
+    right: 0;
     display: flex;
     align-items: center;
-    gap: 3px;
-    padding: 3px;
+    gap: 2px;
+    padding: 2px;
     border: 1px solid #E1E7ED;
-    border-radius: 8px;
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.94);
     box-shadow: 0 4px 12px rgba(42, 51, 61, 0.08);
 }
 
 .sixth-floor-canvas-toolbar button {
-    min-width: 24px;
-    height: 24px;
-    padding: 0 6px;
+    min-width: 21px;
+    height: 21px;
+    padding: 0 4px;
     border: 0;
     border-radius: 4px;
     background: #F4F6F8;
@@ -375,7 +382,7 @@
 }
 
 .sixth-floor-canvas-toolbar button:hover { background: #E8EEF8; }
-.sixth-floor-canvas-toolbar span { min-width: 36px; color: #687483; font-size: 10px; text-align: center; }
+.sixth-floor-canvas-toolbar span { min-width: 32px; color: #687483; font-size: 9px; text-align: center; }
 
 .sixth-floor-canvas {
     position: absolute;
