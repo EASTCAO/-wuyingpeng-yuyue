@@ -9,30 +9,30 @@ const STUDIO_SCENE_REFERENCES = {
     }
 };
 
-const SIXTH_FLOOR_LAYOUT_VERSION = 3;
-const SIXTH_FLOOR_CANVAS_SIZE = { width: 1800, height: 900 };
+const SIXTH_FLOOR_LAYOUT_VERSION = 4;
+const SIXTH_FLOOR_CANVAS_SIZE = { width: 1800, height: 1040 };
 const SIXTH_FLOOR_DEFAULT_LAYOUT = {
-    'sixth-corridor': { x: 40, y: 40, width: 320, height: 100 },
-    'sixth-wood-wall': { x: 400, y: 40, width: 320, height: 100 },
-    'sixth-greenery-wall': { x: 760, y: 40, width: 320, height: 100 },
-    'sixth-ocean-wall': { x: 1120, y: 40, width: 320, height: 100 },
-    'sixth-street': { x: 1480, y: 40, width: 280, height: 100 },
-    'sixth-greenery': { x: 40, y: 170, width: 200, height: 500 },
-    'sixth-kids': { x: 280, y: 170, width: 220, height: 130 },
-    'sixth-classroom': { x: 540, y: 170, width: 260, height: 130 },
-    'sixth-clinic': { x: 280, y: 320, width: 520, height: 130 },
-    'sixth-study': { x: 840, y: 170, width: 260, height: 280 },
-    'sixth-vintage-living': { x: 1140, y: 170, width: 260, height: 280 },
-    'sixth-vintage-dining': { x: 1440, y: 170, width: 320, height: 280 },
-    'sixth-modern-living': { x: 280, y: 480, width: 260, height: 150 },
-    'sixth-modern-dining': { x: 580, y: 480, width: 260, height: 150 },
-    'sixth-outdoor-cafe': { x: 880, y: 480, width: 260, height: 150 },
-    'sixth-bedroom': { x: 1180, y: 480, width: 320, height: 150 },
-    'sixth-bathroom': { x: 40, y: 700, width: 200, height: 100 },
-    'sixth-bar': { x: 280, y: 700, width: 220, height: 100 },
-    'sixth-chinese': { x: 540, y: 700, width: 220, height: 100 },
-    'sixth-workshop': { x: 800, y: 700, width: 220, height: 100 },
-    'sixth-modern-kitchen': { x: 1060, y: 700, width: 320, height: 100 }
+    'sixth-corridor': { x: 40, y: 40, width: 320, height: 120 },
+    'sixth-wood-wall': { x: 400, y: 40, width: 320, height: 120 },
+    'sixth-greenery-wall': { x: 760, y: 40, width: 320, height: 120 },
+    'sixth-ocean-wall': { x: 1120, y: 40, width: 320, height: 120 },
+    'sixth-street': { x: 1480, y: 40, width: 280, height: 120 },
+    'sixth-greenery': { x: 40, y: 200, width: 200, height: 620 },
+    'sixth-kids': { x: 280, y: 200, width: 220, height: 160 },
+    'sixth-classroom': { x: 540, y: 200, width: 260, height: 160 },
+    'sixth-clinic': { x: 280, y: 400, width: 520, height: 160 },
+    'sixth-study': { x: 840, y: 200, width: 260, height: 360 },
+    'sixth-vintage-living': { x: 1140, y: 200, width: 260, height: 360 },
+    'sixth-vintage-dining': { x: 1440, y: 200, width: 320, height: 360 },
+    'sixth-modern-living': { x: 280, y: 600, width: 260, height: 180 },
+    'sixth-modern-dining': { x: 580, y: 600, width: 260, height: 180 },
+    'sixth-outdoor-cafe': { x: 880, y: 600, width: 260, height: 180 },
+    'sixth-bedroom': { x: 1180, y: 600, width: 320, height: 180 },
+    'sixth-bathroom': { x: 40, y: 860, width: 200, height: 140 },
+    'sixth-bar': { x: 280, y: 860, width: 220, height: 140 },
+    'sixth-chinese': { x: 540, y: 860, width: 220, height: 140 },
+    'sixth-workshop': { x: 800, y: 860, width: 220, height: 140 },
+    'sixth-modern-kitchen': { x: 1060, y: 860, width: 320, height: 140 }
 };
 
 let sixthFloorViewport = { x: 0, y: 0, scale: 1 };

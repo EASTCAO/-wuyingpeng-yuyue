@@ -83,7 +83,7 @@ test('6F 户型图中的所有文字场景都作为可预约卡片', () => {
 });
 
 test('6F 场景结构变化后拒绝读取旧版个人布局', () => {
-    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*3/);
+    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*4/);
     assert.match(layoutSource, /stored\?\.version === SIXTH_FLOOR_LAYOUT_VERSION/);
 });
 
@@ -96,10 +96,12 @@ test('6F 卡片使用高优先级绝对定位而不会落入普通文档流', ()
 });
 
 test('6F 默认布局按参考图分成左中右三段户型区域', () => {
-    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*3/);
-    assert.match(layoutSource, /'sixth-greenery':\s*\{\s*x:\s*40,\s*y:\s*170,\s*width:\s*200,\s*height:\s*500/);
-    assert.match(layoutSource, /'sixth-study':\s*\{\s*x:\s*840,\s*y:\s*170/);
-    assert.match(layoutSource, /'sixth-vintage-dining':\s*\{\s*x:\s*1440,\s*y:\s*170/);
+    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*4/);
+    assert.match(layoutSource, /SIXTH_FLOOR_CANVAS_SIZE\s*=\s*\{\s*width:\s*1800,\s*height:\s*1040\s*\}/);
+    assert.match(layoutSource, /'sixth-greenery':\s*\{\s*x:\s*40,\s*y:\s*200,\s*width:\s*200,\s*height:\s*620/);
+    assert.match(layoutSource, /'sixth-study':\s*\{\s*x:\s*840,\s*y:\s*200/);
+    assert.match(layoutSource, /'sixth-vintage-dining':\s*\{\s*x:\s*1440,\s*y:\s*200/);
+    assert.match(layoutSource, /'sixth-modern-kitchen':\s*\{\s*x:\s*1060,\s*y:\s*860,\s*width:\s*320,\s*height:\s*140/);
 });
 
 test('6F 已保存和拖动中的卡片坐标都会被限制在画布内', () => {
