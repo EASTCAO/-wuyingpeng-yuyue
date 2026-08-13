@@ -56,6 +56,9 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
     assert.match(layoutSource, /fitSixthFloorCanvasToViewport/);
+    assert.match(layoutSource, /const widthScale = availableWidth \/ SIXTH_FLOOR_CANVAS_SIZE\.width;/);
+    assert.match(layoutSource, /const heightScale = availableHeight \/ SIXTH_FLOOR_CANVAS_SIZE\.height;/);
+    assert.match(layoutSource, /Math\.min\(1, widthScale, heightScale \+ 0\.1\)/);
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?min-width:\s*0;/);
 });
 

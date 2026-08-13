@@ -373,7 +373,9 @@ function fitSixthFloorCanvasToViewport() {
     if (!viewport) return;
     const availableWidth = Math.max(viewport.clientWidth - 24, 320);
     const availableHeight = Math.max(viewport.clientHeight - 24, 320);
-    const fittedScale = Math.min(1, availableWidth / SIXTH_FLOOR_CANVAS_SIZE.width, availableHeight / SIXTH_FLOOR_CANVAS_SIZE.height);
+    const widthScale = availableWidth / SIXTH_FLOOR_CANVAS_SIZE.width;
+    const heightScale = availableHeight / SIXTH_FLOOR_CANVAS_SIZE.height;
+    const fittedScale = Math.min(1, widthScale, heightScale + 0.1);
     sixthFloorViewport = { ...sixthFloorViewport, scale: Number(Math.max(0.55, fittedScale).toFixed(2)) };
     applySixthFloorViewport();
 }
