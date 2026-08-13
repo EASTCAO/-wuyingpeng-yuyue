@@ -4957,6 +4957,231 @@ body {
     box-shadow: none;
 }
 
+/* Apple-style interaction and layout refinement pass. */
+.toolbar {
+    min-height: 72px;
+    padding: 12px 24px;
+}
+
+.date-nav {
+    gap: 24px;
+}
+
+.week-date-selector {
+    gap: 10px;
+}
+
+.week-date-list {
+    gap: 6px;
+}
+
+.week-date-item {
+    min-height: 52px;
+    border-radius: 11px;
+}
+
+.week-date-item span {
+    font-weight: 400;
+}
+
+.week-date-item.active span,
+.week-date-item.active small {
+    font-weight: 600;
+}
+
+.studio-toolbar-controls {
+    padding: 4px;
+    border-radius: 14px;
+    background: rgba(245, 245, 247, 0.78);
+}
+
+.studio-toolbar-tabs-grid {
+    gap: 8px;
+}
+
+.studio-toolbar-tabs-stack {
+    gap: 5px;
+}
+
+.studio-toolbar-controls .studio-category-tabs {
+    width: 124px;
+    padding: 2px;
+    border: 0;
+    border-radius: 11px;
+    background: #E8E8ED;
+}
+
+.studio-toolbar-controls .preview-floor-tabs .studio-category-tab,
+.studio-toolbar-controls .preview-category-tabs .studio-category-tab {
+    min-height: 28px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.studio-toolbar-controls .preview-category-tabs .studio-category-tab {
+    font-size: 11px;
+}
+
+.studio-toolbar-controls .studio-category-tab.active {
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.sidebar {
+    padding-top: 8px;
+}
+
+.sidebar-link,
+.switch-row {
+    min-height: 36px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.sidebar-link {
+    border-radius: 8px;
+    transition: color 160ms ease, background-color 160ms ease;
+}
+
+.sidebar-link:hover {
+    background: #F5F5F7;
+}
+
+.booking-availability-panel {
+    border-color: var(--ui-hairline);
+    border-radius: 18px;
+    background: var(--ui-surface-card);
+}
+
+.availability-header h3 {
+    color: var(--ui-ink);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.availability-header p,
+.availability-period-title,
+.availability-legend {
+    color: var(--ui-muted);
+}
+
+.availability-period-title::after {
+    background: var(--ui-hairline);
+}
+
+.availability-period-ranges {
+    border-color: #B9D9F7;
+    border-radius: 9999px;
+    background: #EAF4FF;
+    color: var(--ui-action);
+    font-weight: 600;
+}
+
+.availability-slot {
+    min-height: 36px;
+    border-radius: 11px;
+    font-weight: 600;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.availability-free,
+.availability-closing {
+    border-color: #D2D2D7;
+    background: #FFFFFF;
+    color: var(--ui-action);
+}
+
+.availability-free:hover,
+.availability-closing:hover {
+    border-color: var(--ui-action);
+    background: #F5FAFF;
+    color: var(--ui-action);
+    transform: none;
+}
+
+.availability-slot.selected-start,
+.availability-slot.selected-end {
+    border-color: var(--ui-action);
+    background: var(--ui-action);
+    color: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.16);
+}
+
+.availability-slot.selected-range {
+    border-color: #B9D9F7;
+    background: #EAF4FF;
+    color: var(--ui-action);
+}
+
+.availability-past,
+.availability-slot.availability-past:hover,
+.availability-slot.availability-past.selected-start,
+.availability-slot.availability-past.selected-end,
+.availability-slot.availability-past.selected-range {
+    border-color: #E0E0E0;
+    background: #F0F0F0;
+    color: #86868B;
+}
+
+.availability-empty,
+.availability-booking-item {
+    border-color: var(--ui-hairline);
+    border-radius: 11px;
+    background: #FFFFFF;
+}
+
+.stats-header {
+    margin-bottom: 24px;
+}
+
+.stats-header h2 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+}
+
+.stats-filters select {
+    min-height: 44px;
+    padding: 10px 36px 10px 16px;
+}
+
+.stats-summary {
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stats-card {
+    padding: 22px;
+}
+
+.stats-card-label {
+    margin-bottom: 10px;
+}
+
+.stats-card-value {
+    color: var(--ui-ink);
+    font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+}
+
+.stats-table th,
+.stats-table td {
+    padding: 14px 16px;
+}
+
+.close-btn,
+.reminder-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(210, 210, 215, 0.64);
+    color: var(--ui-ink);
+}
+
 @media (max-width: 768px) {
     .main-content {
         height: calc(100vh - 50px);
@@ -4965,6 +5190,62 @@ body {
     .header {
         min-height: 50px;
         padding: 8px 12px;
+    }
+
+    .toolbar {
+        min-height: 100px;
+        padding: 8px 12px;
+    }
+
+    .date-nav {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-rows: auto auto;
+        align-items: center;
+        gap: 8px 10px;
+    }
+
+    .week-date-selector {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .week-date-list {
+        scroll-snap-type: x proximity;
+    }
+
+    .week-date-item {
+        min-height: 48px;
+        scroll-snap-align: center;
+    }
+
+    .studio-toolbar-controls {
+        grid-column: 2;
+        grid-row: 2;
+        width: auto;
+        min-width: 94px;
+        justify-self: end;
+        padding: 3px;
+    }
+
+    .studio-toolbar-tabs-grid {
+        gap: 6px;
+    }
+
+    .studio-toolbar-tabs-stack {
+        gap: 4px;
+    }
+
+    .studio-toolbar-controls .studio-category-tabs {
+        width: 88px;
+    }
+
+    .studio-toolbar-controls .preview-floor-tabs .studio-category-tab,
+    .studio-toolbar-controls .preview-category-tabs .studio-category-tab {
+        min-height: 24px;
+        padding: 2px 5px;
     }
 
     .content-area,

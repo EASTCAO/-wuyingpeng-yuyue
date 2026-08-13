@@ -235,7 +235,7 @@
 
     .studio-booking-page .list-view.real-scene-active .preview-workspace-6f .sixth-floor-canvas-toolbar {
         top: 4px;
-        right: 178px;
+        right: 214px;
     }
 }
 
@@ -1073,20 +1073,53 @@
     box-shadow: none;
 }
 
+.preview-status-legend {
+    gap: 10px;
+    padding: 7px 10px;
+}
+
+.preview-legend-item {
+    gap: 5px;
+    color: #6E6E73;
+    font-size: 11px;
+}
+
+.preview-legend-swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
 .preview-legend-item,
 .sixth-floor-canvas-toolbar span {
     color: #6B7280;
 }
 
 .sixth-floor-canvas-toolbar button {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
     border: 0;
     border-radius: 9999px;
     background: rgba(210, 210, 215, 0.64);
     color: #1D1D1F;
+    font-size: 13px;
 }
 
 .sixth-floor-canvas-toolbar button:hover {
     background: #D2D2D7;
+}
+
+.sixth-floor-canvas-toolbar {
+    gap: 4px;
+    padding: 4px;
+}
+
+.sixth-floor-canvas-toolbar span {
+    min-width: 40px;
+    color: #6E6E73;
+    font-size: 11px;
 }
 
 .preview-scene-card {
@@ -1114,6 +1147,26 @@
     color: #1D1D1F;
     font-weight: 600;
     letter-spacing: -0.01em;
+}
+
+.sixth-floor-layout-card.is-dragging {
+    opacity: 0.78;
+}
+
+.sixth-floor-layout-card.is-dragging .preview-scene-card {
+    border-color: #0071E3;
+}
+
+@media (max-width: 768px) {
+    .studio-booking-page .list-view.real-scene-active .preview-workspace-6f .preview-status-legend {
+        top: 4px;
+        right: 8px;
+    }
+
+    .studio-booking-page .list-view.real-scene-active .preview-workspace-6f .sixth-floor-canvas-toolbar {
+        top: 38px;
+        right: 8px;
+    }
 }
 
 .preview-scene-card.available,
