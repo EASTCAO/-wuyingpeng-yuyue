@@ -56,10 +56,21 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
     assert.match(layoutSource, /fitSixthFloorCanvasToViewport/);
-    assert.match(layoutSource, /const widthScale = availableWidth \/ SIXTH_FLOOR_CANVAS_SIZE\.width;/);
-    assert.match(layoutSource, /const heightScale = availableHeight \/ SIXTH_FLOOR_CANVAS_SIZE\.height;/);
-    assert.match(layoutSource, /Math\.min\(1, widthScale, heightScale \+ 0\.1\)/);
+    assert.match(layoutSource, /SIXTH_FLOOR_FRAME_INSETS\s*=\s*\{\s*top:\s*28,\s*right:\s*20,\s*bottom:\s*20,\s*left:\s*20\s*\}/);
+    assert.match(layoutSource, /SIXTH_FLOOR_DEFAULT_SCALE\s*=\s*0\.75/);
+    assert.match(layoutSource, /getSixthFloorLayoutBounds\(layout\)/);
+    assert.match(layoutSource, /Math\.min\(SIXTH_FLOOR_DEFAULT_SCALE, widthScale, heightScale\)/);
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?min-width:\s*0;/);
+});
+
+test('6F 自由画布使用带安全边距的轻量画板', () => {
+    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?display:\s*flex;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;/);
+    assert.match(layoutStyles, /\.sixth-floor-canvas-viewport\s*\{[\s\S]*?box-sizing:\s*border-box;[\s\S]*?max-width:\s*100%;[\s\S]*?border:\s*1px solid #DCE3EA;[\s\S]*?border-radius:\s*8px;[\s\S]*?box-shadow:/);
+    assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f\s*\{[\s\S]*?padding:\s*0 0 4px;/);
+    assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*4px;[\s\S]*?right:\s*178px;/);
+    assert.match(layoutSource, /viewport\.style\.width = `\$\{Math\.ceil\(bounds\.width \* sixthFloorViewport\.scale/);
+    assert.match(layoutSource, /sixth-floor-canvas-viewport[\s\S]*renderPreviewStatusLegend\(\)/);
+    assert.match(layoutSource, /preview-workspace-\$\{currentStudioFloor\.toLowerCase\(\)\}/);
 });
 
 test('6F 自由画布在桌面端占满剩余高度并展示全部卡片', () => {
@@ -138,6 +149,7 @@ test('楼层和影棚类型切换控件固定在预览卡片右上角', () => {
 test('预约状态说明固定在实景棚预览右上角且不撑满整行', () => {
     assert.match(layoutStyles, /\.preview-workspace\s*\{[\s\S]*?position:\s*relative;[\s\S]*?padding:\s*30px 0 8px;/);
     assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-status-legend\s*\{[\s\S]*?top:\s*0;[\s\S]*?right:\s*0;/);
+    assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f \.preview-status-legend\s*\{[\s\S]*?top:\s*4px;[\s\S]*?right:\s*10px;/);
     assert.match(layoutStyles, /\.preview-status-legend\s*\{[\s\S]*?width:\s*max-content;/);
 });
 

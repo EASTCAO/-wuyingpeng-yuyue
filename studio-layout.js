@@ -11,6 +11,8 @@ const STUDIO_SCENE_REFERENCES = {
 
 const SIXTH_FLOOR_LAYOUT_VERSION = 4;
 const SIXTH_FLOOR_CANVAS_SIZE = { width: 1800, height: 1040 };
+const SIXTH_FLOOR_FRAME_INSETS = { top: 28, right: 20, bottom: 20, left: 20 };
+const SIXTH_FLOOR_DEFAULT_SCALE = 0.75;
 const SIXTH_FLOOR_DEFAULT_LAYOUT = {
     'sixth-corridor': { x: 40, y: 40, width: 320, height: 120 },
     'sixth-wood-wall': { x: 400, y: 40, width: 320, height: 120 },
@@ -188,8 +190,8 @@ renderStudioSections = function renderStudioLayoutSections() {
     document.getElementById('listView')?.classList.add('real-scene-active', 'studio-layout-active');
 
     container.innerHTML = `
-        <section class="preview-workspace">
-            ${renderPreviewStatusLegend()}
+        <section class="preview-workspace preview-workspace-${currentStudioFloor.toLowerCase()}">
+            ${currentStudioFloor === '6F' ? '' : renderPreviewStatusLegend()}
             <div id="studioPreviewContent" class="preview-content"></div>
         </section>
     `;
@@ -289,6 +291,7 @@ function renderRealSceneMap(scenes) {
         <div class="preview-floor-map${floorClass}" aria-label="${currentStudioFloor} 实景棚平面总览">
             ${isSixthFloor ? `
                 <div class="sixth-floor-canvas-viewport" data-canvas-viewport>
+                    ${renderPreviewStatusLegend()}
                     ${canEditSixthFloorLayout() ? `<div class="sixth-floor-canvas-toolbar" aria-label="画布工具">
                         <button type="button" data-canvas-action="zoom-out" aria-label="缩小">−</button>
                         <span data-canvas-zoom>100%</span>
@@ -368,15 +371,30 @@ function applySixthFloorViewport() {
     if (zoom) zoom.textContent = `${Math.round(sixthFloorViewport.scale * 100)}%`;
 }
 
-function fitSixthFloorCanvasToViewport() {
+function getSixthFloorLayoutBounds(layout) {
+    const cards = Object.values(layout);
+    const minX = Math.min(...cards.map(card => card.x));
+    const minY = Math.min(...cards.map(card => card.y));
+    const maxX = Math.max(...cards.map(card => card.x + card.width));
+    const maxY = Math.max(...cards.map(card => card.y + card.height));
+    return { width: maxX - minX, height: maxY - minY };
+}
+
+function fitSixthFloorCanvasToViewport(layout) {
     const viewport = document.querySelector('[data-canvas-viewport]');
     if (!viewport) return;
-    const availableWidth = Math.max(viewport.clientWidth - 24, 320);
-    const availableHeight = Math.max(viewport.clientHeight - 24, 320);
-    const widthScale = availableWidth / SIXTH_FLOOR_CANVAS_SIZE.width;
-    const heightScale = availableHeight / SIXTH_FLOOR_CANVAS_SIZE.height;
-    const fittedScale = Math.min(1, widthScale, heightScale + 0.1);
+    const frame = viewport.parentElement;
+    const bounds = getSixthFloorLayoutBounds(layout);
+    const availableWidth = Math.max(frame.clientWidth - SIXTH_FLOOR_FRAME_INSETS.left - SIXTH_FLOOR_FRAME_INSETS.right, 320);
+    const availableHeight = Math.max(frame.clientHeight - SIXTH_FLOOR_FRAME_INSETS.top - SIXTH_FLOOR_FRAME_INSETS.bottom, 320);
+    const widthScale = availableWidth / bounds.width;
+    const heightScale = availableHeight / bounds.height;
+    const fittedScale = Math.min(SIXTH_FLOOR_DEFAULT_SCALE, widthScale, heightScale);
     sixthFloorViewport = { ...sixthFloorViewport, scale: Number(Math.max(0.55, fittedScale).toFixed(2)) };
+    if (window.matchMedia('(min-width: 769px)').matches) {
+        viewport.style.width = `${Math.ceil(bounds.width * sixthFloorViewport.scale + SIXTH_FLOOR_FRAME_INSETS.left + SIXTH_FLOOR_FRAME_INSETS.right)}px`;
+        viewport.style.height = `${Math.ceil(bounds.height * sixthFloorViewport.scale + SIXTH_FLOOR_FRAME_INSETS.top + SIXTH_FLOOR_FRAME_INSETS.bottom)}px`;
+    }
     applySixthFloorViewport();
 }
 
@@ -384,9 +402,9 @@ function bindSixthFloorCanvas() {
     const viewport = document.querySelector('[data-canvas-viewport]');
     const canvas = document.querySelector('[data-sixth-floor-canvas]');
     if (!viewport || !canvas) return;
-    fitSixthFloorCanvasToViewport();
-    if (!canEditSixthFloorLayout()) return;
     const layout = loadSixthFloorLayout();
+    fitSixthFloorCanvasToViewport(layout);
+    if (!canEditSixthFloorLayout()) return;
     viewport.addEventListener('wheel', event => {
         event.preventDefault();
         const delta = event.deltaY < 0 ? 0.1 : -0.1;
