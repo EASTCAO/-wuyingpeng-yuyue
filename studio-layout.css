@@ -195,6 +195,29 @@
     padding: 18px 28px 16px;
 }
 
+@media (min-width: 769px) {
+    .studio-booking-page .list-view.real-scene-active {
+        overflow: hidden;
+    }
+
+    .studio-booking-page .list-view.real-scene-active #studioGroups,
+    .studio-booking-page .list-view.real-scene-active .preview-workspace {
+        height: 100%;
+        min-height: 0;
+    }
+
+    .studio-booking-page .list-view.real-scene-active .preview-workspace {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+
+    .studio-booking-page .list-view.real-scene-active .preview-content-6f {
+        flex: 1;
+        min-height: 0;
+    }
+}
+
 .preview-workspace {
     position: relative;
     padding: 30px 0 8px;
@@ -296,9 +319,8 @@
     display: block;
     width: 100%;
     min-width: 0;
-    height: auto;
-    min-height: 540px;
-    aspect-ratio: 2 / 1;
+    height: 100%;
+    min-height: 0;
     padding: 0;
     overflow: hidden;
 }
@@ -967,7 +989,9 @@
     .preview-floor-map-sixth-floor {
         width: 100%;
         min-width: 0;
+        height: auto;
         min-height: 540px;
+        aspect-ratio: 2 / 1;
     }
 
     .preview-content-6f {
