@@ -24,6 +24,22 @@ body {
     display: none !important;
 }
 
+.simple-video-task-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    margin-left: 4px;
+    border-radius: 9px;
+    background: #e5484d;
+    color: #fff;
+    font-size: 11px;
+    line-height: 18px;
+    font-weight: 700;
+}
+
 /* 容器 */
 .container {
     max-width: 1200px;

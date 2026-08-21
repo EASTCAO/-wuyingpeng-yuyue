@@ -1075,7 +1075,20 @@ async function loadSimpleVideoTasks() {
     } else {
         simpleVideoTasks = allBookings.filter(booking => booking.needsSimpleVideo && getDateOnly(booking.date) >= getChinaDate());
     }
+    updateSimpleVideoTaskBadge();
     renderSimpleVideoTasks();
+}
+
+function updateSimpleVideoTaskBadge() {
+    const count = simpleVideoTasks.length;
+    const badge = document.getElementById('simpleVideoTaskBadge');
+    if (badge) {
+        badge.textContent = String(count);
+        badge.classList.toggle('hidden', count === 0);
+    }
+    document.querySelectorAll('.simple-video-link').forEach(el => {
+        el.classList.toggle('hidden', currentUser !== simpleVideoOwner || count === 0);
+    });
 }
 
 function renderSimpleVideoTasks() {
