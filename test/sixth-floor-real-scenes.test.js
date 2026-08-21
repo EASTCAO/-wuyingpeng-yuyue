@@ -133,20 +133,21 @@ test('6F 拖动后的点击抑制标记会自动清理', () => {
     assert.match(layoutSource, /pointercancel/);
 });
 
-test('楼层和影棚类型切换控件固定在预览卡片右上角', () => {
+test('楼层和影棚类型使用四选一高频切换控件', () => {
     assert.match(layoutSource, /studioToolbarControls/);
-    assert.match(layoutSource, /studio-toolbar-tabs-stack/);
-    assert.match(layoutSource, /renderStudioCategoryTabs\(\)/);
+    assert.match(layoutSource, /renderStudioViewTabs\(\)/);
+    assert.match(layoutSource, /6F · 无影棚/);
+    assert.match(layoutSource, /6F · 实景棚/);
+    assert.match(layoutSource, /7F · 无影棚/);
+    assert.match(layoutSource, /7F · 实景棚/);
+    assert.match(layoutSource, /selectStudioView\('\$\{view\.floor\}', '\$\{view\.category\}'\)/);
+    assert.match(layoutSource, /studio-view:\$\{currentUser \|\| '游客'\}/);
     assert.match(pageStyles, /\.studio-toolbar-controls\s*\{/);
     assert.match(pageStyles, /display:\s*flex;/);
     assert.match(pageStyles, /justify-content:\s*flex-end;/);
-    assert.match(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[\s\S]*?flex-direction:\s*column;[\s\S]*?align-items:\s*flex-end;/);
-    assert.doesNotMatch(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[^}]*border:/);
-    assert.doesNotMatch(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[^}]*box-shadow:/);
-    assert.match(pageStyles, /\.studio-toolbar-controls \.studio-category-tabs\s*\{[\s\S]*?width:\s*112px;[\s\S]*?padding:\s*0;[\s\S]*?gap:\s*2px;[\s\S]*?border:\s*0;[\s\S]*?background:\s*transparent;/);
-    assert.match(pageStyles, /\.studio-toolbar-tabs-stack\s*\{[\s\S]*?gap:\s*3px;/);
-    assert.match(pageStyles, /\.studio-toolbar-controls \.preview-floor-tabs \.studio-category-tab\s*\{[\s\S]*?min-height:\s*24px;/);
-    assert.match(pageStyles, /\.studio-toolbar-controls \.preview-category-tabs \.studio-category-tab\s*\{[\s\S]*?min-height:\s*22px;/);
+    assert.match(pageStyles, /\.studio-view-tabs\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(2,/);
+    assert.match(pageStyles, /\.studio-view-tab\s*\{[\s\S]*?min-height:\s*44px;/);
+    assert.match(pageStyles, /\.studio-view-tab\.active\s*\{[\s\S]*?background:\s*var\(--ui-action\);[\s\S]*?color:\s*#FFFFFF;/);
 });
 
 test('预约状态说明固定在实景棚预览右上角且不撑满整行', () => {

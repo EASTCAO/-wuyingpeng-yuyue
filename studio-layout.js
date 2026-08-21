@@ -89,25 +89,41 @@ let currentStudioFloor = null;
 currentStudioCategory = null;
 
 initStudioUI = function initStudioLayoutUI() {
-    currentStudioFloor = null;
-    currentStudioCategory = null;
+    const savedView = loadStudioViewPreference();
+    currentStudioFloor = savedView.floor;
+    currentStudioCategory = savedView.category;
     baseInitStudioUI();
 };
 
-function renderFloorTabs() {
-    return `
-        <div class="studio-category-tabs preview-floor-tabs" role="tablist" aria-label="楼层">
-            <button type="button" class="studio-category-tab${currentStudioFloor === '6F' ? ' active' : ''}" onclick="switchStudioFloor('6F')" role="tab" aria-selected="${currentStudioFloor === '6F'}">6F</button>
-            <button type="button" class="studio-category-tab${currentStudioFloor === '7F' ? ' active' : ''}" onclick="switchStudioFloor('7F')" role="tab" aria-selected="${currentStudioFloor === '7F'}">7F</button>
-        </div>
-    `;
+function getStudioViewStorageKey() {
+    return `studio-view:${currentUser || '游客'}`;
 }
 
-function renderStudioCategoryTabs() {
+function loadStudioViewPreference() {
+    try {
+        const savedView = JSON.parse(localStorage.getItem(getStudioViewStorageKey()) || 'null');
+        if (['6F', '7F'].includes(savedView?.floor) && ['cyclorama', 'real-scene'].includes(savedView?.category)) {
+            return savedView;
+        }
+    } catch {
+        // 使用默认视图。
+    }
+    return { floor: '6F', category: 'cyclorama' };
+}
+
+function renderStudioViewTabs() {
+    const views = [
+        { floor: '6F', category: 'cyclorama', label: '6F · 无影棚' },
+        { floor: '6F', category: 'real-scene', label: '6F · 实景棚' },
+        { floor: '7F', category: 'cyclorama', label: '7F · 无影棚' },
+        { floor: '7F', category: 'real-scene', label: '7F · 实景棚' }
+    ];
     return `
-        <div class="studio-category-tabs preview-category-tabs" role="tablist" aria-label="影棚类型">
-            <button type="button" class="studio-category-tab${currentStudioCategory === 'cyclorama' ? ' active' : ''}" onclick="switchStudioCategory('cyclorama')" role="tab" aria-selected="${currentStudioCategory === 'cyclorama'}">无影棚</button>
-            <button type="button" class="studio-category-tab${currentStudioCategory === 'real-scene' ? ' active' : ''}" onclick="switchStudioCategory('real-scene')" role="tab" aria-selected="${currentStudioCategory === 'real-scene'}">实景棚</button>
+        <div class="studio-view-tabs" role="tablist" aria-label="选择楼层和影棚类型">
+            ${views.map(view => {
+                const isActive = currentStudioFloor === view.floor && currentStudioCategory === view.category;
+                return `<button type="button" class="studio-view-tab${isActive ? ' active' : ''}" onclick="selectStudioView('${view.floor}', '${view.category}')" role="tab" aria-selected="${isActive}">${view.label}</button>`;
+            }).join('')}
         </div>
     `;
 }
@@ -116,10 +132,7 @@ function renderStudioToolbarControls() {
     const toolbarControls = document.getElementById('studioToolbarControls');
     if (!toolbarControls) return;
     toolbarControls.innerHTML = `
-        <div class="studio-toolbar-tabs-stack">
-            ${renderFloorTabs()}
-            ${currentStudioFloor ? renderStudioCategoryTabs() : ''}
-        </div>
+        ${renderStudioViewTabs()}
     `;
 }
 
@@ -133,26 +146,17 @@ function renderPreviewStatusLegend() {
     `;
 }
 
-function switchStudioFloor(floor) {
-    if (!['6F', '7F'].includes(floor)) return;
+function selectStudioView(floor, category) {
+    if (!['6F', '7F'].includes(floor) || !['cyclorama', 'real-scene'].includes(category)) return;
     if (currentView !== 'list') switchView('list');
-    if (floor === currentStudioFloor) return;
+    if (floor === currentStudioFloor && category === currentStudioCategory) return;
     currentStudioFloor = floor;
-    currentStudioCategory = null;
+    currentStudioCategory = category;
+    localStorage.setItem(getStudioViewStorageKey(), JSON.stringify({ floor, category }));
     renderStudioToolbarControls();
     renderStudioSections();
     renderBookings();
 }
-
-switchStudioCategory = function switchStudioLayoutCategory(category) {
-    if (!['cyclorama', 'real-scene'].includes(category)) return;
-    if (currentView !== 'list') switchView('list');
-    if (category === currentStudioCategory) return;
-    currentStudioCategory = category;
-    renderStudioToolbarControls();
-    renderStudioSections();
-    renderBookings();
-};
 
 renderStudioSections = function renderStudioLayoutSections() {
     const container = document.getElementById('studioGroups');
