@@ -56,7 +56,7 @@ test('6F 自由画布不显示走廊和街道，并使用当前资源版本', ()
 
 test('6F 自由画布在窄屏保持视口宽度并自动适配', () => {
     assert.match(layoutSource, /fitSixthFloorCanvasToViewport/);
-    assert.match(layoutSource, /SIXTH_FLOOR_FRAME_INSETS\s*=\s*\{\s*top:\s*28,\s*right:\s*20,\s*bottom:\s*20,\s*left:\s*20\s*\}/);
+    assert.match(layoutSource, /SIXTH_FLOOR_FRAME_INSETS\s*=\s*\{\s*top:\s*76,\s*right:\s*20,\s*bottom:\s*20,\s*left:\s*20\s*\}/);
     assert.match(layoutSource, /SIXTH_FLOOR_DEFAULT_SCALE\s*=\s*0\.75/);
     assert.match(layoutSource, /getSixthFloorLayoutBounds\(layout\)/);
     assert.match(layoutSource, /Math\.min\(SIXTH_FLOOR_DEFAULT_SCALE, widthScale, heightScale\)/);
@@ -67,9 +67,11 @@ test('6F 自由画布使用无边框全尺寸视口', () => {
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?display:\s*block;/);
     assert.match(layoutStyles, /\.sixth-floor-canvas-viewport\s*\{[\s\S]*?width:\s*100%;[\s\S]*?height:\s*100%;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;[\s\S]*?box-shadow:\s*none;/);
     assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f\s*\{[\s\S]*?padding:\s*0 0 4px;/);
-    assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f \.preview-status-legend\s*\{[\s\S]*?top:\s*4px;[\s\S]*?right:\s*144px;/);
-    assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*4px;[\s\S]*?right:\s*10px;/);
-    assert.match(layoutStyles, /@media \(max-width:\s*768px\)[\s\S]*?\.preview-workspace-6f \.preview-status-legend\s*\{[\s\S]*?top:\s*4px;[\s\S]*?right:\s*8px;[\s\S]*?\.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*38px;[\s\S]*?right:\s*8px;/);
+    assert.match(layoutStyles, /\.preview-workspace-6f \.preview-status-legend,[\s\S]*?\.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?right:\s*8px;[\s\S]*?width:\s*184px;[\s\S]*?height:\s*27px;[\s\S]*?justify-content:\s*center;/);
+    assert.match(layoutStyles, /\.preview-workspace-6f \.preview-status-legend\s*\{[\s\S]*?top:\s*8px;[\s\S]*?flex-wrap:\s*nowrap;/);
+    assert.match(layoutStyles, /\.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*41px;/);
+    assert.match(layoutStyles, /\.sixth-floor-canvas\s*\{[\s\S]*?top:\s*calc\(50% \+ 28px\);/);
+    assert.match(layoutStyles, /@media \(max-width:\s*768px\)\s*\{[\s\S]*?\.sixth-floor-canvas\s*\{[\s\S]*?top:\s*calc\(50% \+ 92px\);/);
     assert.match(layoutSource, /viewport\.clientWidth - SIXTH_FLOOR_FRAME_INSETS\.left/);
     assert.doesNotMatch(layoutSource, /viewport\.style\.width/);
     assert.doesNotMatch(layoutSource, /viewport\.style\.height/);
@@ -181,13 +183,14 @@ test('楼层和影棚类型使用四选一高频切换控件', () => {
 test('预约状态说明固定在实景棚预览右上角且不撑满整行', () => {
     assert.match(layoutStyles, /\.preview-workspace\s*\{[\s\S]*?position:\s*relative;[\s\S]*?padding:\s*30px 0 8px;/);
     assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-status-legend\s*\{[\s\S]*?top:\s*0;[\s\S]*?right:\s*0;/);
-    assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f \.preview-status-legend\s*\{[\s\S]*?top:\s*4px;[\s\S]*?right:\s*10px;/);
+    assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f \.preview-status-legend\s*\{[\s\S]*?top:\s*8px;/);
     assert.match(layoutStyles, /\.preview-status-legend\s*\{[\s\S]*?width:\s*max-content;/);
 });
 
 test('预约状态说明和画布工具在右上角紧凑排列', () => {
     assert.match(layoutStyles, /\.preview-status-legend\s*\{[\s\S]*?gap:\s*8px;[\s\S]*?padding:\s*4px 7px;/);
     assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active\s*\{[\s\S]*?padding:\s*8px 6px 0;/);
+    assert.match(layoutStyles, /\.preview-workspace-6f \.preview-status-legend,[\s\S]*?\.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?width:\s*184px;[\s\S]*?height:\s*27px;/);
     assert.match(layoutStyles, /\.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*2px;[\s\S]*?right:\s*0;[\s\S]*?gap:\s*2px;[\s\S]*?padding:\s*2px;/);
     assert.match(layoutStyles, /\.sixth-floor-canvas-toolbar button\s*\{[\s\S]*?min-width:\s*21px;[\s\S]*?height:\s*21px;/);
 });

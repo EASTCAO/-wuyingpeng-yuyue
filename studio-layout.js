@@ -11,7 +11,7 @@ const STUDIO_SCENE_REFERENCES = {
 
 const SIXTH_FLOOR_LAYOUT_VERSION = 4;
 const SIXTH_FLOOR_CANVAS_SIZE = { width: 1800, height: 1040 };
-const SIXTH_FLOOR_FRAME_INSETS = { top: 28, right: 20, bottom: 20, left: 20 };
+const SIXTH_FLOOR_FRAME_INSETS = { top: 76, right: 20, bottom: 20, left: 20 };
 const SIXTH_FLOOR_DEFAULT_SCALE = 0.75;
 const SIXTH_FLOOR_DRAG_THRESHOLD = 10;
 const SIXTH_FLOOR_DEFAULT_LAYOUT = {
