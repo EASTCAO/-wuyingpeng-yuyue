@@ -99,7 +99,8 @@ test('待办卡片只突出原预约时间、影棚位置和简易视频预约�
         appSource.indexOf('function renderSimpleVideoTasks()'),
         appSource.indexOf('function openSimpleVideoBooking')
     );
-    assert.match(appSource, /原预约：\$\{escapeHtml\(formatDate\(booking\.date\)\)\} \$\{escapeHtml\(booking\.startTime\)\}–\$\{escapeHtml\(booking\.endTime\)\} · \$\{escapeHtml\(booking\.studio\)\}/);
+    assert.match(appSource, /simple-video-task-label">原预约<\/span>/);
+    assert.match(appSource, /simple-video-task-studio">\$\{escapeHtml\(booking\.studio\)\}<\/span>/);
     assert.match(appSource, /简易视频：\$\{booking\.simpleVideoCompleted/);
     assert.match(appSource, /simpleVideoStartTime: simpleVideoBooking\?\.startTime \|\| ''/);
     assert.match(serverSource, /AS "simpleVideoStartTime"/);
@@ -108,6 +109,12 @@ test('待办卡片只突出原预约时间、影棚位置和简易视频预约�
     assert.doesNotMatch(renderSource, /影棚位置：/);
     assert.doesNotMatch(renderSource, /原摄影师预约：/);
     assert.doesNotMatch(renderSource, /已读 · 已预约对应日期无影棚/);
+});
+
+test('影棚名称和括号位置保持在同一行', () => {
+    const styles = fs.readFileSync('style.css', 'utf8');
+    assert.match(styles, /\.simple-video-task-studio\s*\{[\s\S]*display: inline-block;[\s\S]*white-space: nowrap;/);
+    assert.match(styles, /\.simple-video-task-studio::before\s*\{[\s\S]*content: "· ";/);
 });
 
 test('简易视频待办只用文字区分已预约与待预约并保持卡片原色', () => {

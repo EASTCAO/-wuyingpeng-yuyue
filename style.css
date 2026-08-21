@@ -111,7 +111,27 @@ textarea:focus-visible,
 .simple-video-task-date {
     color: #6b7280;
     font-size: 14px;
-    line-height: 1.4;
+    line-height: 1.55;
+}
+
+.simple-video-task-label {
+    color: #374151;
+    font-weight: 600;
+}
+
+.simple-video-task-label::after {
+    content: "：";
+}
+
+.simple-video-task-studio {
+    display: inline-block;
+    margin-left: 8px;
+    color: #374151;
+    white-space: nowrap;
+}
+
+.simple-video-task-studio::before {
+    content: "· ";
 }
 
 .simple-video-task-time {
