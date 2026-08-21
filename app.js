@@ -19,6 +19,8 @@ let bookingDeleteInFlight = false;
 let currentStudioCategory = 'cyclorama';
 let bookingsLoaded = false;
 let bookingHistoryLoaded = false;
+let simpleVideoOwner = '';
+let simpleVideoTasks = [];
 
 // ============ 影棚配置 ============
 // 所有影棚入口、下拉框、统计筛选和时间轴都从这里生成。
@@ -740,6 +742,14 @@ async function renderUserManagement() {
             <input type="text" id="newUserInput" placeholder="输入用户名（多个用逗号分隔）" maxlength="100">
             <button onclick="handleAddUsers()" class="btn btn-primary btn-small">添加</button>
         </div>
+        <div class="user-mgmt-add simple-video-owner-setting">
+            <label for="simpleVideoOwnerSelect">简易视频负责人</label>
+            <select id="simpleVideoOwnerSelect">
+                <option value="">未设置</option>
+                ${userNames.map(name => `<option value="${escapeHtml(name)}"${name === simpleVideoOwner ? ' selected' : ''}>${escapeHtml(name)}</option>`).join('')}
+            </select>
+            <button onclick="saveSimpleVideoOwner()" class="btn btn-primary btn-small">保存</button>
+        </div>
         <div class="user-mgmt-count">共 ${userNames.length} 个用户</div>
         <div class="user-mgmt-list">
             ${userNames.map(name => `
@@ -760,6 +770,25 @@ async function renderUserManagement() {
             });
         }
     }, 0);
+}
+
+async function saveSimpleVideoOwner() {
+    const owner = document.getElementById('simpleVideoOwnerSelect')?.value || '';
+    if (isCloudMode()) {
+        const response = await apiFetch('/api/simple-video/config', {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ owner })
+        });
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            showToast(data.error || '保存负责人失败', 'error');
+            return;
+        }
+    } else {
+        localStorage.setItem('simpleVideoOwner', owner);
+    }
+    simpleVideoOwner = owner;
+    document.querySelectorAll('.simple-video-link').forEach(el => el.classList.toggle('hidden', currentUser !== owner));
+    showToast('简易视频负责人已保存', 'success');
 }
 
 async function handleAddUsers() {
@@ -1006,6 +1035,7 @@ function showMainPage() {
     document.querySelectorAll('.admin-only').forEach(el => {
         el.style.display = currentUser === 'admin' ? '' : 'none';
     });
+    loadSimpleVideoConfig();
 
     if (currentUser !== 'admin' && currentDateRange === 'yesterday') {
         currentDateRange = 'today';
@@ -1021,6 +1051,51 @@ function showMainPage() {
 
     // 云端模式下启动自动刷新
     startAutoRefresh();
+}
+
+function isSimpleVideoEligibleStudio(studioId) {
+    return Boolean(studioId && studioId !== '6F无影棚' && getStudioById(studioId)?.category === 'cyclorama');
+}
+
+async function loadSimpleVideoConfig() {
+    if (isCloudMode()) {
+        const response = await apiFetch('/api/simple-video/config').catch(() => null);
+        simpleVideoOwner = response?.ok ? ((await response.json()).owner || '') : '';
+    } else {
+        simpleVideoOwner = localStorage.getItem('simpleVideoOwner') || '';
+    }
+    document.querySelectorAll('.simple-video-link').forEach(el => el.classList.toggle('hidden', currentUser !== simpleVideoOwner));
+    if (currentUser === simpleVideoOwner) loadSimpleVideoTasks();
+}
+
+async function loadSimpleVideoTasks() {
+    if (isCloudMode()) {
+        const response = await apiFetch('/api/simple-video/tasks').catch(() => null);
+        simpleVideoTasks = response?.ok ? await response.json() : [];
+    } else {
+        simpleVideoTasks = allBookings.filter(booking => booking.needsSimpleVideo && getDateOnly(booking.date) >= getChinaDate());
+    }
+    renderSimpleVideoTasks();
+}
+
+function renderSimpleVideoTasks() {
+    const container = document.getElementById('simpleVideoTasksContent');
+    if (!container) return;
+    container.innerHTML = simpleVideoTasks.length ? simpleVideoTasks.map(booking => `
+        <div class="booking-card">
+            <div class="booking-info"><div class="booking-date">${escapeHtml(formatDate(booking.date))} · 次日预约</div>
+            <div class="booking-photographer">摄影师：${escapeHtml(booking.photographer)}</div>
+            <div class="booking-note">${escapeHtml(booking.studio)} ${escapeHtml(booking.startTime)}-${escapeHtml(booking.endTime)}</div></div>
+            <button class="btn btn-primary btn-small" onclick="openSimpleVideoBooking('${inlineJsString(booking.date)}')">去预约明天</button>
+        </div>`).join('') : '<p class="empty-message">暂无简易视频待办</p>';
+}
+
+function openSimpleVideoBooking(sourceDate) {
+    const targetDate = typeof WeekDateSelector !== 'undefined' && WeekDateSelector.shiftDate
+        ? WeekDateSelector.shiftDate(sourceDate, 1) : getChinaDate(1);
+    showAddBookingForm();
+    const dateInput = document.getElementById('bookingDate');
+    if (dateInput) { dateInput.value = targetDate; dateInput.dispatchEvent(new Event('change')); }
 }
 
 function renderWeekDateSelector() {
@@ -1159,6 +1234,7 @@ async function loadBookings({ includeHistory = bookingHistoryLoaded } = {}) {
 
             sortBookings();
             renderAllViews();
+            if (currentUser === simpleVideoOwner) loadSimpleVideoTasks();
             console.log('✅ 从云端加载了', allBookings.length, '条预约');
             return true;
         } catch (error) {
@@ -1179,6 +1255,7 @@ async function loadBookings({ includeHistory = bookingHistoryLoaded } = {}) {
             bookingHistoryLoaded = true;
             sortBookings();
             renderAllViews();
+            if (currentUser === simpleVideoOwner) loadSimpleVideoTasks();
             console.log('✅ 从本地加载了', allBookings.length, '条预约');
             return true;
         } catch (error) {
@@ -1201,6 +1278,7 @@ function normalizeBookingRecord(booking) {
     return {
         ...booking,
         studio: normalizeStudioName(booking.studio),
+        needsSimpleVideo: booking.needsSimpleVideo === true || booking.needsSimpleVideo === 'true',
         note,
         notes: note
     };
@@ -1854,6 +1932,17 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null) {
     dateInput.min = minDate;
     dateInput.max = maxDate;
     dateInput.value = defaultDate;
+    const simpleVideoOption = document.getElementById('simpleVideoBookingOption');
+    const simpleVideoCheckbox = document.getElementById('needsSimpleVideo');
+    const updateSimpleVideoOption = () => {
+        const eligible = isSimpleVideoEligibleStudio(studioSelect.value) && dateInput.value === getChinaDate();
+        simpleVideoOption?.classList.toggle('hidden', !eligible);
+        if (simpleVideoCheckbox) {
+            simpleVideoCheckbox.checked = eligible && Boolean(bookingToEdit?.needsSimpleVideo);
+            simpleVideoCheckbox.disabled = !eligible;
+        }
+    };
+    updateSimpleVideoOption();
     document.getElementById('startTime').value = bookingToEdit?.startTime || '';
     document.getElementById('endTime').value = bookingToEdit?.endTime || '';
     const startTimeSelect = document.getElementById('startTime');
@@ -1911,8 +2000,14 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null) {
     }
 
     // 日期或影棚变化时更新开始时间选项
-    dateInput.onchange = updateStartTimeOptions;
-    document.getElementById('studioSelect').onchange = updateStartTimeOptions;
+    dateInput.onchange = () => {
+        updateSimpleVideoOption();
+        updateStartTimeOptions();
+    };
+    document.getElementById('studioSelect').onchange = () => {
+        updateSimpleVideoOption();
+        updateStartTimeOptions();
+    };
 
     // 初始化时更新一次
     updateStartTimeOptions();
@@ -1967,6 +2062,8 @@ async function addBooking() {
         ? allBookings.find(booking => booking.id === editingBookingId)
         : null;
     const note = originalBooking ? getBookingNote(originalBooking) : '';
+    const needsSimpleVideo = isSimpleVideoEligibleStudio(studio)
+        && document.getElementById('needsSimpleVideo')?.checked === true;
 
     console.log('提交预约:', { studio, date, startTime, endTime, note });
 
@@ -2031,6 +2128,7 @@ async function addBooking() {
         contact: originalBooking?.contact || currentUser,
         note: note,
         notes: note, // 后端字段名是 notes
+        needsSimpleVideo,
         createdAt: new Date().toISOString() // 使用 ISO 格式
     };
 
@@ -2453,6 +2551,8 @@ async function switchView(view) {
     document.getElementById('statsView').classList.add('hidden');
     const userMgmtView = document.getElementById('userManagementView');
     if (userMgmtView) userMgmtView.classList.add('hidden');
+    const simpleVideoView = document.getElementById('simpleVideoView');
+    if (simpleVideoView) simpleVideoView.classList.add('hidden');
 
     if (view === 'list') {
         document.getElementById('listView').classList.remove('hidden');
@@ -2470,6 +2570,11 @@ async function switchView(view) {
         if (userMgmtView) {
             userMgmtView.classList.remove('hidden');
             renderUserManagement();
+        }
+    } else if (view === 'simple-video') {
+        if (simpleVideoView) {
+            simpleVideoView.classList.remove('hidden');
+            loadSimpleVideoTasks();
         }
     }
 }
@@ -2978,6 +3083,20 @@ function stopReminderCheck() {
 
 // 检查即将开始的预约
 function checkUpcomingBookings() {
+    if (currentUser === simpleVideoOwner) {
+        loadSimpleVideoTasks().then(() => {
+            const notified = JSON.parse(localStorage.getItem('simpleVideoNotified') || '{}');
+            simpleVideoTasks.forEach(task => {
+                const key = `${task.id}:${task.date}`;
+                if (notified[key]) return;
+                notified[key] = Date.now();
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                    new Notification('简易视频待办', { body: `${task.photographer} 明天需要预约无影棚` });
+                }
+            });
+            localStorage.setItem('simpleVideoNotified', JSON.stringify(notified));
+        });
+    }
     const todayStr = getChinaDate();
     const currentMinutes = timeToMinutes(getChinaCurrentTime());
 

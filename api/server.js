@@ -209,9 +209,11 @@ async function ensureDatabase() {
         photographer TEXT NOT NULL,
         contact TEXT NOT NULL,
         notes TEXT,
+        "needsSimpleVideo" BOOLEAN NOT NULL DEFAULT FALSE,
         "createdAt" TEXT NOT NULL
       )
     `);
+    await client.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "needsSimpleVideo" BOOLEAN NOT NULL DEFAULT FALSE');
     await client.query('CREATE INDEX IF NOT EXISTS bookings_date_start_idx ON bookings (date, "startTime")');
 
     const studioMigrations = [
@@ -234,6 +236,13 @@ async function ensureDatabase() {
         "createdAt" TEXT NOT NULL
       )
     `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL DEFAULT ''
+      )
+    `);
+    await client.query(`INSERT INTO app_settings (key, value) VALUES ('simple_video_owner', '') ON CONFLICT (key) DO NOTHING`);
 
     for (const username of DEFAULT_USER_NAMES) {
       await client.query(
@@ -292,6 +301,47 @@ app.get('/api/users', requireAuth, requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('获取用户失败:', error);
     res.status(500).json({ error: '获取用户失败' });
+  }
+});
+
+app.get('/api/simple-video/config', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT value FROM app_settings WHERE key = $1', ['simple_video_owner']);
+    res.json({ owner: result.rows[0]?.value || '' });
+  } catch (error) {
+    console.error('获取简易视频配置失败:', error);
+    res.status(500).json({ error: '获取简易视频配置失败' });
+  }
+});
+
+app.put('/api/simple-video/config', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const owner = String(req.body?.owner || '').trim();
+    if (owner) {
+      const user = await pool.query('SELECT username FROM users WHERE username = $1', [owner]);
+      if (!user.rows[0]) return res.status(400).json({ error: '负责人账号不存在' });
+    }
+    await pool.query('UPDATE app_settings SET value = $1 WHERE key = $2', [owner, 'simple_video_owner']);
+    res.json({ owner });
+  } catch (error) {
+    console.error('保存简易视频配置失败:', error);
+    res.status(500).json({ error: '保存简易视频配置失败' });
+  }
+});
+
+app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
+  try {
+    const ownerResult = await pool.query('SELECT value FROM app_settings WHERE key = $1', ['simple_video_owner']);
+    if (!ownerResult.rows[0]?.value || ownerResult.rows[0].value !== req.user.username) return res.json([]);
+    const today = getChinaDate();
+    const result = await pool.query(
+      `SELECT * FROM bookings WHERE "needsSimpleVideo" = TRUE AND date >= $1 ORDER BY date, "startTime"`,
+      [today]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('获取简易视频待办失败:', error);
+    res.status(500).json({ error: '获取简易视频待办失败' });
   }
 });
 
@@ -377,6 +427,7 @@ app.get('/api/bookings', requireAuth, async (req, res) => {
 app.post('/api/bookings', requireAuth, async (req, res) => {
   try {
       const { id, studio, date, startTime, endTime, notes } = req.body;
+    const needsSimpleVideo = studio !== '6F无影棚' && date === getChinaDate() && req.body?.needsSimpleVideo === true;
 
     if (!id || !studio || !date || !startTime || !endTime) {
       return res.status(400).json({ error: '缺少必填字段' });
@@ -410,13 +461,13 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
       const createdAt = new Date().toISOString();
 
       const insertQuery = `
-      INSERT INTO bookings (id, studio, date, "startTime", "endTime", photographer, contact, notes, "createdAt")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO bookings (id, studio, date, "startTime", "endTime", photographer, contact, notes, "needsSimpleVideo", "createdAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
     `;
 
       const result = await client.query(insertQuery, [
-        id, studio, date, startTime, endTime, req.user.username, req.user.username, notes || '', createdAt
+        id, studio, date, startTime, endTime, req.user.username, req.user.username, notes || '', needsSimpleVideo, createdAt
       ]);
       await client.query('COMMIT');
       transactionStarted = false;
@@ -440,6 +491,7 @@ app.put('/api/bookings/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { studio, date, startTime, endTime, notes } = req.body || {};
+    const needsSimpleVideo = studio !== '6F无影棚' && date === getChinaDate() && req.body?.needsSimpleVideo === true;
     if (!studio || !date || !startTime || !endTime) {
       return res.status(400).json({ error: '缺少必填字段' });
     }
@@ -485,10 +537,10 @@ app.put('/api/bookings/:id', requireAuth, async (req, res) => {
 
       const result = await client.query(
         `UPDATE bookings
-         SET studio = $1, date = $2, "startTime" = $3, "endTime" = $4, notes = $5
-         WHERE id = $6
+         SET studio = $1, date = $2, "startTime" = $3, "endTime" = $4, notes = $5, "needsSimpleVideo" = $6
+         WHERE id = $7
          RETURNING *`,
-        [studio, date, startTime, endTime, notes || '', id]
+        [studio, date, startTime, endTime, notes || '', needsSimpleVideo, id]
       );
       await client.query('COMMIT');
       transactionStarted = false;

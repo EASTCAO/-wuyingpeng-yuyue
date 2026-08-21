@@ -41,6 +41,7 @@ async function migrate() {
         photographer TEXT NOT NULL,
         contact TEXT NOT NULL,
         notes TEXT,
+        "needsSimpleVideo" BOOLEAN NOT NULL DEFAULT FALSE,
         "createdAt" TEXT NOT NULL
       )
     `);

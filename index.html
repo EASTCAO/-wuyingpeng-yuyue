@@ -184,6 +184,7 @@
                     </label>
                     <a href="javascript:void(0)" onclick="switchView('stats')" class="sidebar-link">统计</a>
                     <a href="javascript:void(0)" onclick="showChangePasswordModal()" class="sidebar-link">修改密码</a>
+                    <a href="javascript:void(0)" onclick="switchView('simple-video')" class="sidebar-link simple-video-link hidden">简易视频待办</a>
                     <a href="javascript:void(0)" onclick="switchView('users')" class="sidebar-link admin-only" style="display:none;">用户管理</a>
                 </div>
             </div>
@@ -263,6 +264,10 @@
                     </div>
                     <div id="userManagementContent"></div>
                 </div>
+                <div id="simpleVideoView" class="stats-view hidden">
+                    <div class="stats-header"><h2>简易视频待办</h2></div>
+                    <div id="simpleVideoTasksContent"></div>
+                </div>
             </div>
         </div>
 
@@ -302,6 +307,11 @@
                             <label>日期</label>
                             <input type="date" id="bookingDate" required>
                         </div>
+                        <label class="switch-row simple-video-booking-option hidden" id="simpleVideoBookingOption">
+                            <span>明天需要拍简易视频</span>
+                            <input type="checkbox" id="needsSimpleVideo">
+                            <span class="switch-slider"></span>
+                        </label>
                         <div hidden aria-hidden="true">
                             <select id="startTime" required tabindex="-1"></select>
                             <select id="endTime" required tabindex="-1"></select>
