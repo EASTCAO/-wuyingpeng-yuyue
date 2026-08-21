@@ -108,6 +108,10 @@ test('6F 卡片拖动时不会选中文字', () => {
     assert.match(layoutStyles, /\.sixth-floor-layout-card\s*\{[\s\S]*?user-select:\s*none;/);
 });
 
+test('6F 实景卡片使用圆润圆角', () => {
+    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor \.preview-scene-card\s*\{[\s\S]*?border-radius:\s*14px;/);
+});
+
 test('6F 卡片使用高优先级绝对定位而不会落入普通文档流', () => {
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s+\.sixth-floor-layout-card\s*\{[\s\S]*?position:\s*absolute;/);
 });
