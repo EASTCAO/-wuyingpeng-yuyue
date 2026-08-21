@@ -344,6 +344,14 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
     const result = await pool.query(
       `SELECT bookings.*,
          CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END AS "simpleVideoTargetDate",
+         (
+           SELECT owner_booking.id FROM bookings owner_booking
+           WHERE owner_booking.photographer = $2
+             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END
+             AND owner_booking.studio = ANY($5::text[])
+           ORDER BY owner_booking."startTime", owner_booking."createdAt"
+           LIMIT 1
+         ) AS "simpleVideoBookingId",
          EXISTS (
            SELECT 1 FROM bookings owner_booking
            WHERE owner_booking.photographer = $2

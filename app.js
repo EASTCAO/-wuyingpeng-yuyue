@@ -1168,12 +1168,17 @@ async function loadSimpleVideoTasks() {
                 const simpleVideoTargetDate = getDateOnly(booking.date) === getChinaDate()
                     ? getChinaDate(1)
                     : getDateOnly(booking.date);
-                const simpleVideoCompleted = allBookings.some(ownerBooking =>
+                const simpleVideoBooking = allBookings.find(ownerBooking =>
                     ownerBooking.photographer === currentUser
                     && getDateOnly(ownerBooking.date) === simpleVideoTargetDate
                     && isSimpleVideoEligibleStudio(ownerBooking.studio)
                 );
-                return { ...booking, simpleVideoTargetDate, simpleVideoCompleted };
+                return {
+                    ...booking,
+                    simpleVideoTargetDate,
+                    simpleVideoCompleted: Boolean(simpleVideoBooking),
+                    simpleVideoBookingId: simpleVideoBooking?.id || ''
+                };
             });
     }
     updateSimpleVideoTaskBadge();
@@ -1205,7 +1210,7 @@ function renderSimpleVideoTasks() {
                 ${booking.simpleVideoCompleted ? '<div class="simple-video-task-completed">已读 · 已预约对应日期无影棚</div>' : ''}
             </div>
             ${booking.simpleVideoCompleted
-                ? ''
+                ? `<button class="btn btn-secondary simple-video-task-action" onclick="showBookingDetail(${inlineJsString(booking.simpleVideoBookingId)})">查看/取消预约</button>`
                 : `<button class="btn btn-primary simple-video-task-action" onclick="openSimpleVideoBooking(${inlineJsString(booking.simpleVideoTargetDate)})">去预约${escapeHtml(formatShortDate(booking.simpleVideoTargetDate))}</button>`}
         </article>`).join('') : '<p class="empty-message">暂无简易视频待办</p>';
 }
@@ -2576,6 +2581,7 @@ async function deleteBookingById(bookingId, options = {}) {
         }
 
         showToast('预约已取消', 'success');
+        if (isSimpleVideoRecipient()) await loadSimpleVideoTasks();
         return true;
     } catch (error) {
         restoreLocalBookings(previousBookings);

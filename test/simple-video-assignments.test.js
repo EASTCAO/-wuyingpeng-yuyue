@@ -47,3 +47,11 @@ test('完成对应预约后未读消息自动变成已读', () => {
     assert.match(appSource, /已读 · 已预约对应日期无影棚/);
     assert.match(appSource, /badge\.classList\.toggle\('hidden', count === 0\)/);
 });
+
+test('已完成待办可以进入对应预约并取消', () => {
+    assert.match(appSource, /simpleVideoBookingId: simpleVideoBooking\?\.id \|\| ''/);
+    assert.match(serverSource, /AS "simpleVideoBookingId"/);
+    assert.match(appSource, /查看\/取消预约<\/button>/);
+    assert.match(appSource, /showBookingDetail\(\$\{inlineJsString\(booking\.simpleVideoBookingId\)\}\)/);
+    assert.match(appSource, /if \(isSimpleVideoRecipient\(\)\) await loadSimpleVideoTasks\(\);/);
+});
