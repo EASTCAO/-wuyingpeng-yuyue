@@ -46,12 +46,31 @@ test('切换账号后重置到预约首页且无权限用户不能停留在简�
     assert.match(switchViewSource, /if \(view === 'simple-video' && !isSimpleVideoRecipient\(\)\) \{[\s\S]*view = 'list';[\s\S]*\}[\s\S]*currentView = view;/);
 });
 
-test('今天和明天的预约都可以选择简易视频并生成正确日期的待办', () => {
+test('今天和明天的摄影预约分别生成明天和后天的简易视频待办', () => {
     assert.match(appSource, /isSimpleVideoEligibleStudio\(studioSelect\.value\) && isBookableDate\(dateInput\.value\)/);
     assert.match(serverSource, /isValidBookingDate\(date\) && req\.body\?\.needsSimpleVideo === true/g);
     assert.match(serverSource, /date IN \(\$1, \$3\)/);
-    assert.match(serverSource, /CASE WHEN bookings\.date = \$1 THEN \$3 ELSE bookings\.date END AS "simpleVideoTargetDate"/);
-    assert.match(appSource, /openSimpleVideoBooking\(targetDate\)/);
+    assert.match(serverSource, /CASE WHEN bookings\.date = \$1 THEN \$3 ELSE \$6 END AS "simpleVideoTargetDate"/);
+    assert.match(appSource, /getDateOnly\(booking\.date\) === getChinaDate\(\)[\s\S]*getChinaDate\(1\)[\s\S]*getChinaDate\(2\)/);
+    assert.match(appSource, /openSimpleVideoBooking\(taskId, targetDate\)/);
+    assert.match(appSource, /formatShortDate\(task\.simpleVideoTargetDate\).*需要预约无影棚/);
+});
+
+test('后天预约仅对本人绑定的简易视频待办开放', () => {
+    assert.match(serverSource, /async function isAuthorizedSimpleVideoBooking\(user, taskId, date, studio\)/);
+    assert.match(serverSource, /date !== getChinaDate\(2\)/);
+    assert.match(serverSource, /SIMPLE_VIDEO_ASSIGNMENTS\[task\.photographer\] === user\.username/);
+    assert.match(serverSource, /await isAuthorizedSimpleVideoBooking\(req\.user, simpleVideoTaskId, date, studio\)/);
+    assert.match(appSource, /showAddBookingForm\(undefined, null, \{ taskId, targetDate \}\)/);
+    assert.match(appSource, /const minDate = simpleVideoBookingContext\?\.targetDate \|\| getBookableStartDate\(\);/);
+    assert.match(appSource, /simpleVideoTaskId: simpleVideoBookingContext\?\.taskId \|\| ''/);
+});
+
+test('简易视频人员刷新后仍能查看、修改和取消后天预约', () => {
+    assert.match(appSource, /getChinaDate\(isSimpleVideoRecipient\(\) \? 2 : 1\)/);
+    assert.match(appSource, /bookingDate === getChinaDate\(1\) \|\| bookingDate === getChinaDate\(2\)/);
+    assert.match(serverSource, /booking\.date === getChinaDate\(1\) \|\| booking\.date === getChinaDate\(2\)/);
+    assert.match(serverSource, /booking\.date === getChinaDate\(2\) && date === getChinaDate\(2\)/);
 });
 
 test('只有对应日期的7F无影棚预约才算完成简易视频待办', () => {

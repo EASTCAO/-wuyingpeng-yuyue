@@ -181,8 +181,20 @@ function isValidBookingDate(date) {
   return date === getChinaDate() || date === getChinaDate(1);
 }
 
+async function isAuthorizedSimpleVideoBooking(user, taskId, date, studio) {
+  if (!taskId || date !== getChinaDate(2) || !SIMPLE_VIDEO_STUDIO_IDS.includes(studio)) return false;
+  const result = await pool.query(
+    'SELECT photographer, date, "needsSimpleVideo" FROM bookings WHERE id = $1',
+    [taskId]
+  );
+  const task = result.rows[0];
+  return Boolean(task?.needsSimpleVideo)
+    && task.date === getChinaDate(1)
+    && SIMPLE_VIDEO_ASSIGNMENTS[task.photographer] === user.username;
+}
+
 function isEditableBooking(booking) {
-  if (booking.date === getChinaDate(1)) return true;
+  if (booking.date === getChinaDate(1) || booking.date === getChinaDate(2)) return true;
   return booking.date === getChinaDate() && booking.endTime > new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false
   }).format(new Date());
@@ -341,13 +353,14 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
     if (assignedPhotographers.length === 0) return res.json([]);
     const today = getChinaDate();
     const tomorrow = getChinaDate(1);
+    const dayAfterTomorrow = getChinaDate(2);
     const result = await pool.query(
       `SELECT bookings.*,
-         CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END AS "simpleVideoTargetDate",
+         CASE WHEN bookings.date = $1 THEN $3 ELSE $6 END AS "simpleVideoTargetDate",
          (
            SELECT owner_booking.id FROM bookings owner_booking
            WHERE owner_booking.photographer = $2
-             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END
+             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE $6 END
              AND owner_booking.studio = ANY($5::text[])
            ORDER BY owner_booking."startTime", owner_booking."createdAt"
            LIMIT 1
@@ -355,7 +368,7 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
          (
            SELECT owner_booking."startTime" FROM bookings owner_booking
            WHERE owner_booking.photographer = $2
-             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END
+             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE $6 END
              AND owner_booking.studio = ANY($5::text[])
            ORDER BY owner_booking."startTime", owner_booking."createdAt"
            LIMIT 1
@@ -363,7 +376,7 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
          (
            SELECT owner_booking."endTime" FROM bookings owner_booking
            WHERE owner_booking.photographer = $2
-             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END
+             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE $6 END
              AND owner_booking.studio = ANY($5::text[])
            ORDER BY owner_booking."startTime", owner_booking."createdAt"
            LIMIT 1
@@ -371,13 +384,13 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
          EXISTS (
            SELECT 1 FROM bookings owner_booking
            WHERE owner_booking.photographer = $2
-             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END
+             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE $6 END
              AND owner_booking.studio = ANY($5::text[])
          ) AS "simpleVideoCompleted"
        FROM bookings
        WHERE "needsSimpleVideo" = TRUE AND date IN ($1, $3) AND photographer = ANY($4::text[])
        ORDER BY date, "startTime"`,
-      [today, req.user.username, tomorrow, assignedPhotographers, SIMPLE_VIDEO_STUDIO_IDS]
+      [today, req.user.username, tomorrow, assignedPhotographers, SIMPLE_VIDEO_STUDIO_IDS, dayAfterTomorrow]
     );
     res.json(result.rows);
   } catch (error) {
@@ -467,7 +480,7 @@ app.get('/api/bookings', requireAuth, async (req, res) => {
 // 创建新预约
 app.post('/api/bookings', requireAuth, async (req, res) => {
   try {
-      const { id, studio, date, startTime, endTime, notes } = req.body;
+      const { id, studio, date, startTime, endTime, notes, simpleVideoTaskId } = req.body;
     const needsSimpleVideo = studio !== '6F无影棚' && isValidBookingDate(date) && req.body?.needsSimpleVideo === true;
 
     if (!id || !studio || !date || !startTime || !endTime) {
@@ -476,7 +489,9 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
 
     if (!STUDIO_IDS.includes(studio)) return res.status(400).json({ error: '影棚无效' });
     if (FROZEN_STUDIO_IDS.has(studio)) return res.status(400).json({ error: '该影棚暂时冻结，无法预约' });
-    if (!isValidBookingDate(date)) return res.status(400).json({ error: '只能预约今天或明天' });
+    const validBookingDate = isValidBookingDate(date)
+      || await isAuthorizedSimpleVideoBooking(req.user, simpleVideoTaskId, date, studio);
+    if (!validBookingDate) return res.status(400).json({ error: '只能预约今天或明天；简易视频人员可从待办预约对应日期' });
     if (!isValidBookingRange(startTime, endTime)) return res.status(400).json({ error: '时间必须在营业时段内，且按15分钟预约' });
 
     const client = await pool.connect();
@@ -538,7 +553,6 @@ app.put('/api/bookings/:id', requireAuth, async (req, res) => {
     }
     if (!STUDIO_IDS.includes(studio)) return res.status(400).json({ error: '影棚无效' });
     if (FROZEN_STUDIO_IDS.has(studio)) return res.status(400).json({ error: '该影棚暂时冻结，无法预约' });
-    if (!isValidBookingDate(date)) return res.status(400).json({ error: '只能预约今天或明天' });
     if (!isValidBookingRange(startTime, endTime)) {
       return res.status(400).json({ error: '时间必须在营业时段内，且按15分钟预约' });
     }
@@ -563,6 +577,13 @@ app.put('/api/bookings/:id', requireAuth, async (req, res) => {
       if (!isEditableBooking(booking)) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: '已过期预约不能修改' });
+      }
+      const validBookingDate = isValidBookingDate(date)
+        || (booking.date === getChinaDate(2) && date === getChinaDate(2)
+          && SIMPLE_VIDEO_STUDIO_IDS.includes(studio));
+      if (!validBookingDate) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: '只能预约今天或明天；简易视频预约只能修改原定后天日期' });
       }
 
       const conflicts = await client.query(

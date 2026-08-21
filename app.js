@@ -19,6 +19,7 @@ let bookingDeleteInFlight = false;
 let currentStudioCategory = 'cyclorama';
 let bookingsLoaded = false;
 let bookingHistoryLoaded = false;
+let simpleVideoBookingContext = null;
 const SIMPLE_VIDEO_ASSIGNMENTS = {
     '曹东': '涂萱',
     '於佳莹': '向芷琪',
@@ -1172,7 +1173,7 @@ async function loadSimpleVideoTasks() {
             .map(booking => {
                 const simpleVideoTargetDate = getDateOnly(booking.date) === getChinaDate()
                     ? getChinaDate(1)
-                    : getDateOnly(booking.date);
+                    : getChinaDate(2);
                 const simpleVideoBooking = allBookings.find(ownerBooking =>
                     ownerBooking.photographer === currentUser
                     && getDateOnly(ownerBooking.date) === simpleVideoTargetDate
@@ -1218,14 +1219,12 @@ function renderSimpleVideoTasks() {
             </div>
             ${booking.simpleVideoCompleted
                 ? `<button class="btn btn-secondary simple-video-task-action" onclick="showBookingDetail(${inlineJsString(booking.simpleVideoBookingId)})">查看/取消预约</button>`
-                : `<button class="btn btn-primary simple-video-task-action" onclick="openSimpleVideoBooking(${inlineJsString(booking.simpleVideoTargetDate)})">去预约${escapeHtml(formatShortDate(booking.simpleVideoTargetDate))}</button>`}
+                : `<button class="btn btn-primary simple-video-task-action" onclick="openSimpleVideoBooking(${inlineJsString(booking.id)}, ${inlineJsString(booking.simpleVideoTargetDate)})">去预约${escapeHtml(formatShortDate(booking.simpleVideoTargetDate))}</button>`}
         </article>`).join('') : '<p class="empty-message">暂无简易视频待办</p>';
 }
 
-function openSimpleVideoBooking(targetDate) {
-    showAddBookingForm();
-    const dateInput = document.getElementById('bookingDate');
-    if (dateInput) { dateInput.value = targetDate; dateInput.dispatchEvent(new Event('change')); }
+function openSimpleVideoBooking(taskId, targetDate) {
+    showAddBookingForm(undefined, null, { taskId, targetDate });
 }
 
 function renderWeekDateSelector() {
@@ -1350,7 +1349,7 @@ async function loadBookings({ includeHistory = bookingHistoryLoaded } = {}) {
         try {
             const bookingPath = includeHistory
                 ? '/api/bookings'
-                : `/api/bookings?from=${getChinaDate(-1)}&to=${getChinaDate(1)}`;
+                : `/api/bookings?from=${getChinaDate(-1)}&to=${getChinaDate(isSimpleVideoRecipient() ? 2 : 1)}`;
             const response = await apiFetch(bookingPath);
             if (!response.ok) {
                 throw new Error(`加载失败: ${response.status}`);
@@ -2028,7 +2027,7 @@ function formatDate(dateStr) {
 }
 
 // 显示新建预约表单
-function showAddBookingForm(defaultStudio, bookingToEdit = null) {
+function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask = null) {
     if (currentUser && currentUser.startsWith('游客')) {
         alert('游客模式不能预约，请登录后操作。');
         return;
@@ -2041,8 +2040,13 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null) {
         showToast('该影棚暂时冻结，无法预约', 'error');
         return;
     }
+    simpleVideoBookingContext = simpleVideoTask || (getDateOnly(bookingToEdit?.date) === getChinaDate(2)
+        ? { taskId: '', targetDate: getChinaDate(2) }
+        : null);
     editingBookingId = bookingToEdit?.id || null;
-    document.getElementById('bookingModalTitle').textContent = editingBookingId ? '修改预约时间' : '预约';
+    document.getElementById('bookingModalTitle').textContent = editingBookingId
+        ? '修改预约时间'
+        : simpleVideoBookingContext ? '预约简易视频' : '预约';
     document.getElementById('bookingSubmitButton').textContent = editingBookingId ? '保存修改' : '确认预约';
     // 重置表单
     const studioSelect = document.getElementById('studioSelect');
@@ -2052,10 +2056,12 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null) {
         studioSelect.value = getDefaultStudioId();
     }
 
-    // 最多提前一天预约：今天和明天可选，后天及以后不可选。
-    const minDate = getBookableStartDate();
-    const maxDate = getBookableEndDate();
-    const defaultDate = bookingToEdit ? getDateOnly(bookingToEdit.date) : getDefaultBookingDate();
+    // 普通预约最多提前一天；简易视频待办只能预约摄影次日。
+    const minDate = simpleVideoBookingContext?.targetDate || getBookableStartDate();
+    const maxDate = simpleVideoBookingContext?.targetDate || getBookableEndDate();
+    const defaultDate = bookingToEdit
+        ? getDateOnly(bookingToEdit.date)
+        : simpleVideoBookingContext?.targetDate || getDefaultBookingDate();
     const dateInput = document.getElementById('bookingDate');
     dateInput.min = minDate;
     dateInput.max = maxDate;
@@ -2082,7 +2088,10 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null) {
 
     // 根据选择的日期和当前时间，禁用已过去的开始时间
     function updateStartTimeOptions() {
-        if (!isBookableDate(dateInput.value)) {
+        const validDate = simpleVideoBookingContext
+            ? dateInput.value === simpleVideoBookingContext.targetDate
+            : isBookableDate(dateInput.value);
+        if (!validDate) {
             dateInput.value = defaultDate;
         }
 
@@ -2171,6 +2180,7 @@ function closeAddBookingForm() {
     if (modal) {
         closeAccessibleModal('addBookingModal');
         editingBookingId = null;
+        simpleVideoBookingContext = null;
         document.getElementById('bookingModalTitle').textContent = '预约';
         document.getElementById('bookingSubmitButton').textContent = '确认预约';
         console.log('弹窗已关闭');
@@ -2202,7 +2212,10 @@ async function addBooking() {
         return;
     }
 
-    if (!isBookableDate(date)) {
+    const validBookingDate = simpleVideoBookingContext
+        ? date === simpleVideoBookingContext.targetDate
+        : isBookableDate(date);
+    if (!validBookingDate) {
         showToast('只能预约今天或明天的影棚', 'error');
         return;
     }
@@ -2258,6 +2271,7 @@ async function addBooking() {
         note: note,
         notes: note, // 后端字段名是 notes
         needsSimpleVideo,
+        simpleVideoTaskId: simpleVideoBookingContext?.taskId || '',
         createdAt: new Date().toISOString() // 使用 ISO 格式
     };
 
@@ -2405,7 +2419,7 @@ function canCancelBooking(booking) {
 
 function isBookingEditable(booking) {
     const bookingDate = getDateOnly(booking?.date);
-    if (bookingDate === getChinaDate(1)) return true;
+    if (bookingDate === getChinaDate(1) || bookingDate === getChinaDate(2)) return true;
     return bookingDate === getChinaDate() && booking.endTime > getChinaCurrentTime();
 }
 
@@ -2524,7 +2538,7 @@ function editBooking() {
         return;
     }
     const bookingDate = getDateOnly(booking.date);
-    if (!isBookableDate(bookingDate)
+    if (!(isBookableDate(bookingDate) || bookingDate === getChinaDate(2))
         || (bookingDate === getChinaDate() && booking.endTime <= getChinaCurrentTime())) {
         showToast('已过期预约不能修改', 'error');
         return;
@@ -3227,7 +3241,9 @@ function checkUpcomingBookings() {
                 if (notified[key]) return;
                 notified[key] = Date.now();
                 if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-                    new Notification('简易视频待办', { body: `${task.photographer} 明天需要预约无影棚` });
+                    new Notification('简易视频待办', {
+                        body: `${task.photographer} ${formatShortDate(task.simpleVideoTargetDate)}需要预约无影棚`
+                    });
                 }
             });
             localStorage.setItem('simpleVideoNotified', JSON.stringify(notified));
