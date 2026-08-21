@@ -83,12 +83,44 @@ textarea:focus-visible,
     box-shadow: 0 4px 14px rgba(31, 41, 55, 0.08);
 }
 
+.simple-video-task-card.is-booked {
+    border-color: #bbf7d0;
+    border-left-color: #22c55e;
+    background: #f7fef9;
+}
+
+.simple-video-task-card.is-pending {
+    border-color: #fed7aa;
+    border-left-color: #f59e0b;
+    background: #fffaf3;
+}
+
 .simple-video-task-info {
     min-width: 0;
     display: flex;
     flex: 1;
     flex-direction: column;
     gap: 7px;
+}
+
+.simple-video-task-status {
+    align-self: flex-start;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.simple-video-task-card.is-booked .simple-video-task-status {
+    color: #166534;
+    background: #dcfce7;
+}
+
+.simple-video-task-card.is-pending .simple-video-task-status {
+    color: #9a3412;
+    background: #ffedd5;
 }
 
 .simple-video-task-date {

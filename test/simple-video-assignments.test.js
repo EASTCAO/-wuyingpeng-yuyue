@@ -108,3 +108,11 @@ test('待办卡片只突出原预约时间、影棚位置和简易视频预约�
     assert.doesNotMatch(renderSource, /摄影师：/);
     assert.doesNotMatch(renderSource, /已读 · 已预约对应日期无影棚/);
 });
+
+test('简易视频待办用文字标签和卡片颜色区分已预约与待预约', () => {
+    const styles = fs.readFileSync('style.css', 'utf8');
+    assert.match(appSource, /simple-video-task-card \$\{booking\.simpleVideoCompleted \? 'is-booked' : 'is-pending'\}/);
+    assert.match(appSource, /simple-video-task-status">\$\{booking\.simpleVideoCompleted \? '已预约' : '待预约'\}/);
+    assert.match(styles, /\.simple-video-task-card\.is-booked[\s\S]*border-left-color: #22c55e;[\s\S]*background: #f7fef9;/);
+    assert.match(styles, /\.simple-video-task-card\.is-pending[\s\S]*border-left-color: #f59e0b;[\s\S]*background: #fffaf3;/);
+});
