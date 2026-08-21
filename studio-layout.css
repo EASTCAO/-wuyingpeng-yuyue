@@ -235,7 +235,19 @@
 
     .studio-booking-page .list-view.real-scene-active .preview-workspace-6f .sixth-floor-canvas-toolbar {
         top: 4px;
-        right: 178px;
+        right: 214px;
+    }
+}
+
+@media (max-width: 768px) {
+    .studio-booking-page .list-view.real-scene-active .preview-workspace-6f .preview-status-legend {
+        top: 4px;
+        right: 8px;
+    }
+
+    .studio-booking-page .list-view.real-scene-active .preview-workspace-6f .sixth-floor-canvas-toolbar {
+        top: 38px;
+        right: 8px;
     }
 }
 
