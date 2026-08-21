@@ -1475,7 +1475,7 @@ function renderBookings() {
                     ? '当前日期已约满'
                     : partiallyBooked
                         ? '当前日期已有预约，仍有可预约时间'
-                        : '当前日期空闲，点击预约';
+                        : '';
 
             const statusLabel = studioCard.querySelector('.real-scene-status-label');
             if (statusLabel) {
@@ -1633,12 +1633,6 @@ function getBookingNote(booking) {
 }
 
 function createStudioSummary(studio, studioBookings) {
-    const emptyState = studioBookings.length === 0 ? `
-        <div class="studio-summary-empty-state">
-            <strong>${studio.frozen ? '暂停预约' : '当前日期空闲'}</strong>
-            <span>${studio.frozen ? '该影棚暂时冻结' : '点击卡片选择时间'}</span>
-        </div>
-    ` : '';
     const bookingRows = studioBookings.length === 0
         ? ''
         : studioBookings.map(booking => {
@@ -1662,7 +1656,6 @@ function createStudioSummary(studio, studioBookings) {
 
     return `
         <div class="studio-summary-bookings">
-            ${emptyState}
             ${bookingRows}
         </div>
     `;
@@ -1991,7 +1984,7 @@ function createBookingCard(booking) {
             <div class="booking-info">
                 <div class="booking-time">${booking.startTime} - ${booking.endTime}</div>
                 <div class="booking-date">${formatDate(booking.date)}</div>
-                <div class="booking-photographer">${escapeHtml(booking.photographer)}</div>
+                <div class="booking-photographer">📷 ${escapeHtml(booking.photographer)}</div>
             </div>
             ${note ? `<div class="booking-note">${escapeHtml(note)}</div>` : ''}
         </div>

@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="favicon.svg">
     
     <title>影棚预约系统</title>
-    <link rel="stylesheet" href="style.css?v=20260821-ui-ux-accessibility-v1">
+    <link rel="stylesheet" href="style.css?v=20260821-production-layout-v1">
     <link rel="stylesheet" href="studio-layout.css?v=20260813-apple-ui-v2">
 </head>
 <body class="studio-booking-page">
@@ -152,10 +152,7 @@
             </div>
             <div class="user-info">
                 <span id="currentUser"></span>
-                <button type="button" onclick="logout()" class="btn btn-small btn-user" aria-label="退出登录">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path></svg>
-                    <span>退出</span>
-                </button>
+                <button type="button" onclick="logout()" class="btn btn-small btn-user" aria-label="退出登录">退出</button>
             </div>
         </div>
 
@@ -165,10 +162,7 @@
         <!-- 提醒条 -->
         <div id="reminderBar" class="reminder-bar hidden">
             <div class="reminder-content">
-                <svg class="reminder-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
-                    <path d="M10 21h4"></path>
-                </svg>
+                <span class="reminder-icon" aria-hidden="true">🔔</span>
                 <span id="reminderText"></span>
             </div>
             <button type="button" onclick="closeReminder()" class="reminder-close" aria-label="关闭提醒">&times;</button>
@@ -188,10 +182,10 @@
                         <input type="checkbox" id="enableReminder" onchange="toggleReminder()">
                         <span class="switch-slider"></span>
                     </label>
-                    <button type="button" onclick="switchView('stats')" class="sidebar-link">统计</button>
-                    <button type="button" onclick="showChangePasswordModal()" class="sidebar-link">修改密码</button>
-                    <button type="button" onclick="switchView('simple-video')" class="sidebar-link simple-video-link hidden">简易视频待办 <span id="simpleVideoTaskBadge" class="simple-video-task-badge hidden">0</span></button>
-                    <button type="button" onclick="switchView('users')" class="sidebar-link admin-only" style="display:none;">用户管理</button>
+                    <a href="javascript:void(0)" onclick="switchView('stats')" class="sidebar-link">统计</a>
+                    <a href="javascript:void(0)" onclick="showChangePasswordModal()" class="sidebar-link">修改密码</a>
+                    <a href="javascript:void(0)" onclick="switchView('simple-video')" class="sidebar-link simple-video-link hidden">简易视频待办 <span id="simpleVideoTaskBadge" class="simple-video-task-badge hidden">0</span></a>
+                    <a href="javascript:void(0)" onclick="switchView('users')" class="sidebar-link admin-only" style="display:none;">用户管理</a>
                 </div>
             </div>
 
@@ -218,7 +212,7 @@
                 <!-- 统计视图 -->
                 <div id="statsView" class="stats-view hidden">
                     <div class="stats-header">
-                        <h2><span class="section-heading-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path></svg></span>使用时长统计</h2>
+                        <h2>📊 使用时长统计</h2>
                         <div class="stats-filters">
                             <label class="sr-only" for="statsMonth">统计月份</label>
                             <select id="statsMonth" onchange="renderStatsView()">
@@ -268,7 +262,7 @@
                 <!-- 用户管理视图（仅 admin） -->
                 <div id="userManagementView" class="stats-view hidden">
                     <div class="stats-header">
-                        <h2><span class="section-heading-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg></span>用户管理</h2>
+                        <h2>👤 用户管理</h2>
                     </div>
                     <div id="userManagementContent"></div>
                 </div>
@@ -287,11 +281,11 @@
         <!-- 移动端底部导航栏 -->
         <div class="mobile-bottom-nav">
             <button class="nav-item active" onclick="switchView('list')" data-view="list">
-                <svg class="nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5V4.5A2.5 2.5 0 0 1 6.5 2H19v20H6.5A2.5 2.5 0 0 1 4 19.5Z"></path><path d="M8 7h7M8 11h7"></path></svg>
+                <span class="nav-icon" aria-hidden="true">📝</span>
                 <span class="nav-label">预约</span>
             </button>
             <button class="nav-item" onclick="switchView('stats')" data-view="stats">
-                <svg class="nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path></svg>
+                <span class="nav-icon" aria-hidden="true">📊</span>
                 <span class="nav-label">统计</span>
             </button>
         </div>
@@ -390,7 +384,7 @@
     <div id="reminderModal" class="modal reminder-modal hidden" role="dialog" aria-modal="true" aria-labelledby="reminderModalTitle">
         <div class="modal-content reminder-modal-content">
             <div class="reminder-modal-icon">
-                <svg class="reminder-bell" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
+                <span class="reminder-bell" aria-hidden="true">🔔</span>
             </div>
             <div class="reminder-modal-body">
                 <h2 id="reminderModalTitle">预约提醒</h2>
@@ -438,7 +432,7 @@
     </div>
 
     <script src="week-date-selector.js?v=20260812-date-policy-v1"></script>
-    <script src="app.js?v=20260821-ui-ux-accessibility-v1"></script>
+    <script src="app.js?v=20260821-production-layout-v1"></script>
     <script src="studio-layout.js?v=20260821-studio-view-switcher-v1"></script>
 
     <!-- PWA Service Worker 注册 -->
