@@ -1089,6 +1089,8 @@ function logout() {
         currentUser = null;
         authToken = null;
         allBookings = [];
+        simpleVideoTasks = [];
+        currentView = 'list';
         bookingsLoaded = false;
         bookingHistoryLoaded = false;
         localStorage.removeItem('currentUser');
@@ -1105,6 +1107,8 @@ function logout() {
 // 显示主页面
 function showMainPage() {
     allBookings = [];
+    simpleVideoTasks = [];
+    currentView = 'list';
     bookingsLoaded = false;
     bookingHistoryLoaded = false;
     document.getElementById('loginPage').classList.add('hidden');
@@ -1112,6 +1116,7 @@ function showMainPage() {
     document.getElementById('currentUser').textContent = currentUser;
     initStudioUI();
     renderWeekDateSelector();
+    switchView('list');
 
     // admin 用户显示用户管理入口
     document.querySelectorAll('.admin-only').forEach(el => {
@@ -2655,6 +2660,9 @@ window.addEventListener('click', (e) => {
 
 // 切换视图
 async function switchView(view) {
+    if (view === 'simple-video' && !isSimpleVideoRecipient()) {
+        view = 'list';
+    }
     currentView = view;
     if (window.innerWidth <= 768) closeSidebar();
 

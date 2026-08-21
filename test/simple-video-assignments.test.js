@@ -27,6 +27,25 @@ test('接收人只读取自己绑定人员的简易视频待办', () => {
     assert.match(appSource, /el\.classList\.toggle\('hidden', !isSimpleVideoRecipient\(\)\);/);
 });
 
+test('切换账号后重置到预约首页且无权限用户不能停留在简易视频待办', () => {
+    const logoutSource = appSource.slice(
+        appSource.indexOf('function logout()'),
+        appSource.indexOf('// 显示主页面')
+    );
+    const mainPageSource = appSource.slice(
+        appSource.indexOf('function showMainPage()'),
+        appSource.indexOf('function isSimpleVideoEligibleStudio')
+    );
+    const switchViewSource = appSource.slice(
+        appSource.indexOf('async function switchView(view)'),
+        appSource.indexOf('// 渲染时间轴')
+    );
+
+    assert.match(logoutSource, /simpleVideoTasks = \[\];[\s\S]*currentView = 'list';/);
+    assert.match(mainPageSource, /simpleVideoTasks = \[\];[\s\S]*currentView = 'list';[\s\S]*switchView\('list'\);/);
+    assert.match(switchViewSource, /if \(view === 'simple-video' && !isSimpleVideoRecipient\(\)\) \{[\s\S]*view = 'list';[\s\S]*\}[\s\S]*currentView = view;/);
+});
+
 test('今天和明天的预约都可以选择简易视频并生成正确日期的待办', () => {
     assert.match(appSource, /isSimpleVideoEligibleStudio\(studioSelect\.value\) && isBookableDate\(dateInput\.value\)/);
     assert.match(serverSource, /isValidBookingDate\(date\) && req\.body\?\.needsSimpleVideo === true/g);
