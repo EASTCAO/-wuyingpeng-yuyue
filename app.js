@@ -1171,7 +1171,7 @@ async function loadSimpleVideoTasks() {
                 const simpleVideoCompleted = allBookings.some(ownerBooking =>
                     ownerBooking.photographer === currentUser
                     && getDateOnly(ownerBooking.date) === simpleVideoTargetDate
-                    && ownerBooking.studio !== '6F无影棚'
+                    && isSimpleVideoEligibleStudio(ownerBooking.studio)
                 );
                 return { ...booking, simpleVideoTargetDate, simpleVideoCompleted };
             });
@@ -1181,7 +1181,7 @@ async function loadSimpleVideoTasks() {
 }
 
 function updateSimpleVideoTaskBadge() {
-    const count = simpleVideoTasks.filter(task => !task.simpleVideoCompleted).length;
+    const count = simpleVideoTasks.length;
     const badge = document.getElementById('simpleVideoTaskBadge');
     if (badge) {
         badge.textContent = String(count);

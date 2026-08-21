@@ -34,3 +34,15 @@ test('今天和明天的预约都可以选择简易视频并生成正确日期�
     assert.match(serverSource, /CASE WHEN bookings\.date = \$1 THEN \$3 ELSE bookings\.date END AS "simpleVideoTargetDate"/);
     assert.match(appSource, /openSimpleVideoBooking\(targetDate\)/);
 });
+
+test('只有对应日期的7F无影棚预约才算完成简易视频待办', () => {
+    assert.match(appSource, /isSimpleVideoEligibleStudio\(ownerBooking\.studio\)/);
+    assert.match(serverSource, /const SIMPLE_VIDEO_STUDIO_IDS = \[/);
+    assert.match(serverSource, /owner_booking\.studio = ANY\(\$5::text\[\]\)/);
+    assert.doesNotMatch(serverSource, /owner_booking\.studio <> '6F无影棚'/);
+});
+
+test('红色数量显示全部当前消息，包括已经完成的新增消息', () => {
+    assert.match(appSource, /const count = simpleVideoTasks\.length;/);
+    assert.doesNotMatch(appSource, /const count = simpleVideoTasks\.filter\(task => !task\.simpleVideoCompleted\)\.length;/);
+});

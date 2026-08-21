@@ -54,6 +54,14 @@ const STUDIO_IDS = [
   '6F·现代厨房景'
 ];
 const FROZEN_STUDIO_IDS = new Set(['小无影棚1', '小无影棚2']);
+const SIMPLE_VIDEO_STUDIO_IDS = [
+  '大无影棚1（工位对面）',
+  '大无影棚2（鄢军隔壁）',
+  '小无影棚1',
+  '小无影棚2',
+  '小无影棚3',
+  '小无影棚4'
+];
 const DEFAULT_USER_NAMES = [
   '周旭欣', '曹东', '曹玉', '程维跃', '付国俊', '何雨涵', '李冬梅', '卢圣林',
   '吕书悦', '阮静', '沈磊', '涂萱', '王斐雯', '王思琪', '王羽', '魏钰涵',
@@ -340,12 +348,12 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
            SELECT 1 FROM bookings owner_booking
            WHERE owner_booking.photographer = $2
              AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END
-             AND owner_booking.studio <> '6F无影棚'
+             AND owner_booking.studio = ANY($5::text[])
          ) AS "simpleVideoCompleted"
        FROM bookings
        WHERE "needsSimpleVideo" = TRUE AND date IN ($1, $3) AND photographer = ANY($4::text[])
        ORDER BY date, "startTime"`,
-      [today, req.user.username, tomorrow, assignedPhotographers]
+      [today, req.user.username, tomorrow, assignedPhotographers, SIMPLE_VIDEO_STUDIO_IDS]
     );
     res.json(result.rows);
   } catch (error) {
