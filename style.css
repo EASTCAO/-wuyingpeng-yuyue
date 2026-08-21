@@ -97,13 +97,6 @@ textarea:focus-visible,
     line-height: 1.4;
 }
 
-.simple-video-task-photographer {
-    color: #2563eb;
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 1.4;
-}
-
 .simple-video-task-studio {
     color: #1f2937;
     font-size: 14px;
@@ -114,13 +107,6 @@ textarea:focus-visible,
 .simple-video-task-time {
     color: #6b7280;
     font-size: 13px;
-    line-height: 1.4;
-}
-
-.simple-video-task-completed {
-    color: #16a34a;
-    font-size: 13px;
-    font-weight: 700;
     line-height: 1.4;
 }
 

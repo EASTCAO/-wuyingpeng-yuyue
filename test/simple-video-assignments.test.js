@@ -44,7 +44,7 @@ test('只有对应日期的7F无影棚预约才算完成简易视频待办', () 
 
 test('完成对应预约后未读消息自动变成已读', () => {
     assert.match(appSource, /const count = simpleVideoTasks\.filter\(task => !task\.simpleVideoCompleted\)\.length;/);
-    assert.match(appSource, /已读 · 已预约对应日期无影棚/);
+    assert.match(appSource, /simpleVideoCompleted: Boolean\(simpleVideoBooking\)/);
     assert.match(appSource, /badge\.classList\.toggle\('hidden', count === 0\)/);
 });
 
@@ -54,4 +54,19 @@ test('已完成待办可以进入对应预约并取消', () => {
     assert.match(appSource, /查看\/取消预约<\/button>/);
     assert.match(appSource, /showBookingDetail\(\$\{inlineJsString\(booking\.simpleVideoBookingId\)\}\)/);
     assert.match(appSource, /if \(isSimpleVideoRecipient\(\)\) await loadSimpleVideoTasks\(\);/);
+});
+
+test('待办卡片只突出原预约时间、影棚位置和简易视频预约时间', () => {
+    const renderSource = appSource.slice(
+        appSource.indexOf('function renderSimpleVideoTasks()'),
+        appSource.indexOf('function openSimpleVideoBooking')
+    );
+    assert.match(appSource, /原摄影师预约：\$\{escapeHtml\(formatDate\(booking\.date\)\)\} \$\{escapeHtml\(booking\.startTime\)\}-\$\{escapeHtml\(booking\.endTime\)\}/);
+    assert.match(appSource, /影棚位置：\$\{escapeHtml\(booking\.studio\)\}/);
+    assert.match(appSource, /简易视频预约：\$\{booking\.simpleVideoCompleted/);
+    assert.match(appSource, /simpleVideoStartTime: simpleVideoBooking\?\.startTime \|\| ''/);
+    assert.match(serverSource, /AS "simpleVideoStartTime"/);
+    assert.match(serverSource, /AS "simpleVideoEndTime"/);
+    assert.doesNotMatch(renderSource, /摄影师：/);
+    assert.doesNotMatch(renderSource, /已读 · 已预约对应日期无影棚/);
 });

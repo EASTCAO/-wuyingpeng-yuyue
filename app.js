@@ -1177,7 +1177,9 @@ async function loadSimpleVideoTasks() {
                     ...booking,
                     simpleVideoTargetDate,
                     simpleVideoCompleted: Boolean(simpleVideoBooking),
-                    simpleVideoBookingId: simpleVideoBooking?.id || ''
+                    simpleVideoBookingId: simpleVideoBooking?.id || '',
+                    simpleVideoStartTime: simpleVideoBooking?.startTime || '',
+                    simpleVideoEndTime: simpleVideoBooking?.endTime || ''
                 };
             });
     }
@@ -1203,11 +1205,11 @@ function renderSimpleVideoTasks() {
     container.innerHTML = simpleVideoTasks.length ? simpleVideoTasks.map(booking => `
         <article class="simple-video-task-card">
             <div class="simple-video-task-info">
-                <div class="simple-video-task-date">原预约：${escapeHtml(formatDate(booking.date))} · 需预约 ${escapeHtml(formatDate(booking.simpleVideoTargetDate))}</div>
-                <div class="simple-video-task-photographer">摄影师：${escapeHtml(booking.photographer)}</div>
-                <div class="simple-video-task-studio">${escapeHtml(booking.studio)}</div>
-                <div class="simple-video-task-time">原预约时段：${escapeHtml(booking.startTime)}-${escapeHtml(booking.endTime)}</div>
-                ${booking.simpleVideoCompleted ? '<div class="simple-video-task-completed">已读 · 已预约对应日期无影棚</div>' : ''}
+                <div class="simple-video-task-date">原摄影师预约：${escapeHtml(formatDate(booking.date))} ${escapeHtml(booking.startTime)}-${escapeHtml(booking.endTime)}</div>
+                <div class="simple-video-task-studio">影棚位置：${escapeHtml(booking.studio)}</div>
+                <div class="simple-video-task-time">简易视频预约：${booking.simpleVideoCompleted
+                    ? `${escapeHtml(formatDate(booking.simpleVideoTargetDate))} ${escapeHtml(booking.simpleVideoStartTime)}-${escapeHtml(booking.simpleVideoEndTime)}`
+                    : '未预约'}</div>
             </div>
             ${booking.simpleVideoCompleted
                 ? `<button class="btn btn-secondary simple-video-task-action" onclick="showBookingDetail(${inlineJsString(booking.simpleVideoBookingId)})">查看/取消预约</button>`

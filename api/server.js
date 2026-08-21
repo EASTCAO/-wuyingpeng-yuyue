@@ -352,6 +352,22 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
            ORDER BY owner_booking."startTime", owner_booking."createdAt"
            LIMIT 1
          ) AS "simpleVideoBookingId",
+         (
+           SELECT owner_booking."startTime" FROM bookings owner_booking
+           WHERE owner_booking.photographer = $2
+             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END
+             AND owner_booking.studio = ANY($5::text[])
+           ORDER BY owner_booking."startTime", owner_booking."createdAt"
+           LIMIT 1
+         ) AS "simpleVideoStartTime",
+         (
+           SELECT owner_booking."endTime" FROM bookings owner_booking
+           WHERE owner_booking.photographer = $2
+             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END
+             AND owner_booking.studio = ANY($5::text[])
+           ORDER BY owner_booking."startTime", owner_booking."createdAt"
+           LIMIT 1
+         ) AS "simpleVideoEndTime",
          EXISTS (
            SELECT 1 FROM bookings owner_booking
            WHERE owner_booking.photographer = $2
