@@ -19,7 +19,8 @@ let bookingDeleteInFlight = false;
 let currentStudioCategory = 'cyclorama';
 let bookingsLoaded = false;
 let bookingHistoryLoaded = false;
-let simpleVideoOwner = '';
+const DEFAULT_SIMPLE_VIDEO_OWNER = '涂萱';
+let simpleVideoOwner = DEFAULT_SIMPLE_VIDEO_OWNER;
 let simpleVideoTasks = [];
 const modalFocusStack = [];
 
@@ -1145,9 +1146,11 @@ function isSimpleVideoEligibleStudio(studioId) {
 async function loadSimpleVideoConfig() {
     if (isCloudMode()) {
         const response = await apiFetch('/api/simple-video/config').catch(() => null);
-        simpleVideoOwner = response?.ok ? ((await response.json()).owner || '') : '';
+        simpleVideoOwner = response?.ok ? ((await response.json()).owner || DEFAULT_SIMPLE_VIDEO_OWNER) : DEFAULT_SIMPLE_VIDEO_OWNER;
     } else {
-        simpleVideoOwner = localStorage.getItem('simpleVideoOwner') || '';
+        const storedOwner = localStorage.getItem('simpleVideoOwner');
+        simpleVideoOwner = !storedOwner || storedOwner === '李冬梅' ? DEFAULT_SIMPLE_VIDEO_OWNER : storedOwner;
+        if (simpleVideoOwner !== storedOwner) localStorage.setItem('simpleVideoOwner', simpleVideoOwner);
     }
     document.querySelectorAll('.simple-video-link').forEach(el => el.classList.toggle('hidden', currentUser !== simpleVideoOwner));
     if (currentUser === simpleVideoOwner) loadSimpleVideoTasks();
@@ -1180,7 +1183,7 @@ function updateSimpleVideoTaskBadge() {
         badge.classList.toggle('hidden', count === 0);
     }
     document.querySelectorAll('.simple-video-link').forEach(el => {
-        el.classList.toggle('hidden', currentUser !== simpleVideoOwner || simpleVideoTasks.length === 0);
+        el.classList.toggle('hidden', currentUser !== simpleVideoOwner);
     });
 }
 

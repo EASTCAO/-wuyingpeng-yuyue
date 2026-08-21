@@ -242,7 +242,8 @@ async function ensureDatabase() {
         value TEXT NOT NULL DEFAULT ''
       )
     `);
-    await client.query(`INSERT INTO app_settings (key, value) VALUES ('simple_video_owner', '') ON CONFLICT (key) DO NOTHING`);
+    await client.query(`INSERT INTO app_settings (key, value) VALUES ('simple_video_owner', '涂萱') ON CONFLICT (key) DO NOTHING`);
+    await client.query(`UPDATE app_settings SET value = '涂萱' WHERE key = 'simple_video_owner' AND value IN ('', '李冬梅')`);
 
     for (const username of DEFAULT_USER_NAMES) {
       await client.query(
