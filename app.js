@@ -1111,7 +1111,9 @@ function renderSimpleVideoTasks() {
                 <div class="simple-video-task-time">原预约时段：${escapeHtml(booking.startTime)}-${escapeHtml(booking.endTime)}</div>
                 ${booking.simpleVideoCompleted ? '<div class="simple-video-task-completed">已预约明天无影棚</div>' : ''}
             </div>
-            <button class="btn ${booking.simpleVideoCompleted ? 'btn-secondary' : 'btn-primary'} simple-video-task-action" ${booking.simpleVideoCompleted ? 'disabled' : `onclick="openSimpleVideoBooking(${inlineJsString(booking.date)})"`}>${booking.simpleVideoCompleted ? '已预约明天' : '去预约明天'}</button>
+            ${booking.simpleVideoCompleted
+                ? ''
+                : `<button class="btn btn-primary simple-video-task-action" onclick="openSimpleVideoBooking(${inlineJsString(booking.date)})">去预约明天</button>`}
         </article>`).join('') : '<p class="empty-message">暂无简易视频待办</p>';
 }
 
