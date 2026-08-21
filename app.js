@@ -1181,7 +1181,7 @@ async function loadSimpleVideoTasks() {
 }
 
 function updateSimpleVideoTaskBadge() {
-    const count = simpleVideoTasks.length;
+    const count = simpleVideoTasks.filter(task => !task.simpleVideoCompleted).length;
     const badge = document.getElementById('simpleVideoTaskBadge');
     if (badge) {
         badge.textContent = String(count);
@@ -1202,7 +1202,7 @@ function renderSimpleVideoTasks() {
                 <div class="simple-video-task-photographer">摄影师：${escapeHtml(booking.photographer)}</div>
                 <div class="simple-video-task-studio">${escapeHtml(booking.studio)}</div>
                 <div class="simple-video-task-time">原预约时段：${escapeHtml(booking.startTime)}-${escapeHtml(booking.endTime)}</div>
-                ${booking.simpleVideoCompleted ? '<div class="simple-video-task-completed">已预约对应日期无影棚</div>' : ''}
+                ${booking.simpleVideoCompleted ? '<div class="simple-video-task-completed">已读 · 已预约对应日期无影棚</div>' : ''}
             </div>
             ${booking.simpleVideoCompleted
                 ? ''

@@ -42,7 +42,8 @@ test('只有对应日期的7F无影棚预约才算完成简易视频待办', () 
     assert.doesNotMatch(serverSource, /owner_booking\.studio <> '6F无影棚'/);
 });
 
-test('红色数量显示全部当前消息，包括已经完成的新增消息', () => {
-    assert.match(appSource, /const count = simpleVideoTasks\.length;/);
-    assert.doesNotMatch(appSource, /const count = simpleVideoTasks\.filter\(task => !task\.simpleVideoCompleted\)\.length;/);
+test('完成对应预约后未读消息自动变成已读', () => {
+    assert.match(appSource, /const count = simpleVideoTasks\.filter\(task => !task\.simpleVideoCompleted\)\.length;/);
+    assert.match(appSource, /已读 · 已预约对应日期无影棚/);
+    assert.match(appSource, /badge\.classList\.toggle\('hidden', count === 0\)/);
 });
