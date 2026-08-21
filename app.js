@@ -50,6 +50,18 @@ const STUDIO_GROUPS = [
         ]
     },
     {
+        key: 'sixth-floor',
+        category: 'cyclorama',
+        title: '6F',
+        subtitle: '跨楼层备用棚',
+        optionLabel: '6F',
+        cardClass: 'studio-section-sixth',
+        buttonClass: 'btn-primary',
+        studios: [
+            { id: '6F无影棚', title: '6F无影棚', location: '6F' }
+        ]
+    },
+    {
         key: 'real-scene',
         category: 'real-scene',
         title: '7F 实景棚',

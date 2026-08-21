@@ -104,11 +104,9 @@ function renderFloorTabs() {
 }
 
 function renderStudioCategoryTabs() {
-    const cycloramaTab = currentStudioFloor === '6F' ? '' : `
-            <button type="button" class="studio-category-tab${currentStudioCategory === 'cyclorama' ? ' active' : ''}" onclick="switchStudioCategory('cyclorama')" role="tab" aria-selected="${currentStudioCategory === 'cyclorama'}">无影棚</button>`;
     return `
         <div class="studio-category-tabs preview-category-tabs" role="tablist" aria-label="影棚类型">
-            ${cycloramaTab}
+            <button type="button" class="studio-category-tab${currentStudioCategory === 'cyclorama' ? ' active' : ''}" onclick="switchStudioCategory('cyclorama')" role="tab" aria-selected="${currentStudioCategory === 'cyclorama'}">无影棚</button>
             <button type="button" class="studio-category-tab${currentStudioCategory === 'real-scene' ? ' active' : ''}" onclick="switchStudioCategory('real-scene')" role="tab" aria-selected="${currentStudioCategory === 'real-scene'}">实景棚</button>
         </div>
     `;
@@ -138,7 +136,7 @@ function renderPreviewStatusLegend() {
 function switchStudioFloor(floor) {
     if (!['6F', '7F'].includes(floor) || floor === currentStudioFloor) return;
     currentStudioFloor = floor;
-    currentStudioCategory = floor === '6F' ? 'real-scene' : null;
+    currentStudioCategory = null;
     renderStudioToolbarControls();
     renderStudioSections();
     renderBookings();
@@ -146,7 +144,6 @@ function switchStudioFloor(floor) {
 
 switchStudioCategory = function switchStudioLayoutCategory(category) {
     if (!['cyclorama', 'real-scene'].includes(category) || category === currentStudioCategory) return;
-    if (currentStudioFloor === '6F' && category === 'cyclorama') return;
     currentStudioCategory = category;
     renderStudioToolbarControls();
     renderStudioSections();
