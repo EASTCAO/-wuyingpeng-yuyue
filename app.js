@@ -1099,7 +1099,7 @@ function renderSimpleVideoTasks() {
             <div class="booking-info"><div class="booking-date">${escapeHtml(formatDate(booking.date))} · 次日预约</div>
             <div class="booking-photographer">摄影师：${escapeHtml(booking.photographer)}</div>
             <div class="booking-note">${escapeHtml(booking.studio)} ${escapeHtml(booking.startTime)}-${escapeHtml(booking.endTime)}</div></div>
-            <button class="btn btn-primary btn-small" onclick="openSimpleVideoBooking('${inlineJsString(booking.date)}')">去预约明天</button>
+            <button class="btn btn-primary btn-small" onclick="openSimpleVideoBooking(${inlineJsString(booking.date)})">去预约明天</button>
         </div>`).join('') : '<p class="empty-message">暂无简易视频待办</p>';
 }
 
