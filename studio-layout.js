@@ -468,6 +468,12 @@ function bindSixthFloorCanvas() {
                 setTimeout(() => {
                     sixthFloorSuppressClick = false;
                 }, 0);
+            } else {
+                sixthFloorSuppressClick = true;
+                openRealSceneCard(state.card.dataset.studioId);
+                setTimeout(() => {
+                    sixthFloorSuppressClick = false;
+                }, 0);
             }
         }
         sixthFloorDragState = null;

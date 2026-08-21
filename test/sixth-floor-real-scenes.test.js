@@ -158,6 +158,7 @@ test('6F 实景卡片轻点优先预约，移动超过阈值后才拖动', () =>
     assert.match(layoutSource, /SIXTH_FLOOR_DRAG_THRESHOLD\s*=\s*10/);
     assert.match(layoutSource, /if \(!state\.moved && Math\.hypot\(dx, dy\) < SIXTH_FLOOR_DRAG_THRESHOLD\) return;/);
     assert.match(layoutSource, /state\.moved = true;[\s\S]*if \(state\.type === 'card'\)/);
+    assert.match(layoutSource, /else \{\s*sixthFloorSuppressClick = true;\s*openRealSceneCard\(state\.card\.dataset\.studioId\);/);
 });
 
 test('楼层和影棚类型使用四选一高频切换控件', () => {
