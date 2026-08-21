@@ -61,7 +61,7 @@
 .preview-single-floor-map .studio-map-zone-seventh-floor {
     grid-column: 1;
     padding: 14px;
-    border-color: #DDE4EC;
+    border: 0;
     background: #F8FAFC;
 }
 

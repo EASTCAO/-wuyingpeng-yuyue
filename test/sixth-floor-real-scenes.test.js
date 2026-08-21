@@ -113,6 +113,10 @@ test('6F 实景卡片使用圆润圆角', () => {
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor \.preview-scene-card\s*\{[\s\S]*?border-radius:\s*14px;/);
 });
 
+test('7F 无影棚区域不显示最外层线框', () => {
+    assert.match(layoutStyles, /\.preview-single-floor-map \.studio-map-zone-seventh-floor\s*\{[\s\S]*?border:\s*0;/);
+});
+
 test('6F 卡片使用高优先级绝对定位而不会落入普通文档流', () => {
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s+\.sixth-floor-layout-card\s*\{[\s\S]*?position:\s*absolute;/);
 });
