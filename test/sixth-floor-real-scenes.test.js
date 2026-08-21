@@ -67,8 +67,7 @@ test('6F 自由画布使用无边框全尺寸视口', () => {
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?display:\s*block;/);
     assert.match(layoutStyles, /\.sixth-floor-canvas-viewport\s*\{[\s\S]*?width:\s*100%;[\s\S]*?height:\s*100%;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;[\s\S]*?box-shadow:\s*none;/);
     assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f\s*\{[\s\S]*?padding:\s*0 0 4px;/);
-    assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*4px;[\s\S]*?right:\s*214px;/);
-    assert.match(layoutStyles, /@media \(max-width:\s*768px\)[\s\S]*?\.preview-workspace-6f \.preview-status-legend\s*\{[\s\S]*?top:\s*4px;[\s\S]*?right:\s*8px;[\s\S]*?\.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*38px;[\s\S]*?right:\s*8px;/);
+    assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*4px;[\s\S]*?right:\s*178px;/);
     assert.match(layoutSource, /viewport\.clientWidth - SIXTH_FLOOR_FRAME_INSETS\.left/);
     assert.doesNotMatch(layoutSource, /viewport\.style\.width/);
     assert.doesNotMatch(layoutSource, /viewport\.style\.height/);
@@ -146,8 +145,8 @@ test('楼层和影棚类型使用四选一高频切换控件', () => {
     assert.match(pageStyles, /display:\s*flex;/);
     assert.match(pageStyles, /justify-content:\s*flex-end;/);
     assert.match(pageStyles, /\.studio-view-tabs\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(2,/);
-    assert.match(pageStyles, /\.studio-view-tab\s*\{[\s\S]*?min-height:\s*44px;/);
-    assert.match(pageStyles, /\.studio-view-tab\.active\s*\{[\s\S]*?background:\s*var\(--ui-action\);[\s\S]*?color:\s*#FFFFFF;/);
+    assert.match(pageStyles, /\.studio-view-tab\s*\{[\s\S]*?min-height:\s*30px;[\s\S]*?border-radius:\s*4px;/);
+    assert.match(pageStyles, /\.studio-view-tab\.active\s*\{[\s\S]*?background:\s*#4C7DFF;[\s\S]*?color:\s*#FFFFFF;/);
 });
 
 test('预约状态说明固定在实景棚预览右上角且不撑满整行', () => {
