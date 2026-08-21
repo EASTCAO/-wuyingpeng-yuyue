@@ -40,6 +40,78 @@ body {
     font-weight: 700;
 }
 
+.simple-video-task-card {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 20px;
+    width: min(100%, 560px);
+    min-height: 142px;
+    padding: 20px 22px;
+    margin: 0 0 14px;
+    box-sizing: border-box;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #4c7dff;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(31, 41, 55, 0.08);
+}
+
+.simple-video-task-info {
+    min-width: 0;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.simple-video-task-date {
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.simple-video-task-photographer {
+    color: #2563eb;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.simple-video-task-studio {
+    color: #1f2937;
+    font-size: 14px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.simple-video-task-time {
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.simple-video-task-action {
+    align-self: flex-end;
+    flex: 0 0 auto;
+    min-width: 132px;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .simple-video-task-card {
+        width: 100%;
+        flex-direction: column;
+        gap: 14px;
+        padding: 18px;
+    }
+
+    .simple-video-task-action {
+        align-self: stretch;
+        width: 100%;
+    }
+}
+
 /* 容器 */
 .container {
     max-width: 1200px;
