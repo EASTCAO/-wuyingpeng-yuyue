@@ -19,8 +19,21 @@ let bookingDeleteInFlight = false;
 let currentStudioCategory = 'cyclorama';
 let bookingsLoaded = false;
 let bookingHistoryLoaded = false;
-const DEFAULT_SIMPLE_VIDEO_OWNER = '涂萱';
-let simpleVideoOwner = DEFAULT_SIMPLE_VIDEO_OWNER;
+const SIMPLE_VIDEO_ASSIGNMENTS = {
+    '曹东': '涂萱',
+    '於佳莹': '向芷琪',
+    '夏驰': '李冬梅',
+    '谭金林': '何雨涵',
+    '杨丽': '魏钰涵',
+    '卢圣林': '王羽',
+    '鄢军': '曹玉',
+    '吕文祎': '王思琪',
+    '徐优': '程思盈',
+    '周旭欣': '魏钰涵',
+    '付国俊': '阮静',
+    '沈磊': '王斐雯',
+    '张阳洋': '魏钰涵'
+};
 let simpleVideoTasks = [];
 const modalFocusStack = [];
 
@@ -823,13 +836,15 @@ async function renderUserManagement() {
             <input type="text" id="newUserInput" placeholder="输入用户名（多个用逗号分隔）" maxlength="100">
             <button onclick="handleAddUsers()" class="btn btn-primary btn-small">添加</button>
         </div>
-        <div class="user-mgmt-add simple-video-owner-setting">
-            <label for="simpleVideoOwnerSelect">简易视频负责人</label>
-            <select id="simpleVideoOwnerSelect">
-                <option value="">未设置</option>
-                ${userNames.map(name => `<option value="${escapeHtml(name)}"${name === simpleVideoOwner ? ' selected' : ''}>${escapeHtml(name)}</option>`).join('')}
-            </select>
-            <button onclick="saveSimpleVideoOwner()" class="btn btn-primary btn-small">保存</button>
+        <div class="simple-video-assignment-setting">
+            <div class="simple-video-assignment-title">简易视频人员绑定</div>
+            <div class="simple-video-assignment-list">
+                ${Object.entries(SIMPLE_VIDEO_ASSIGNMENTS).map(([photographer, recipient]) => `
+                    <div class="simple-video-assignment-item">
+                        <span>${escapeHtml(photographer)}</span><span aria-hidden="true">→</span><span>${escapeHtml(recipient)}</span>
+                    </div>
+                `).join('')}
+            </div>
         </div>
         <div class="user-mgmt-count">共 ${userNames.length} 个用户</div>
         <div class="user-mgmt-list">
@@ -851,25 +866,6 @@ async function renderUserManagement() {
             });
         }
     }, 0);
-}
-
-async function saveSimpleVideoOwner() {
-    const owner = document.getElementById('simpleVideoOwnerSelect')?.value || '';
-    if (isCloudMode()) {
-        const response = await apiFetch('/api/simple-video/config', {
-            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ owner })
-        });
-        if (!response.ok) {
-            const data = await response.json().catch(() => ({}));
-            showToast(data.error || '保存负责人失败', 'error');
-            return;
-        }
-    } else {
-        localStorage.setItem('simpleVideoOwner', owner);
-    }
-    simpleVideoOwner = owner;
-    document.querySelectorAll('.simple-video-link').forEach(el => el.classList.toggle('hidden', currentUser !== owner));
-    showToast('简易视频负责人已保存', 'success');
 }
 
 async function handleAddUsers() {
@@ -1144,16 +1140,18 @@ function isSimpleVideoEligibleStudio(studioId) {
 }
 
 async function loadSimpleVideoConfig() {
-    if (isCloudMode()) {
-        const response = await apiFetch('/api/simple-video/config').catch(() => null);
-        simpleVideoOwner = response?.ok ? ((await response.json()).owner || DEFAULT_SIMPLE_VIDEO_OWNER) : DEFAULT_SIMPLE_VIDEO_OWNER;
-    } else {
-        const storedOwner = localStorage.getItem('simpleVideoOwner');
-        simpleVideoOwner = !storedOwner || storedOwner === '李冬梅' ? DEFAULT_SIMPLE_VIDEO_OWNER : storedOwner;
-        if (simpleVideoOwner !== storedOwner) localStorage.setItem('simpleVideoOwner', simpleVideoOwner);
-    }
-    document.querySelectorAll('.simple-video-link').forEach(el => el.classList.toggle('hidden', currentUser !== simpleVideoOwner));
-    if (currentUser === simpleVideoOwner) loadSimpleVideoTasks();
+    document.querySelectorAll('.simple-video-link').forEach(el => el.classList.toggle('hidden', !isSimpleVideoRecipient()));
+    if (isSimpleVideoRecipient()) loadSimpleVideoTasks();
+}
+
+function getSimpleVideoPhotographers(recipient = currentUser) {
+    return Object.entries(SIMPLE_VIDEO_ASSIGNMENTS)
+        .filter(([, assignedRecipient]) => assignedRecipient === recipient)
+        .map(([photographer]) => photographer);
+}
+
+function isSimpleVideoRecipient(user = currentUser) {
+    return getSimpleVideoPhotographers(user).length > 0;
 }
 
 async function loadSimpleVideoTasks() {
@@ -1162,13 +1160,16 @@ async function loadSimpleVideoTasks() {
         simpleVideoTasks = response?.ok ? await response.json() : [];
     } else {
         const targetDate = getChinaDate(1);
+        const assignedPhotographers = new Set(getSimpleVideoPhotographers());
         const ownerHasBooking = allBookings.some(booking =>
             booking.photographer === currentUser
             && getDateOnly(booking.date) === targetDate
             && booking.studio !== '6F无影棚'
         );
         simpleVideoTasks = allBookings
-            .filter(booking => booking.needsSimpleVideo && getDateOnly(booking.date) === getChinaDate())
+            .filter(booking => assignedPhotographers.has(booking.photographer)
+                && booking.needsSimpleVideo
+                && getDateOnly(booking.date) === getChinaDate())
             .map(booking => ({ ...booking, simpleVideoCompleted: ownerHasBooking }));
     }
     updateSimpleVideoTaskBadge();
@@ -1183,7 +1184,7 @@ function updateSimpleVideoTaskBadge() {
         badge.classList.toggle('hidden', count === 0);
     }
     document.querySelectorAll('.simple-video-link').forEach(el => {
-        el.classList.toggle('hidden', currentUser !== simpleVideoOwner);
+        el.classList.toggle('hidden', !isSimpleVideoRecipient());
     });
 }
 
@@ -1349,7 +1350,7 @@ async function loadBookings({ includeHistory = bookingHistoryLoaded } = {}) {
 
             sortBookings();
             renderAllViews();
-            if (currentUser === simpleVideoOwner) loadSimpleVideoTasks();
+            if (isSimpleVideoRecipient()) loadSimpleVideoTasks();
             console.log('✅ 从云端加载了', allBookings.length, '条预约');
             return true;
         } catch (error) {
@@ -1370,7 +1371,7 @@ async function loadBookings({ includeHistory = bookingHistoryLoaded } = {}) {
             bookingHistoryLoaded = true;
             sortBookings();
             renderAllViews();
-            if (currentUser === simpleVideoOwner) loadSimpleVideoTasks();
+            if (isSimpleVideoRecipient()) loadSimpleVideoTasks();
             console.log('✅ 从本地加载了', allBookings.length, '条预约');
             return true;
         } catch (error) {
@@ -2284,7 +2285,7 @@ async function addBooking() {
             closeAddBookingForm();
         }
 
-        if (currentUser === simpleVideoOwner) loadSimpleVideoTasks();
+        if (isSimpleVideoRecipient()) loadSimpleVideoTasks();
 
         console.log('✅ 预约保存成功');
         showToast(isEditing ? '预约时间已修改' : '预约成功', 'success');
@@ -3200,7 +3201,7 @@ function stopReminderCheck() {
 
 // 检查即将开始的预约
 function checkUpcomingBookings() {
-    if (currentUser === simpleVideoOwner) {
+    if (isSimpleVideoRecipient()) {
         loadSimpleVideoTasks().then(() => {
             const notified = JSON.parse(localStorage.getItem('simpleVideoNotified') || '{}');
             simpleVideoTasks.forEach(task => {

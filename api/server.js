@@ -61,6 +61,21 @@ const DEFAULT_USER_NAMES = [
   '叶雨婷', '程思盈', '魏伟', '谭金林', '徐优',
   '陈梦轲', '陈思', '樊瑾怡', '李梦涵', '向纯希', '夏姝敏', '周梓君', 'admin'
 ];
+const SIMPLE_VIDEO_ASSIGNMENTS = {
+  '曹东': '涂萱',
+  '於佳莹': '向芷琪',
+  '夏驰': '李冬梅',
+  '谭金林': '何雨涵',
+  '杨丽': '魏钰涵',
+  '卢圣林': '王羽',
+  '鄢军': '曹玉',
+  '吕文祎': '王思琪',
+  '徐优': '程思盈',
+  '周旭欣': '魏钰涵',
+  '付国俊': '阮静',
+  '沈磊': '王斐雯',
+  '张阳洋': '魏钰涵'
+};
 const loginLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   limit: 10,
@@ -242,9 +257,6 @@ async function ensureDatabase() {
         value TEXT NOT NULL DEFAULT ''
       )
     `);
-    await client.query(`INSERT INTO app_settings (key, value) VALUES ('simple_video_owner', '涂萱') ON CONFLICT (key) DO NOTHING`);
-    await client.query(`UPDATE app_settings SET value = '涂萱' WHERE key = 'simple_video_owner' AND value IN ('', '李冬梅')`);
-
     for (const username of DEFAULT_USER_NAMES) {
       await client.query(
         `INSERT INTO users (username, "passwordHash", role, "createdAt")
@@ -306,34 +318,19 @@ app.get('/api/users', requireAuth, requireAdmin, async (req, res) => {
 });
 
 app.get('/api/simple-video/config', requireAuth, async (req, res) => {
-  try {
-    const result = await pool.query('SELECT value FROM app_settings WHERE key = $1', ['simple_video_owner']);
-    res.json({ owner: result.rows[0]?.value || '' });
-  } catch (error) {
-    console.error('获取简易视频配置失败:', error);
-    res.status(500).json({ error: '获取简易视频配置失败' });
-  }
+  res.json({ assignments: SIMPLE_VIDEO_ASSIGNMENTS });
 });
 
 app.put('/api/simple-video/config', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const owner = String(req.body?.owner || '').trim();
-    if (owner) {
-      const user = await pool.query('SELECT username FROM users WHERE username = $1', [owner]);
-      if (!user.rows[0]) return res.status(400).json({ error: '负责人账号不存在' });
-    }
-    await pool.query('UPDATE app_settings SET value = $1 WHERE key = $2', [owner, 'simple_video_owner']);
-    res.json({ owner });
-  } catch (error) {
-    console.error('保存简易视频配置失败:', error);
-    res.status(500).json({ error: '保存简易视频配置失败' });
-  }
+  res.status(405).json({ error: '简易视频人员绑定由系统配置维护' });
 });
 
 app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
   try {
-    const ownerResult = await pool.query('SELECT value FROM app_settings WHERE key = $1', ['simple_video_owner']);
-    if (!ownerResult.rows[0]?.value || ownerResult.rows[0].value !== req.user.username) return res.json([]);
+    const assignedPhotographers = Object.entries(SIMPLE_VIDEO_ASSIGNMENTS)
+      .filter(([, recipient]) => recipient === req.user.username)
+      .map(([photographer]) => photographer);
+    if (assignedPhotographers.length === 0) return res.json([]);
     const today = getChinaDate();
     const targetDate = getChinaDate(1);
     const result = await pool.query(
@@ -345,9 +342,9 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
              AND owner_booking.studio <> '6F无影棚'
          ) AS "simpleVideoCompleted"
        FROM bookings
-       WHERE "needsSimpleVideo" = TRUE AND date = $1
+       WHERE "needsSimpleVideo" = TRUE AND date = $1 AND photographer = ANY($4::text[])
        ORDER BY date, "startTime"`,
-      [today, req.user.username, targetDate]
+      [today, req.user.username, targetDate, assignedPhotographers]
     );
     res.json(result.rows);
   } catch (error) {
