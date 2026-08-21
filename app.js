@@ -1079,23 +1079,23 @@ async function loadSimpleVideoTasks() {
             && getDateOnly(booking.date) === targetDate
             && booking.studio !== '6F无影棚'
         );
-        simpleVideoTasks = ownerHasBooking
-            ? []
-            : allBookings.filter(booking => booking.needsSimpleVideo && getDateOnly(booking.date) === getChinaDate());
+        simpleVideoTasks = allBookings
+            .filter(booking => booking.needsSimpleVideo && getDateOnly(booking.date) === getChinaDate())
+            .map(booking => ({ ...booking, simpleVideoCompleted: ownerHasBooking }));
     }
     updateSimpleVideoTaskBadge();
     renderSimpleVideoTasks();
 }
 
 function updateSimpleVideoTaskBadge() {
-    const count = simpleVideoTasks.length;
+    const count = simpleVideoTasks.filter(task => !task.simpleVideoCompleted).length;
     const badge = document.getElementById('simpleVideoTaskBadge');
     if (badge) {
         badge.textContent = String(count);
         badge.classList.toggle('hidden', count === 0);
     }
     document.querySelectorAll('.simple-video-link').forEach(el => {
-        el.classList.toggle('hidden', currentUser !== simpleVideoOwner || count === 0);
+        el.classList.toggle('hidden', currentUser !== simpleVideoOwner || simpleVideoTasks.length === 0);
     });
 }
 
@@ -1109,8 +1109,9 @@ function renderSimpleVideoTasks() {
                 <div class="simple-video-task-photographer">摄影师：${escapeHtml(booking.photographer)}</div>
                 <div class="simple-video-task-studio">${escapeHtml(booking.studio)}</div>
                 <div class="simple-video-task-time">原预约时段：${escapeHtml(booking.startTime)}-${escapeHtml(booking.endTime)}</div>
+                ${booking.simpleVideoCompleted ? '<div class="simple-video-task-completed">已预约明天无影棚</div>' : ''}
             </div>
-            <button class="btn btn-primary simple-video-task-action" onclick="openSimpleVideoBooking(${inlineJsString(booking.date)})">去预约明天</button>
+            <button class="btn ${booking.simpleVideoCompleted ? 'btn-secondary' : 'btn-primary'} simple-video-task-action" ${booking.simpleVideoCompleted ? 'disabled' : `onclick="openSimpleVideoBooking(${inlineJsString(booking.date)})"`}>${booking.simpleVideoCompleted ? '已预约明天' : '去预约明天'}</button>
         </article>`).join('') : '<p class="empty-message">暂无简易视频待办</p>';
 }
 

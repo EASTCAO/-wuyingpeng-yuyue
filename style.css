@@ -91,6 +91,13 @@ body {
     line-height: 1.4;
 }
 
+.simple-video-task-completed {
+    color: #16a34a;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
 .simple-video-task-action {
     align-self: flex-end;
     flex: 0 0 auto;
