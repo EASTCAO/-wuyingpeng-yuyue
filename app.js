@@ -1159,18 +1159,22 @@ async function loadSimpleVideoTasks() {
         const response = await apiFetch('/api/simple-video/tasks').catch(() => null);
         simpleVideoTasks = response?.ok ? await response.json() : [];
     } else {
-        const targetDate = getChinaDate(1);
         const assignedPhotographers = new Set(getSimpleVideoPhotographers());
-        const ownerHasBooking = allBookings.some(booking =>
-            booking.photographer === currentUser
-            && getDateOnly(booking.date) === targetDate
-            && booking.studio !== '6F无影棚'
-        );
         simpleVideoTasks = allBookings
             .filter(booking => assignedPhotographers.has(booking.photographer)
                 && booking.needsSimpleVideo
-                && getDateOnly(booking.date) === getChinaDate())
-            .map(booking => ({ ...booking, simpleVideoCompleted: ownerHasBooking }));
+                && [getChinaDate(), getChinaDate(1)].includes(getDateOnly(booking.date)))
+            .map(booking => {
+                const simpleVideoTargetDate = getDateOnly(booking.date) === getChinaDate()
+                    ? getChinaDate(1)
+                    : getDateOnly(booking.date);
+                const simpleVideoCompleted = allBookings.some(ownerBooking =>
+                    ownerBooking.photographer === currentUser
+                    && getDateOnly(ownerBooking.date) === simpleVideoTargetDate
+                    && ownerBooking.studio !== '6F无影棚'
+                );
+                return { ...booking, simpleVideoTargetDate, simpleVideoCompleted };
+            });
     }
     updateSimpleVideoTaskBadge();
     renderSimpleVideoTasks();
@@ -1194,21 +1198,19 @@ function renderSimpleVideoTasks() {
     container.innerHTML = simpleVideoTasks.length ? simpleVideoTasks.map(booking => `
         <article class="simple-video-task-card">
             <div class="simple-video-task-info">
-                <div class="simple-video-task-date">${escapeHtml(formatDate(booking.date))} · 次日预约</div>
+                <div class="simple-video-task-date">原预约：${escapeHtml(formatDate(booking.date))} · 需预约 ${escapeHtml(formatDate(booking.simpleVideoTargetDate))}</div>
                 <div class="simple-video-task-photographer">摄影师：${escapeHtml(booking.photographer)}</div>
                 <div class="simple-video-task-studio">${escapeHtml(booking.studio)}</div>
                 <div class="simple-video-task-time">原预约时段：${escapeHtml(booking.startTime)}-${escapeHtml(booking.endTime)}</div>
-                ${booking.simpleVideoCompleted ? '<div class="simple-video-task-completed">已预约明天无影棚</div>' : ''}
+                ${booking.simpleVideoCompleted ? '<div class="simple-video-task-completed">已预约对应日期无影棚</div>' : ''}
             </div>
             ${booking.simpleVideoCompleted
                 ? ''
-                : `<button class="btn btn-primary simple-video-task-action" onclick="openSimpleVideoBooking(${inlineJsString(booking.date)})">去预约明天</button>`}
+                : `<button class="btn btn-primary simple-video-task-action" onclick="openSimpleVideoBooking(${inlineJsString(booking.simpleVideoTargetDate)})">去预约${escapeHtml(formatShortDate(booking.simpleVideoTargetDate))}</button>`}
         </article>`).join('') : '<p class="empty-message">暂无简易视频待办</p>';
 }
 
-function openSimpleVideoBooking(sourceDate) {
-    const targetDate = typeof WeekDateSelector !== 'undefined' && WeekDateSelector.shiftDate
-        ? WeekDateSelector.shiftDate(sourceDate, 1) : getChinaDate(1);
+function openSimpleVideoBooking(targetDate) {
     showAddBookingForm();
     const dateInput = document.getElementById('bookingDate');
     if (dateInput) { dateInput.value = targetDate; dateInput.dispatchEvent(new Event('change')); }
@@ -2049,7 +2051,7 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null) {
     const simpleVideoOption = document.getElementById('simpleVideoBookingOption');
     const simpleVideoCheckbox = document.getElementById('needsSimpleVideo');
     const updateSimpleVideoOption = () => {
-        const eligible = isSimpleVideoEligibleStudio(studioSelect.value) && dateInput.value === getChinaDate();
+        const eligible = isSimpleVideoEligibleStudio(studioSelect.value) && isBookableDate(dateInput.value);
         simpleVideoOption?.classList.toggle('hidden', !eligible);
         if (simpleVideoCheckbox) {
             simpleVideoCheckbox.checked = eligible && Boolean(bookingToEdit?.needsSimpleVideo);

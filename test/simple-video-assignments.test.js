@@ -26,3 +26,11 @@ test('接收人只读取自己绑定人员的简易视频待办', () => {
     assert.match(serverSource, /photographer = ANY\(\$4::text\[\]\)/);
     assert.match(appSource, /el\.classList\.toggle\('hidden', !isSimpleVideoRecipient\(\)\);/);
 });
+
+test('今天和明天的预约都可以选择简易视频并生成正确日期的待办', () => {
+    assert.match(appSource, /isSimpleVideoEligibleStudio\(studioSelect\.value\) && isBookableDate\(dateInput\.value\)/);
+    assert.match(serverSource, /isValidBookingDate\(date\) && req\.body\?\.needsSimpleVideo === true/g);
+    assert.match(serverSource, /date IN \(\$1, \$3\)/);
+    assert.match(serverSource, /CASE WHEN bookings\.date = \$1 THEN \$3 ELSE bookings\.date END AS "simpleVideoTargetDate"/);
+    assert.match(appSource, /openSimpleVideoBooking\(targetDate\)/);
+});

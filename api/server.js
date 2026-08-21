@@ -332,19 +332,20 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
       .map(([photographer]) => photographer);
     if (assignedPhotographers.length === 0) return res.json([]);
     const today = getChinaDate();
-    const targetDate = getChinaDate(1);
+    const tomorrow = getChinaDate(1);
     const result = await pool.query(
       `SELECT bookings.*,
+         CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END AS "simpleVideoTargetDate",
          EXISTS (
            SELECT 1 FROM bookings owner_booking
            WHERE owner_booking.photographer = $2
-             AND owner_booking.date = $3
+             AND owner_booking.date = CASE WHEN bookings.date = $1 THEN $3 ELSE bookings.date END
              AND owner_booking.studio <> '6F无影棚'
          ) AS "simpleVideoCompleted"
        FROM bookings
-       WHERE "needsSimpleVideo" = TRUE AND date = $1 AND photographer = ANY($4::text[])
+       WHERE "needsSimpleVideo" = TRUE AND date IN ($1, $3) AND photographer = ANY($4::text[])
        ORDER BY date, "startTime"`,
-      [today, req.user.username, targetDate, assignedPhotographers]
+      [today, req.user.username, tomorrow, assignedPhotographers]
     );
     res.json(result.rows);
   } catch (error) {
@@ -435,7 +436,7 @@ app.get('/api/bookings', requireAuth, async (req, res) => {
 app.post('/api/bookings', requireAuth, async (req, res) => {
   try {
       const { id, studio, date, startTime, endTime, notes } = req.body;
-    const needsSimpleVideo = studio !== '6F无影棚' && date === getChinaDate() && req.body?.needsSimpleVideo === true;
+    const needsSimpleVideo = studio !== '6F无影棚' && isValidBookingDate(date) && req.body?.needsSimpleVideo === true;
 
     if (!id || !studio || !date || !startTime || !endTime) {
       return res.status(400).json({ error: '缺少必填字段' });
@@ -499,7 +500,7 @@ app.put('/api/bookings/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { studio, date, startTime, endTime, notes } = req.body || {};
-    const needsSimpleVideo = studio !== '6F无影棚' && date === getChinaDate() && req.body?.needsSimpleVideo === true;
+    const needsSimpleVideo = studio !== '6F无影棚' && isValidBookingDate(date) && req.body?.needsSimpleVideo === true;
     if (!studio || !date || !startTime || !endTime) {
       return res.status(400).json({ error: '缺少必填字段' });
     }
