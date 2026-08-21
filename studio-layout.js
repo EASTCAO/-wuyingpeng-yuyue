@@ -134,7 +134,9 @@ function renderPreviewStatusLegend() {
 }
 
 function switchStudioFloor(floor) {
-    if (!['6F', '7F'].includes(floor) || floor === currentStudioFloor) return;
+    if (!['6F', '7F'].includes(floor)) return;
+    if (currentView !== 'list') switchView('list');
+    if (floor === currentStudioFloor) return;
     currentStudioFloor = floor;
     currentStudioCategory = null;
     renderStudioToolbarControls();
@@ -143,7 +145,9 @@ function switchStudioFloor(floor) {
 }
 
 switchStudioCategory = function switchStudioLayoutCategory(category) {
-    if (!['cyclorama', 'real-scene'].includes(category) || category === currentStudioCategory) return;
+    if (!['cyclorama', 'real-scene'].includes(category)) return;
+    if (currentView !== 'list') switchView('list');
+    if (category === currentStudioCategory) return;
     currentStudioCategory = category;
     renderStudioToolbarControls();
     renderStudioSections();
