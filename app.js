@@ -21,6 +21,86 @@ let bookingsLoaded = false;
 let bookingHistoryLoaded = false;
 let simpleVideoOwner = '';
 let simpleVideoTasks = [];
+const modalFocusStack = [];
+
+function getModalFocusableElements(modal) {
+    return Array.from(modal.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+    )).filter(element => !element.closest('[hidden]') && element.offsetParent !== null);
+}
+
+function openAccessibleModal(modalId, initialFocusSelector) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    const existingEntry = modalFocusStack.find(entry => entry.modal === modal);
+    if (!existingEntry) {
+        modalFocusStack.push({ modal, trigger: document.activeElement });
+    }
+
+    modal.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+    requestAnimationFrame(() => {
+        const initialFocus = initialFocusSelector ? modal.querySelector(initialFocusSelector) : null;
+        (initialFocus || getModalFocusableElements(modal)[0])?.focus({ preventScroll: true });
+    });
+}
+
+function closeAccessibleModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    modal.classList.add('hidden');
+    let entryIndex = -1;
+    for (let index = modalFocusStack.length - 1; index >= 0; index -= 1) {
+        if (modalFocusStack[index].modal === modal) {
+            entryIndex = index;
+            break;
+        }
+    }
+    const [entry] = entryIndex >= 0 ? modalFocusStack.splice(entryIndex, 1) : [];
+    const activeModal = modalFocusStack[modalFocusStack.length - 1]?.modal;
+    document.body.classList.toggle('modal-open', Boolean(activeModal));
+
+    requestAnimationFrame(() => {
+        if (entry?.trigger?.isConnected) {
+            entry.trigger.focus({ preventScroll: true });
+        } else if (activeModal) {
+            getModalFocusableElements(activeModal)[0]?.focus({ preventScroll: true });
+        }
+    });
+}
+
+document.addEventListener('keydown', event => {
+    const modal = modalFocusStack[modalFocusStack.length - 1]?.modal;
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    if (event.key === 'Escape') {
+        const closeControl = modal.querySelector('[data-modal-close]');
+        if (closeControl) {
+            event.preventDefault();
+            closeControl.click();
+        }
+        return;
+    }
+
+    if (event.key !== 'Tab') return;
+    const focusableElements = getModalFocusableElements(modal);
+    if (focusableElements.length === 0) {
+        event.preventDefault();
+        return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+    } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+    }
+});
 
 // ============ 影棚配置 ============
 // 所有影棚入口、下拉框、统计筛选和时间轴都从这里生成。
@@ -906,13 +986,18 @@ function guestLogin() {
 function togglePasswordVisibility() {
     const passwordInput = document.getElementById('loginPassword');
     const eyeIcon = document.getElementById('eyeIcon');
+    const toggleButton = document.querySelector('.toggle-password');
 
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
         eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+        toggleButton?.setAttribute('aria-label', '隐藏密码');
+        toggleButton?.setAttribute('aria-pressed', 'true');
     } else {
         passwordInput.type = 'password';
         eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+        toggleButton?.setAttribute('aria-label', '显示密码');
+        toggleButton?.setAttribute('aria-pressed', 'false');
     }
 }
 
@@ -920,16 +1005,16 @@ function togglePasswordVisibility() {
 
 // 显示修改密码弹窗
 function showChangePasswordModal() {
-    document.getElementById('changePasswordModal').classList.remove('hidden');
     // 清空输入框
     document.getElementById('currentPassword').value = '';
     document.getElementById('newPassword').value = '';
     document.getElementById('confirmPassword').value = '';
+    openAccessibleModal('changePasswordModal', '#currentPassword');
 }
 
 // 关闭修改密码弹窗
 function closeChangePasswordModal() {
-    document.getElementById('changePasswordModal').classList.add('hidden');
+    closeAccessibleModal('changePasswordModal');
 }
 
 // 获取用户当前密码
@@ -1390,7 +1475,7 @@ function renderBookings() {
                     ? '当前日期已约满'
                     : partiallyBooked
                         ? '当前日期已有预约，仍有可预约时间'
-                        : '';
+                        : '当前日期空闲，点击预约';
 
             const statusLabel = studioCard.querySelector('.real-scene-status-label');
             if (statusLabel) {
@@ -1548,6 +1633,12 @@ function getBookingNote(booking) {
 }
 
 function createStudioSummary(studio, studioBookings) {
+    const emptyState = studioBookings.length === 0 ? `
+        <div class="studio-summary-empty-state">
+            <strong>${studio.frozen ? '暂停预约' : '当前日期空闲'}</strong>
+            <span>${studio.frozen ? '该影棚暂时冻结' : '点击卡片选择时间'}</span>
+        </div>
+    ` : '';
     const bookingRows = studioBookings.length === 0
         ? ''
         : studioBookings.map(booking => {
@@ -1571,6 +1662,7 @@ function createStudioSummary(studio, studioBookings) {
 
     return `
         <div class="studio-summary-bookings">
+            ${emptyState}
             ${bookingRows}
         </div>
     `;
@@ -1899,7 +1991,7 @@ function createBookingCard(booking) {
             <div class="booking-info">
                 <div class="booking-time">${booking.startTime} - ${booking.endTime}</div>
                 <div class="booking-date">${formatDate(booking.date)}</div>
-                <div class="booking-photographer">📷 ${escapeHtml(booking.photographer)}</div>
+                <div class="booking-photographer">${escapeHtml(booking.photographer)}</div>
             </div>
             ${note ? `<div class="booking-note">${escapeHtml(note)}</div>` : ''}
         </div>
@@ -1941,8 +2033,6 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null) {
     editingBookingId = bookingToEdit?.id || null;
     document.getElementById('bookingModalTitle').textContent = editingBookingId ? '修改预约时间' : '预约';
     document.getElementById('bookingSubmitButton').textContent = editingBookingId ? '保存修改' : '确认预约';
-    document.getElementById('addBookingModal').classList.remove('hidden');
-
     // 重置表单
     const studioSelect = document.getElementById('studioSelect');
     if (defaultStudio) {
@@ -2061,13 +2151,14 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null) {
         startTimeSelect.dispatchEvent(new Event('change'));
     }
     endTimeSelect.onchange = renderAvailabilityPanel;
+    openAccessibleModal('addBookingModal', '#studioSelect');
 }
 
 // 关闭新建预约表单
 function closeAddBookingForm() {
     const modal = document.getElementById('addBookingModal');
     if (modal) {
-        modal.classList.add('hidden');
+        closeAccessibleModal('addBookingModal');
         editingBookingId = null;
         document.getElementById('bookingModalTitle').textContent = '预约';
         document.getElementById('bookingSubmitButton').textContent = '确认预约';
@@ -2255,7 +2346,7 @@ function showStudioDetail(studioId) {
         <button onclick="openAddBookingFromStudioDetail('${escapeHtml(studio.id)}')" class="btn ${studio.buttonClass}">预约</button>
     `;
 
-    document.getElementById('bookingDetailModal').classList.remove('hidden');
+    openAccessibleModal('bookingDetailModal', '.close-btn');
 }
 
 function createStudioDetailBookingItem(booking) {
@@ -2336,11 +2427,11 @@ function showCancelBookingConfirm(bookingId, studioId = '') {
         </div>
     `;
 
-    document.getElementById('cancelBookingModal').classList.remove('hidden');
+    openAccessibleModal('cancelBookingModal', '.btn-danger');
 }
 
 function closeCancelBookingConfirm() {
-    document.getElementById('cancelBookingModal').classList.add('hidden');
+    closeAccessibleModal('cancelBookingModal');
     pendingCancelBookingId = null;
     pendingCancelStudioId = null;
 }
@@ -2411,7 +2502,7 @@ function showBookingDetail(bookingId) {
 
     document.getElementById('detailActions').innerHTML = actionsHtml;
 
-    document.getElementById('bookingDetailModal').classList.remove('hidden');
+    openAccessibleModal('bookingDetailModal', '.close-btn');
 }
 
 function editBooking() {
@@ -2433,7 +2524,7 @@ function editBooking() {
 
 // 关闭详情弹窗
 function closeDetailModal() {
-    document.getElementById('bookingDetailModal').classList.add('hidden');
+    closeAccessibleModal('bookingDetailModal');
     selectedBookingId = null;
 }
 
@@ -2558,6 +2649,7 @@ window.addEventListener('click', (e) => {
 // 切换视图
 async function switchView(view) {
     currentView = view;
+    if (window.innerWidth <= 768) closeSidebar();
 
     // 更新桌面端按钮状态
     document.querySelectorAll('.view-btn').forEach(btn => {
@@ -3361,7 +3453,7 @@ function showReminderModal(title, message, booking) {
         ${booking.note ? `<div style="font-size: 14px; color: #6b7280; margin-top: 8px;">${booking.note}</div>` : ''}
     `;
 
-    modal.classList.remove('hidden');
+    openAccessibleModal('reminderModal', '.btn-primary');
 
     // 5秒后自动关闭（可选）
     // setTimeout(() => {
@@ -3371,8 +3463,7 @@ function showReminderModal(title, message, booking) {
 
 // 关闭提醒弹窗
 function closeReminderModal() {
-    const modal = document.getElementById('reminderModal');
-    modal.classList.add('hidden');
+    closeAccessibleModal('reminderModal');
 }
 
 // 测试提醒功能
@@ -3546,12 +3637,12 @@ function renderStatsView() {
 
         return `
             <tr class="${rankClass}">
-                <td>${rank}</td>
-                <td>${stat.photographer}</td>
-                <td>${stat.count}</td>
-                <td>${stat.totalHours.toFixed(1)}h</td>
-                <td>${stat.avgHours.toFixed(1)}h</td>
-                <td>${percentage.toFixed(1)}%</td>
+                <td data-label="排名">${rank}</td>
+                <td data-label="摄影师">${escapeHtml(stat.photographer)}</td>
+                <td data-label="预约次数">${stat.count}</td>
+                <td data-label="总时长">${stat.totalHours.toFixed(1)}h</td>
+                <td data-label="平均时长">${stat.avgHours.toFixed(1)}h</td>
+                <td data-label="占比">${percentage.toFixed(1)}%</td>
             </tr>
         `;
     }).join('');

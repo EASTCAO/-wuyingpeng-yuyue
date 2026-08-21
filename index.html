@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="favicon.svg">
     
     <title>影棚预约系统</title>
-    <link rel="stylesheet" href="style.css?v=20260821-studio-view-switcher-v1">
+    <link rel="stylesheet" href="style.css?v=20260821-ui-ux-accessibility-v1">
     <link rel="stylesheet" href="studio-layout.css?v=20260813-apple-ui-v2">
 </head>
 <body class="studio-booking-page">
@@ -68,9 +68,9 @@
                 <!-- 表单 -->
                 <div class="login-form">
                     <div class="form-field">
-                        <label class="field-label"><span class="required">*</span> 用户名</label>
+                        <label class="field-label" for="photographerName"><span class="required">*</span> 用户名</label>
                         <div class="input-wrapper">
-                            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
+                            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" aria-hidden="true">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                                 <circle cx="12" cy="7" r="4"/>
                             </svg>
@@ -79,15 +79,15 @@
                     </div>
 
                     <div class="form-field">
-                        <label class="field-label"><span class="required">*</span> 密码</label>
+                        <label class="field-label" for="loginPassword"><span class="required">*</span> 密码</label>
                         <div class="input-wrapper">
-                            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
+                            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" aria-hidden="true">
                                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                             </svg>
                             <input type="password" id="loginPassword" placeholder="请输入密码" maxlength="20">
-                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">
-                                <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility()" aria-label="显示密码" aria-pressed="false">
+                                <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" aria-hidden="true">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                     <circle cx="12" cy="12" r="3"/>
                                 </svg>
@@ -152,7 +152,10 @@
             </div>
             <div class="user-info">
                 <span id="currentUser"></span>
-                <button onclick="logout()" class="btn btn-small btn-user">退出</button>
+                <button type="button" onclick="logout()" class="btn btn-small btn-user" aria-label="退出登录">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path></svg>
+                    <span>退出</span>
+                </button>
             </div>
         </div>
 
@@ -162,10 +165,13 @@
         <!-- 提醒条 -->
         <div id="reminderBar" class="reminder-bar hidden">
             <div class="reminder-content">
-                <span class="reminder-icon">🔔</span>
+                <svg class="reminder-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                    <path d="M10 21h4"></path>
+                </svg>
                 <span id="reminderText"></span>
             </div>
-            <button onclick="closeReminder()" class="reminder-close">&times;</button>
+            <button type="button" onclick="closeReminder()" class="reminder-close" aria-label="关闭提醒">&times;</button>
         </div>
 
         <div class="main-container">
@@ -182,10 +188,10 @@
                         <input type="checkbox" id="enableReminder" onchange="toggleReminder()">
                         <span class="switch-slider"></span>
                     </label>
-                    <a href="javascript:void(0)" onclick="switchView('stats')" class="sidebar-link">统计</a>
-                    <a href="javascript:void(0)" onclick="showChangePasswordModal()" class="sidebar-link">修改密码</a>
-                    <a href="javascript:void(0)" onclick="switchView('simple-video')" class="sidebar-link simple-video-link hidden">简易视频待办 <span id="simpleVideoTaskBadge" class="simple-video-task-badge hidden">0</span></a>
-                    <a href="javascript:void(0)" onclick="switchView('users')" class="sidebar-link admin-only" style="display:none;">用户管理</a>
+                    <button type="button" onclick="switchView('stats')" class="sidebar-link">统计</button>
+                    <button type="button" onclick="showChangePasswordModal()" class="sidebar-link">修改密码</button>
+                    <button type="button" onclick="switchView('simple-video')" class="sidebar-link simple-video-link hidden">简易视频待办 <span id="simpleVideoTaskBadge" class="simple-video-task-badge hidden">0</span></button>
+                    <button type="button" onclick="switchView('users')" class="sidebar-link admin-only" style="display:none;">用户管理</button>
                 </div>
             </div>
 
@@ -212,11 +218,13 @@
                 <!-- 统计视图 -->
                 <div id="statsView" class="stats-view hidden">
                     <div class="stats-header">
-                        <h2>📊 使用时长统计</h2>
+                        <h2><span class="section-heading-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path></svg></span>使用时长统计</h2>
                         <div class="stats-filters">
+                            <label class="sr-only" for="statsMonth">统计月份</label>
                             <select id="statsMonth" onchange="renderStatsView()">
                                 <option value="all">所有时间</option>
                             </select>
+                            <label class="sr-only" for="statsStudio">统计影棚</label>
                             <select id="statsStudio" onchange="renderStatsView()"></select>
                         </div>
                     </div>
@@ -260,7 +268,7 @@
                 <!-- 用户管理视图（仅 admin） -->
                 <div id="userManagementView" class="stats-view hidden">
                     <div class="stats-header">
-                        <h2>👤 用户管理</h2>
+                        <h2><span class="section-heading-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg></span>用户管理</h2>
                     </div>
                     <div id="userManagementContent"></div>
                 </div>
@@ -279,32 +287,32 @@
         <!-- 移动端底部导航栏 -->
         <div class="mobile-bottom-nav">
             <button class="nav-item active" onclick="switchView('list')" data-view="list">
-                <span class="nav-icon">📝</span>
+                <svg class="nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5V4.5A2.5 2.5 0 0 1 6.5 2H19v20H6.5A2.5 2.5 0 0 1 4 19.5Z"></path><path d="M8 7h7M8 11h7"></path></svg>
                 <span class="nav-label">预约</span>
             </button>
             <button class="nav-item" onclick="switchView('stats')" data-view="stats">
-                <span class="nav-icon">📊</span>
+                <svg class="nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path></svg>
                 <span class="nav-label">统计</span>
             </button>
         </div>
     </div>
 
     <!-- 新建预约弹窗 -->
-    <div id="addBookingModal" class="modal hidden">
+    <div id="addBookingModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="bookingModalTitle">预约</h2>
-                <button onclick="closeAddBookingForm()" class="close-btn">&times;</button>
+                <button type="button" onclick="closeAddBookingForm()" class="close-btn" aria-label="关闭预约窗口" data-modal-close>&times;</button>
             </div>
             <div class="modal-body">
                 <div class="booking-form-layout">
                     <div class="booking-form-fields">
                         <div class="form-group">
-                            <label>选择影棚</label>
+                            <label for="studioSelect">选择影棚</label>
                             <select id="studioSelect"></select>
                         </div>
                         <div class="form-group">
-                            <label>日期</label>
+                            <label for="bookingDate">日期</label>
                             <input type="date" id="bookingDate" required>
                         </div>
                         <label class="switch-row simple-video-booking-option hidden" id="simpleVideoBookingOption">
@@ -313,7 +321,9 @@
                             <span class="switch-slider"></span>
                         </label>
                         <div hidden aria-hidden="true">
+                            <label for="startTime">开始时间</label>
                             <select id="startTime" required tabindex="-1"></select>
+                            <label for="endTime">结束时间</label>
                             <select id="endTime" required tabindex="-1"></select>
                         </div>
                         <section class="booking-schedule-summary" aria-labelledby="bookingScheduleSummaryTitle">
@@ -345,11 +355,11 @@
     </div>
 
     <!-- 预约详情弹窗 -->
-    <div id="bookingDetailModal" class="modal hidden">
+    <div id="bookingDetailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="bookingDetailModalTitle">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>预约详情</h2>
-                <button onclick="closeDetailModal()" class="close-btn">&times;</button>
+                <h2 id="bookingDetailModalTitle">预约详情</h2>
+                <button type="button" onclick="closeDetailModal()" class="close-btn" aria-label="关闭预约详情" data-modal-close>&times;</button>
             </div>
             <div class="modal-body">
                 <div id="bookingDetailContent"></div>
@@ -359,11 +369,11 @@
     </div>
 
     <!-- 取消预约确认弹窗 -->
-    <div id="cancelBookingModal" class="modal hidden">
+    <div id="cancelBookingModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="cancelBookingModalTitle">
         <div class="modal-content cancel-booking-modal-content">
             <div class="modal-header">
-                <h2>确认取消</h2>
-                <button onclick="closeCancelBookingConfirm()" class="close-btn">&times;</button>
+                <h2 id="cancelBookingModalTitle">确认取消</h2>
+                <button type="button" onclick="closeCancelBookingConfirm()" class="close-btn" aria-label="关闭取消确认" data-modal-close>&times;</button>
             </div>
             <div class="modal-body">
                 <p class="cancel-booking-hint">请确认要取消的预约时间段</p>
@@ -377,10 +387,10 @@
     </div>
 
     <!-- 提醒弹窗 -->
-    <div id="reminderModal" class="modal reminder-modal hidden">
+    <div id="reminderModal" class="modal reminder-modal hidden" role="dialog" aria-modal="true" aria-labelledby="reminderModalTitle">
         <div class="modal-content reminder-modal-content">
             <div class="reminder-modal-icon">
-                <span class="reminder-bell">🔔</span>
+                <svg class="reminder-bell" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
             </div>
             <div class="reminder-modal-body">
                 <h2 id="reminderModalTitle">预约提醒</h2>
@@ -388,33 +398,33 @@
                 <div class="reminder-modal-time" id="reminderModalTime"></div>
             </div>
             <div class="reminder-modal-actions">
-                <button onclick="closeReminderModal()" class="btn btn-primary btn-large">我知道了</button>
+                <button type="button" onclick="closeReminderModal()" class="btn btn-primary btn-large" data-modal-close>我知道了</button>
             </div>
         </div>
     </div>
 
     <!-- 修改密码弹窗 -->
-    <div id="changePasswordModal" class="modal hidden">
+    <div id="changePasswordModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="changePasswordModalTitle">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>修改密码</h2>
-                <button onclick="closeChangePasswordModal()" class="close-btn">&times;</button>
+                <h2 id="changePasswordModalTitle">修改密码</h2>
+                <button type="button" onclick="closeChangePasswordModal()" class="close-btn" aria-label="关闭修改密码" data-modal-close>&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>当前密码</label>
+                    <label for="currentPassword">当前密码</label>
                     <div class="password-input-wrapper">
                         <input type="password" id="currentPassword" placeholder="请输入当前密码" maxlength="20">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>新密码</label>
+                    <label for="newPassword">新密码</label>
                     <div class="password-input-wrapper">
                         <input type="password" id="newPassword" placeholder="请输入新密码（至少6位）" maxlength="20">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>确认新密码</label>
+                    <label for="confirmPassword">确认新密码</label>
                     <div class="password-input-wrapper">
                         <input type="password" id="confirmPassword" placeholder="请再次输入新密码" maxlength="20">
                     </div>
@@ -428,7 +438,7 @@
     </div>
 
     <script src="week-date-selector.js?v=20260812-date-policy-v1"></script>
-    <script src="app.js?v=20260812-integrity-audit-v1"></script>
+    <script src="app.js?v=20260821-ui-ux-accessibility-v1"></script>
     <script src="studio-layout.js?v=20260821-studio-view-switcher-v1"></script>
 
     <!-- PWA Service Worker 注册 -->

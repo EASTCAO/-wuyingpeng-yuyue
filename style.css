@@ -2112,6 +2112,98 @@ body {
     gap: 8px;
 }
 
+/* UX refinement: accessibility, compact mobile navigation, and task-focused dialogs. */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+.btn-user {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.sidebar-link {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible {
+    outline: 2px solid var(--ui-focus, #0071E3);
+    outline-offset: 2px;
+}
+
+.toggle-password,
+.close-btn,
+.reminder-close {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.section-heading-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+    color: var(--ui-action);
+    vertical-align: -5px;
+}
+
+.studio-summary-empty-state {
+    grid-column: 1 / -1;
+    align-self: center;
+    justify-self: stretch;
+    display: flex;
+    min-height: 78px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 1px dashed #C9D4E3;
+    border-radius: 12px;
+    background: rgba(248, 250, 252, 0.72);
+    color: #475569;
+    text-align: center;
+}
+
+.studio-summary-empty-state strong {
+    color: #166534;
+    font-size: 14px;
+}
+
+.studio-summary-empty-state span {
+    font-size: 12px;
+}
+
+.studio-frozen .studio-summary-empty-state strong,
+.studio-frozen .studio-summary-empty-state span {
+    color: #64748B;
+}
+
 .sidebar-bottom {
     display: flex;
     flex-direction: column;
@@ -5376,5 +5468,226 @@ body {
         padding: 0;
         overflow-x: auto;
         overflow-y: hidden;
+    }
+}
+
+/* Keep the final mobile overrides after the legacy responsive layers. */
+@media (max-width: 768px) {
+    .header {
+        gap: 8px;
+    }
+
+    .header-left {
+        min-width: 0;
+        gap: 8px;
+    }
+
+    .header-left h1 {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .user-info {
+        flex: 0 0 auto;
+        gap: 4px;
+        margin-right: 8px;
+    }
+
+    .user-info span {
+        display: none;
+    }
+
+.btn-user {
+    min-width: 52px;
+    min-height: 44px;
+    padding: 8px 10px;
+}
+
+    .toolbar {
+        min-height: 0;
+    }
+
+    .week-date-selector {
+        gap: 5px;
+        overflow: visible;
+    }
+
+    .week-date-list {
+        display: flex;
+        flex: 1;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    .week-date-item {
+        flex: 1 1 0;
+        width: auto;
+        min-width: 0;
+        padding-inline: 2px;
+    }
+
+    .week-date-item:disabled,
+    .week-nav-button:disabled {
+        display: none;
+    }
+
+    .mobile-fab {
+        right: 16px;
+        bottom: max(16px, env(safe-area-inset-bottom));
+    }
+
+    .content-area,
+    .timeline-view,
+    .list-view,
+    .stats-view {
+        padding-bottom: 88px;
+    }
+
+    #addBookingModal {
+        align-items: stretch;
+        padding: 8px;
+    }
+
+    #addBookingModal .modal-content {
+        display: flex;
+        position: relative;
+        width: 100%;
+        max-width: none;
+        max-height: calc(100dvh - 16px);
+        margin: 0;
+        flex-direction: column;
+        overflow: hidden;
+        border-radius: 16px;
+    }
+
+    #addBookingModal .modal-header {
+        flex: 0 0 auto;
+    }
+
+    #addBookingModal .modal-body {
+        display: flex;
+        min-height: 0;
+        flex: 1;
+        flex-direction: column;
+        overflow: hidden;
+        padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    }
+
+    #addBookingModal .booking-form-layout {
+        min-height: 0;
+        flex: 1;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-right: 3px;
+    }
+
+    #addBookingModal .form-actions {
+        position: absolute;
+        right: 15px;
+        bottom: max(12px, env(safe-area-inset-bottom));
+        left: 15px;
+        z-index: 2;
+        margin: 0;
+        padding-top: 12px;
+        border-top: 1px solid var(--ui-hairline);
+        background: #FFFFFF;
+        box-shadow: 0 -10px 20px rgba(255, 255, 255, 0.96);
+    }
+
+    .studio-summary-empty-state {
+        min-height: 64px;
+    }
+
+    .preview-single-floor-map .studio-map-zone-seventh-floor .studio-overview-card {
+        min-height: 132px;
+    }
+
+    .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card {
+        min-height: 112px;
+    }
+
+    .stats-table-container {
+        overflow: visible;
+        border: 0;
+        background: transparent;
+    }
+
+    .stats-table {
+        min-width: 0;
+    }
+
+    .stats-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+    }
+
+    .stats-table,
+    .stats-table tbody,
+    .stats-table tr,
+    .stats-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .stats-table tbody {
+        display: grid;
+        gap: 10px;
+    }
+
+    .stats-table tbody tr {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 16px;
+        padding: 14px;
+        border: 1px solid var(--ui-hairline);
+        border-radius: 12px;
+        background: #FFFFFF;
+    }
+
+    .stats-table tbody td,
+    .stats-table tbody td:first-child {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 0;
+        color: var(--ui-ink);
+        text-align: right;
+    }
+
+    .stats-table tbody td::before {
+        content: attr(data-label);
+        color: var(--ui-muted);
+        font-size: 12px;
+        font-weight: 500;
+        text-align: left;
+    }
+
+    .stats-table .empty-message {
+        grid-column: 1 / -1;
+        text-align: center;
+    }
+}
+
+@media (max-width: 520px) {
+    .header-icon {
+        display: none;
+    }
+
+    .mobile-menu-btn {
+        margin-right: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
     }
 }
