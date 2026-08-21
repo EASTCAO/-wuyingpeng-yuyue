@@ -99,13 +99,14 @@ test('待办卡片只突出原预约时间、影棚位置和简易视频预约�
         appSource.indexOf('function renderSimpleVideoTasks()'),
         appSource.indexOf('function openSimpleVideoBooking')
     );
-    assert.match(appSource, /原摄影师预约：\$\{escapeHtml\(formatDate\(booking\.date\)\)\} \$\{escapeHtml\(booking\.startTime\)\}-\$\{escapeHtml\(booking\.endTime\)\}/);
-    assert.match(appSource, /影棚位置：\$\{escapeHtml\(booking\.studio\)\}/);
-    assert.match(appSource, /简易视频预约：\$\{booking\.simpleVideoCompleted/);
+    assert.match(appSource, /原预约：\$\{escapeHtml\(formatDate\(booking\.date\)\)\} \$\{escapeHtml\(booking\.startTime\)\}–\$\{escapeHtml\(booking\.endTime\)\} · \$\{escapeHtml\(booking\.studio\)\}/);
+    assert.match(appSource, /简易视频：\$\{booking\.simpleVideoCompleted/);
     assert.match(appSource, /simpleVideoStartTime: simpleVideoBooking\?\.startTime \|\| ''/);
     assert.match(serverSource, /AS "simpleVideoStartTime"/);
     assert.match(serverSource, /AS "simpleVideoEndTime"/);
     assert.doesNotMatch(renderSource, /摄影师：/);
+    assert.doesNotMatch(renderSource, /影棚位置：/);
+    assert.doesNotMatch(renderSource, /原摄影师预约：/);
     assert.doesNotMatch(renderSource, /已读 · 已预约对应日期无影棚/);
 });
 
@@ -114,5 +115,7 @@ test('简易视频待办只用文字区分已预约与待预约并保持卡片�
     assert.match(appSource, /simple-video-task-card \$\{booking\.simpleVideoCompleted \? 'is-booked' : 'is-pending'\}/);
     assert.match(appSource, /simple-video-task-status">\$\{booking\.simpleVideoCompleted \? '已预约' : '待预约'\}/);
     assert.match(styles, /\.simple-video-task-card\s*\{[\s\S]*border-left: 4px solid #4c7dff;[\s\S]*background: #fff;/);
-    assert.doesNotMatch(styles, /\.simple-video-task-card\.is-(?:booked|pending)\s*\{/);
+    assert.match(styles, /\.simple-video-task-card\.is-booked \.simple-video-task-status\s*\{[\s\S]*color: #15803d;/);
+    assert.match(styles, /\.simple-video-task-card\.is-pending \.simple-video-task-status\s*\{[\s\S]*color: #c2410c;/);
+    assert.doesNotMatch(styles, /\.simple-video-task-card\.is-(?:booked|pending)\s*\{[\s\S]*background:/);
 });

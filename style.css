@@ -72,8 +72,8 @@ textarea:focus-visible,
     justify-content: space-between;
     gap: 20px;
     width: min(100%, 560px);
-    min-height: 142px;
-    padding: 20px 22px;
+    min-height: 118px;
+    padding: 18px 22px;
     margin: 0 0 14px;
     box-sizing: border-box;
     border: 1px solid #e5e7eb;
@@ -100,17 +100,18 @@ textarea:focus-visible,
     white-space: nowrap;
 }
 
+.simple-video-task-card.is-booked .simple-video-task-status {
+    color: #15803d;
+}
+
+.simple-video-task-card.is-pending .simple-video-task-status {
+    color: #c2410c;
+}
+
 .simple-video-task-date {
     color: #6b7280;
     font-size: 14px;
     line-height: 1.4;
-}
-
-.simple-video-task-studio {
-    color: #1f2937;
-    font-size: 14px;
-    line-height: 1.4;
-    overflow-wrap: anywhere;
 }
 
 .simple-video-task-time {

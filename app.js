@@ -1212,9 +1212,8 @@ function renderSimpleVideoTasks() {
         <article class="simple-video-task-card ${booking.simpleVideoCompleted ? 'is-booked' : 'is-pending'}">
             <div class="simple-video-task-info">
                 <div class="simple-video-task-status">${booking.simpleVideoCompleted ? '已预约' : '待预约'}</div>
-                <div class="simple-video-task-date">原摄影师预约：${escapeHtml(formatDate(booking.date))} ${escapeHtml(booking.startTime)}-${escapeHtml(booking.endTime)}</div>
-                <div class="simple-video-task-studio">影棚位置：${escapeHtml(booking.studio)}</div>
-                <div class="simple-video-task-time">简易视频预约：${booking.simpleVideoCompleted
+                <div class="simple-video-task-date">原预约：${escapeHtml(formatDate(booking.date))} ${escapeHtml(booking.startTime)}–${escapeHtml(booking.endTime)} · ${escapeHtml(booking.studio)}</div>
+                <div class="simple-video-task-time">简易视频：${booking.simpleVideoCompleted
                     ? `${escapeHtml(formatDate(booking.simpleVideoTargetDate))} ${escapeHtml(booking.simpleVideoStartTime)}-${escapeHtml(booking.simpleVideoEndTime)}`
                     : '未预约'}</div>
             </div>
