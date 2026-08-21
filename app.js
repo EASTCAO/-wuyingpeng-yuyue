@@ -1073,7 +1073,15 @@ async function loadSimpleVideoTasks() {
         const response = await apiFetch('/api/simple-video/tasks').catch(() => null);
         simpleVideoTasks = response?.ok ? await response.json() : [];
     } else {
-        simpleVideoTasks = allBookings.filter(booking => booking.needsSimpleVideo && getDateOnly(booking.date) >= getChinaDate());
+        const targetDate = getChinaDate(1);
+        const ownerHasBooking = allBookings.some(booking =>
+            booking.photographer === currentUser
+            && getDateOnly(booking.date) === targetDate
+            && booking.studio !== '6F无影棚'
+        );
+        simpleVideoTasks = ownerHasBooking
+            ? []
+            : allBookings.filter(booking => booking.needsSimpleVideo && getDateOnly(booking.date) === getChinaDate());
     }
     updateSimpleVideoTaskBadge();
     renderSimpleVideoTasks();
@@ -2185,6 +2193,8 @@ async function addBooking() {
             saveBookings();
             closeAddBookingForm();
         }
+
+        if (currentUser === simpleVideoOwner) loadSimpleVideoTasks();
 
         console.log('✅ 预约保存成功');
         showToast(isEditing ? '预约时间已修改' : '预约成功', 'success');

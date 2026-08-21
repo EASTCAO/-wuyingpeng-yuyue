@@ -334,9 +334,18 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
     const ownerResult = await pool.query('SELECT value FROM app_settings WHERE key = $1', ['simple_video_owner']);
     if (!ownerResult.rows[0]?.value || ownerResult.rows[0].value !== req.user.username) return res.json([]);
     const today = getChinaDate();
+    const targetDate = getChinaDate(1);
     const result = await pool.query(
-      `SELECT * FROM bookings WHERE "needsSimpleVideo" = TRUE AND date >= $1 ORDER BY date, "startTime"`,
-      [today]
+      `SELECT * FROM bookings
+       WHERE "needsSimpleVideo" = TRUE AND date = $1
+       AND NOT EXISTS (
+         SELECT 1 FROM bookings owner_booking
+         WHERE owner_booking.photographer = $2
+           AND owner_booking.date = $3
+           AND owner_booking.studio <> '6F无影棚'
+       )
+       ORDER BY date, "startTime"`,
+      [today, req.user.username, targetDate]
     );
     res.json(result.rows);
   } catch (error) {
