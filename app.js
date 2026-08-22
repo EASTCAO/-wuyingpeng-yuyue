@@ -545,6 +545,7 @@ async function apiFetch(path, options = {}) {
 
 // 自动刷新间隔（云端模式下每30秒刷新一次）
 let autoRefreshInterval = null;
+let bookingAvailabilityRefreshInterval = null;
 
 function startAutoRefresh() {
     if (isCloudMode() && !autoRefreshInterval) {
@@ -560,6 +561,48 @@ function stopAutoRefresh() {
     if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
+    }
+}
+
+function startBookingAvailabilityRefresh() {
+    if (bookingAvailabilityRefreshInterval) clearInterval(bookingAvailabilityRefreshInterval);
+    bookingAvailabilityRefreshInterval = setInterval(async () => {
+        const modal = document.getElementById('addBookingModal');
+        if (!modal || modal.classList.contains('hidden')) return;
+        if (bookingSaveInFlight || bookingDeleteInFlight) return;
+        if (isCloudMode()) await loadBookings();
+        const studioSelect = document.getElementById('studioSelect');
+        const dateInput = document.getElementById('bookingDate');
+        if (!studioSelect || !dateInput) return;
+        const startTimeSelect = document.getElementById('startTime');
+        const endTimeSelect = document.getElementById('endTime');
+        const existingBookings = allBookings.filter(booking =>
+            booking.id !== editingBookingId
+            && booking.studio === studioSelect.value
+            && getDateOnly(booking.date) === dateInput.value
+        );
+        const today = getChinaDate();
+        const currentTime = getChinaCurrentTime();
+        startTimeSelect?.querySelectorAll('option').forEach(option => {
+            if (!option.value) return;
+            option.disabled = (dateInput.value === today && option.value <= currentTime)
+                || existingBookings.some(booking => option.value >= booking.startTime && option.value < booking.endTime);
+        });
+        if (startTimeSelect?.value && startTimeSelect.selectedOptions[0]?.disabled) {
+            startTimeSelect.value = '';
+            if (endTimeSelect) endTimeSelect.value = '';
+        }
+        if (startTimeSelect?.value && endTimeSelect) {
+            updateEndTimeOptions(startTimeSelect.value, endTimeSelect, existingBookings);
+        }
+        renderAvailabilityPanel();
+    }, 15000);
+}
+
+function stopBookingAvailabilityRefresh() {
+    if (bookingAvailabilityRefreshInterval) {
+        clearInterval(bookingAvailabilityRefreshInterval);
+        bookingAvailabilityRefreshInterval = null;
     }
 }
 
@@ -2176,6 +2219,7 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask
     }
     endTimeSelect.onchange = renderAvailabilityPanel;
     openAccessibleModal('addBookingModal', '#studioSelect');
+    startBookingAvailabilityRefresh();
 }
 
 // 关闭新建预约表单
@@ -2183,6 +2227,7 @@ function closeAddBookingForm() {
     const modal = document.getElementById('addBookingModal');
     if (modal) {
         closeAccessibleModal('addBookingModal');
+        stopBookingAvailabilityRefresh();
         editingBookingId = null;
         simpleVideoBookingContext = null;
         document.getElementById('bookingModalTitle').textContent = '预约';
@@ -2241,6 +2286,11 @@ async function addBooking() {
 
     if (!isValidBookingRange(startTime, endTime)) {
         showToast('预约时间必须在上午或下午营业时段内', 'error');
+        return;
+    }
+
+    if (date === getChinaDate() && startTime <= getChinaCurrentTime()) {
+        showToast('该开始时间已过期，请选择当前时间之后的时段', 'error');
         return;
     }
 

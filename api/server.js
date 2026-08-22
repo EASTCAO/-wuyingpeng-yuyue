@@ -177,6 +177,16 @@ function getChinaDate(offsetDays = 0) {
   }).format(date);
 }
 
+function getChinaCurrentTime() {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(new Date());
+}
+
+function isBookingStartAvailable(date, startTime) {
+  return date !== getChinaDate() || startTime > getChinaCurrentTime();
+}
+
 function isValidBookingDate(date) {
   return date === getChinaDate() || date === getChinaDate(1);
 }
@@ -493,6 +503,7 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
       || await isAuthorizedSimpleVideoBooking(req.user, simpleVideoTaskId, date, studio);
     if (!validBookingDate) return res.status(400).json({ error: '只能预约今天或明天；简易视频人员可从待办预约对应日期' });
     if (!isValidBookingRange(startTime, endTime)) return res.status(400).json({ error: '时间必须在营业时段内，且按15分钟预约' });
+    if (!isBookingStartAvailable(date, startTime)) return res.status(400).json({ error: '今天的开始时间已过期，请选择当前时间之后的时段' });
 
     const client = await pool.connect();
     let transactionStarted = false;
@@ -555,6 +566,9 @@ app.put('/api/bookings/:id', requireAuth, async (req, res) => {
     if (FROZEN_STUDIO_IDS.has(studio)) return res.status(400).json({ error: '该影棚暂时冻结，无法预约' });
     if (!isValidBookingRange(startTime, endTime)) {
       return res.status(400).json({ error: '时间必须在营业时段内，且按15分钟预约' });
+    }
+    if (!isBookingStartAvailable(date, startTime)) {
+      return res.status(400).json({ error: '今天的开始时间已过期，请选择当前时间之后的时段' });
     }
 
     const client = await pool.connect();

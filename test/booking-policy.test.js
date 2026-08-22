@@ -28,6 +28,13 @@ test('预约状态统一按上海时区判断', () => {
     assert.doesNotMatch(appSource, /formatDateToString/);
 });
 
+test('创建和修改预约都禁止选择今天已经过去的开始时间', () => {
+    assert.match(appSource, /date === getChinaDate\(\) && startTime <= getChinaCurrentTime\(\)/);
+    assert.match(serverSource, /function isBookingStartAvailable\(date, startTime\)/);
+    assert.match(serverSource, /if \(!isBookingStartAvailable\(date, startTime\)\) return res\.status\(400\)/);
+    assert.match(serverSource, /if \(!isBookingStartAvailable\(date, startTime\)\) \{[\s\S]*?今天的开始时间已过期/);
+});
+
 test('预约编号使用随机 UUID，避免并发提交主键冲突', () => {
     assert.match(appSource, /function createBookingId\(\)/);
     assert.match(appSource, /globalThis\.crypto\?\.randomUUID/);
