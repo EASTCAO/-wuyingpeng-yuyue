@@ -67,7 +67,7 @@ test('后天预约仅对本人绑定的简易视频待办开放', () => {
 });
 
 test('简易视频预约流程隐藏重复的简易视频开关', () => {
-    assert.match(appSource, /const eligible = !simpleVideoBookingContext[\s\S]*isSimpleVideoEligibleStudio\(studioSelect\.value\)/);
+    assert.match(appSource, /const eligible = !isSimpleVideoRecipient\(\)[\s\S]*!simpleVideoBookingContext[\s\S]*isSimpleVideoEligibleStudio\(studioSelect\.value\)/);
     assert.match(appSource, /simpleVideoOption\?\.classList\.toggle\('hidden', !eligible\)/);
 });
 

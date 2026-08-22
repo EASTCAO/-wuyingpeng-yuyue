@@ -2116,7 +2116,8 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask
     const simpleVideoOption = document.getElementById('simpleVideoBookingOption');
     const simpleVideoCheckbox = document.getElementById('needsSimpleVideo');
     const updateSimpleVideoOption = () => {
-        const eligible = !simpleVideoBookingContext
+        const eligible = !isSimpleVideoRecipient()
+            && !simpleVideoBookingContext
             && isSimpleVideoEligibleStudio(studioSelect.value)
             && isBookableDate(dateInput.value);
         simpleVideoOption?.classList.toggle('hidden', !eligible);
