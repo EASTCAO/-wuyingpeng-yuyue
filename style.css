@@ -990,6 +990,119 @@ textarea:focus-visible,
     min-width: 0;
 }
 
+.booking-addon-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: -2px 0 14px;
+    padding: 12px 14px;
+    border: 1px solid #DCE5F2;
+    border-radius: 10px;
+    background: #F7FAFF;
+}
+
+.booking-addon-copy {
+    min-width: 0;
+}
+
+.booking-addon-eyebrow {
+    display: block;
+    margin-bottom: 3px;
+    color: #6B7280;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.booking-addon-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.booking-addon-title-row h3 {
+    margin: 0;
+    color: #1F2937;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.booking-addon-state {
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #E9EEF7;
+    color: #64748B;
+    font-size: 10px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.booking-addon-copy p {
+    margin: 4px 0 0;
+    color: #64748B;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.booking-addon-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    color: #475569;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.booking-addon-control input[type="checkbox"] {
+    position: relative;
+    width: 34px;
+    height: 20px;
+    margin: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    border: 0;
+    border-radius: 20px;
+    background: #CBD5E1;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.booking-addon-control input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+    transition: transform 0.2s ease;
+}
+
+.booking-addon-control input[type="checkbox"]:checked {
+    background: #4C7DFF;
+}
+
+.booking-addon-control input[type="checkbox"]:checked::before {
+    transform: translateX(14px);
+}
+
+.booking-addon-control input[type="checkbox"]:focus-visible {
+    outline: 2px solid #4C7DFF;
+    outline-offset: 3px;
+}
+
+.booking-addon-control input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.booking-addon-control .switch-slider {
+    display: none;
+}
+
 .booking-schedule-summary {
     margin-top: 2px;
     padding-top: 12px;

@@ -1,6 +1,6 @@
 // Service Worker：用于缓存资源，让应用即使在断网情况下也能打开（PWA 必须组件）
 // 提升版本号可强制客户端更新缓存（例如修改 API 域名后）
-const CACHE_NAME = 'studio-booking-v165-simple-video-recipient-hide-toggle';
+const CACHE_NAME = 'studio-booking-v166-simple-video-addon-card';
 const urlsToCache = [
   './',
   './index.html',

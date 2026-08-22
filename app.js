@@ -2115,18 +2115,30 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask
     dateInput.value = defaultDate;
     const simpleVideoOption = document.getElementById('simpleVideoBookingOption');
     const simpleVideoCheckbox = document.getElementById('needsSimpleVideo');
-    const updateSimpleVideoOption = () => {
+    const simpleVideoHint = document.getElementById('simpleVideoBookingHint');
+    const simpleVideoState = document.getElementById('simpleVideoBookingState');
+    const updateSimpleVideoOption = ({ syncValue = true } = {}) => {
         const eligible = !isSimpleVideoRecipient()
             && !simpleVideoBookingContext
             && isSimpleVideoEligibleStudio(studioSelect.value)
             && isBookableDate(dateInput.value);
         simpleVideoOption?.classList.toggle('hidden', !eligible);
         if (simpleVideoCheckbox) {
-            simpleVideoCheckbox.checked = eligible && Boolean(bookingToEdit?.needsSimpleVideo);
+            if (syncValue) simpleVideoCheckbox.checked = eligible && Boolean(bookingToEdit?.needsSimpleVideo);
             simpleVideoCheckbox.disabled = !eligible;
+            simpleVideoState.textContent = simpleVideoCheckbox.checked ? '已选择' : '未选择';
+        }
+        if (simpleVideoHint) {
+            const targetDate = dateInput.value === getChinaDate() ? getChinaDate(1) : getChinaDate(2);
+            simpleVideoHint.textContent = eligible
+                ? `系统会为${formatDate(targetDate)}生成简易视频待办`
+                : '可为对应人员安排后续的简易视频拍摄';
         }
     };
     updateSimpleVideoOption();
+    if (simpleVideoCheckbox) {
+        simpleVideoCheckbox.onchange = () => updateSimpleVideoOption({ syncValue: false });
+    }
     document.getElementById('startTime').value = bookingToEdit?.startTime || '';
     document.getElementById('endTime').value = bookingToEdit?.endTime || '';
     const startTimeSelect = document.getElementById('startTime');
@@ -2253,7 +2265,9 @@ async function addBooking() {
         ? allBookings.find(booking => booking.id === editingBookingId)
         : null;
     const note = originalBooking ? getBookingNote(originalBooking) : '';
-    const needsSimpleVideo = isSimpleVideoEligibleStudio(studio)
+    const needsSimpleVideo = !isSimpleVideoRecipient()
+        && !simpleVideoBookingContext
+        && isSimpleVideoEligibleStudio(studio)
         && document.getElementById('needsSimpleVideo')?.checked === true;
 
     console.log('提交预约:', { studio, date, startTime, endTime, note });

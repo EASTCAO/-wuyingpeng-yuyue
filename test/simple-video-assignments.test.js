@@ -69,6 +69,9 @@ test('后天预约仅对本人绑定的简易视频待办开放', () => {
 test('简易视频预约流程隐藏重复的简易视频开关', () => {
     assert.match(appSource, /const eligible = !isSimpleVideoRecipient\(\)[\s\S]*!simpleVideoBookingContext[\s\S]*isSimpleVideoEligibleStudio\(studioSelect\.value\)/);
     assert.match(appSource, /simpleVideoOption\?\.classList\.toggle\('hidden', !eligible\)/);
+    assert.match(appSource, /simpleVideoHint\.textContent = eligible[\s\S]*生成简易视频待办/);
+    assert.match(appSource, /simpleVideoCheckbox\.onchange = \(\) => updateSimpleVideoOption\(\{ syncValue: false \}\)/);
+    assert.match(fs.readFileSync('index.html', 'utf8'), /booking-addon-card simple-video-booking-option hidden/);
 });
 
 test('简易视频人员刷新后仍能查看、修改和取消后天预约', () => {
