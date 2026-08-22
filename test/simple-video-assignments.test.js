@@ -47,7 +47,7 @@ test('切换账号后重置到预约首页且无权限用户不能停留在简�
 });
 
 test('今天和明天的摄影预约分别生成明天和后天的简易视频待办', () => {
-    assert.match(appSource, /isSimpleVideoEligibleStudio\(studioSelect\.value\) && isBookableDate\(dateInput\.value\)/);
+    assert.match(appSource, /!simpleVideoBookingContext[\s\S]*isSimpleVideoEligibleStudio\(studioSelect\.value\)[\s\S]*isBookableDate\(dateInput\.value\)/);
     assert.match(serverSource, /isValidBookingDate\(date\) && req\.body\?\.needsSimpleVideo === true/g);
     assert.match(serverSource, /date IN \(\$1, \$3\)/);
     assert.match(serverSource, /CASE WHEN bookings\.date = \$1 THEN \$3 ELSE \$6 END AS "simpleVideoTargetDate"/);
@@ -64,6 +64,11 @@ test('后天预约仅对本人绑定的简易视频待办开放', () => {
     assert.match(appSource, /showAddBookingForm\(undefined, null, \{ taskId, targetDate \}\)/);
     assert.match(appSource, /const minDate = simpleVideoBookingContext\?\.targetDate \|\| getBookableStartDate\(\);/);
     assert.match(appSource, /simpleVideoTaskId: simpleVideoBookingContext\?\.taskId \|\| ''/);
+});
+
+test('简易视频预约流程隐藏重复的简易视频开关', () => {
+    assert.match(appSource, /const eligible = !simpleVideoBookingContext[\s\S]*isSimpleVideoEligibleStudio\(studioSelect\.value\)/);
+    assert.match(appSource, /simpleVideoOption\?\.classList\.toggle\('hidden', !eligible\)/);
 });
 
 test('简易视频人员刷新后仍能查看、修改和取消后天预约', () => {
