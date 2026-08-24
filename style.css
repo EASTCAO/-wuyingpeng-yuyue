@@ -2203,6 +2203,24 @@ textarea:focus-visible,
     font-weight: 500;
 }
 
+/* 离线提示条：断网时告诉用户看到的是缓存数据，而不是让他误以为是实时的 */
+.offline-banner {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 32px);
+    background: #613400;
+    color: #FFF7E6;
+    padding: 10px 18px;
+    border-radius: 999px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 2100;
+    text-align: center;
+}
+
 /* 成功/错误提示 */
 .toast {
     position: fixed;

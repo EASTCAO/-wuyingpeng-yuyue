@@ -1,3 +1,18 @@
+// 调试日志：只在本地预览或手动开启 localStorage.debug='1' 时输出。
+// 线上默认静音，避免 30 秒一次的轮询日志刷屏。错误一律走 console.error，不受影响。
+const DEBUG_LOGGING = (() => {
+    try {
+        if (localStorage.getItem('debug') === '1') return true;
+    } catch {
+        // 隐私模式下 localStorage 可能不可用，忽略即可。
+    }
+    return ['localhost', '127.0.0.1', ''].includes(window.location.hostname);
+})();
+
+function debugLog(...args) {
+    if (DEBUG_LOGGING) console.log(...args);
+}
+
 // 全局变量
 let currentUser = null;
 let allBookings = [];
@@ -442,69 +457,18 @@ const IS_LOCAL_PREVIEW = typeof window !== 'undefined'
     && LOCAL_PREVIEW_HOSTS.includes(window.location.hostname);
 const API_BASE_URL = IS_LOCAL_PREVIEW ? '' : ONLINE_API_BASE_URL;
 
-const BOOKING_START_TIME = '08:30';
-const BOOKING_END_TIME = '18:30';
-const BOOKING_INTERVAL_MINUTES = 15;
-const BOOKABLE_PERIODS = [
-    { start: '08:30', end: '12:30' },
-    { start: '14:00', end: '18:30' }
-];
-
-function timeToMinutes(time) {
-    const [hour, minute] = time.split(':').map(Number);
-    return hour * 60 + minute;
-}
-
-function minutesToTime(minutes) {
-    const hour = Math.floor(minutes / 60);
-    const minute = minutes % 60;
-    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-}
+// 营业时段、时间换算、时段合法性、冲突判断和预约状态统一由 shared/booking-rules.js 提供，
+// 它在 index.html 里先于 app.js 加载，并把下列名字挂到 globalThis：
+//   BOOKING_START_TIME / BOOKING_END_TIME / BOOKING_INTERVAL_MINUTES / BOOKABLE_PERIODS
+//   getChinaDate / getChinaCurrentTime / timeToMinutes / minutesToTime / getDateOnly
+//   getBookablePeriod / getTimeOptions / getBookingStartTimes / isValidBookingRange
+//   hasTimeOverlap / isValidBookingDate / isBookingStartAvailable / isBookingEditable
+//   getBookingStatus / getBookedSlotPercentage
+// 后端 api/server.js 使用同一份代码（api/booking-rules.js 是自动同步副本）。
 
 function createBookingId() {
     if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
     return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function getChinaDate(offsetDays = 0) {
-    const date = new Date(Date.now() + offsetDays * 86400000);
-    return new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Shanghai',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    }).format(date);
-}
-
-function getChinaCurrentTime() {
-    return new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'Asia/Shanghai',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    }).format(new Date());
-}
-
-function getBookablePeriod(time) {
-    return BOOKABLE_PERIODS.find(period => time >= period.start && time <= period.end) || null;
-}
-
-function isValidBookingRange(startTime, endTime) {
-    const period = getBookablePeriod(startTime);
-    if (!period || getBookablePeriod(endTime) !== period) return false;
-    return minutesToTime(timeToMinutes(startTime)) === startTime
-        && minutesToTime(timeToMinutes(endTime)) === endTime
-        && (timeToMinutes(startTime) - timeToMinutes(period.start)) % BOOKING_INTERVAL_MINUTES === 0
-        && (timeToMinutes(endTime) - timeToMinutes(period.start)) % BOOKING_INTERVAL_MINUTES === 0
-        && startTime < endTime;
-}
-
-function getTimeOptions(startTime = BOOKING_START_TIME, endTime = BOOKING_END_TIME, step = BOOKING_INTERVAL_MINUTES) {
-    const options = [];
-    for (let minutes = timeToMinutes(startTime); minutes <= timeToMinutes(endTime); minutes += step) {
-        options.push(minutesToTime(minutes));
-    }
-    return options;
 }
 
 function renderTimeSelectOptions() {
@@ -547,15 +511,28 @@ async function apiFetch(path, options = {}) {
 let autoRefreshInterval = null;
 let bookingAvailabilityRefreshInterval = null;
 
+// 页面在后台时不轮询：省电、省流量，也避免看不见的整页重渲染。
+function isPageVisible() {
+    return typeof document === 'undefined' || document.visibilityState !== 'hidden';
+}
+
 function startAutoRefresh() {
     if (isCloudMode() && !autoRefreshInterval) {
         autoRefreshInterval = setInterval(async () => {
+            if (!isPageVisible()) return;
             if (bookingSaveInFlight || bookingDeleteInFlight) return;
-            console.log('🔄 自动刷新数据...');
+            debugLog('🔄 自动刷新数据...');
             await loadBookings();
         }, 30000); // 30秒刷新一次
     }
 }
+
+// 切回前台立刻补一次，不用等下一个轮询周期。
+document.addEventListener('visibilitychange', () => {
+    if (!isPageVisible() || !autoRefreshInterval) return;
+    if (bookingSaveInFlight || bookingDeleteInFlight) return;
+    loadBookings();
+});
 
 function stopAutoRefresh() {
     if (autoRefreshInterval) {
@@ -567,6 +544,7 @@ function stopAutoRefresh() {
 function startBookingAvailabilityRefresh() {
     if (bookingAvailabilityRefreshInterval) clearInterval(bookingAvailabilityRefreshInterval);
     bookingAvailabilityRefreshInterval = setInterval(async () => {
+        if (!isPageVisible()) return;
         const modal = document.getElementById('addBookingModal');
         if (!modal || modal.classList.contains('hidden')) return;
         if (bookingSaveInFlight || bookingDeleteInFlight) return;
@@ -650,10 +628,11 @@ function closeSidebar() {
 
 // 初始化应用
 window.addEventListener('DOMContentLoaded', async () => {
-    console.log('✅ 应用初始化成功（使用 localStorage）');
+    debugLog('✅ 应用初始化成功（使用 localStorage）');
 
     // 初始化移动端侧边栏（确保页面加载时是隐藏的）
     initMobileSidebar();
+    updateOnlineStatus();
 
     // 监听任意点击以解锁音频（iOS必须）
     document.addEventListener('click', unlockAudio, { once: false });
@@ -823,6 +802,11 @@ async function addNewUser(name) {
             const data = await response.json().catch(() => ({}));
             showToast(data.error || '添加用户失败', 'error');
             return false;
+        }
+        // 后端没有固定初始密码时会随机生成一个，必须显示出来交给本人。
+        const created = await response.json().catch(() => ({}));
+        if (created.initialPassword) {
+            showToast(`用户 ${name} 的初始密码：${created.initialPassword}（请转告本人并尽快修改）`, 'success');
         }
         return true;
     }
@@ -1089,6 +1073,13 @@ function changePassword() {
         }).then(async response => {
             const data = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(data.error || '密码修改失败');
+            // 改密码会让所有旧 token 失效，后端会回一个新 token，必须换掉本地的，
+            // 否则下一个请求就会被判成"密码已修改，请重新登录"。
+            if (data.token) {
+                authToken = data.token;
+                if (localStorage.getItem('authToken')) localStorage.setItem('authToken', data.token);
+                if (sessionStorage.getItem('authToken')) sessionStorage.setItem('authToken', data.token);
+            }
             showToast('密码修改成功', 'success');
             closeChangePasswordModal();
         }).catch(error => showToast(error.message, 'error'));
@@ -1380,7 +1371,7 @@ function migrateStudioNames() {
     if (changed) {
         try {
             localStorage.setItem('bookings', JSON.stringify(allBookings));
-            console.log('✅ 已将旧影棚名称迁移到新版影棚配置');
+            debugLog('✅ 已将旧影棚名称迁移到新版影棚配置');
         } catch (error) {
             console.error('迁移影棚名称保存失败:', error);
         }
@@ -1388,14 +1379,15 @@ function migrateStudioNames() {
 }
 
 async function loadBookings({ includeHistory = bookingHistoryLoaded } = {}) {
-    console.log('开始加载预约数据...');
+    debugLog('开始加载预约数据...');
 
     if (isCloudMode()) {
         // 云端模式：从 API 加载
         const previousBookings = allBookings;
         try {
+            // all=1 只有管理员能用，普通用户按需要的日期窗口取数。
             const bookingPath = includeHistory
-                ? '/api/bookings'
+                ? '/api/bookings?all=1'
                 : `/api/bookings?from=${getChinaDate(-1)}&to=${getChinaDate(isSimpleVideoRecipient() ? 2 : 1)}`;
             const response = await apiFetch(bookingPath);
             if (!response.ok) {
@@ -1411,14 +1403,14 @@ async function loadBookings({ includeHistory = bookingHistoryLoaded } = {}) {
             sortBookings();
             renderAllViews();
             if (isSimpleVideoRecipient()) loadSimpleVideoTasks();
-            console.log('✅ 从云端加载了', allBookings.length, '条预约');
+            debugLog('✅ 从云端加载了', allBookings.length, '条预约');
             return true;
         } catch (error) {
             console.error('从云端加载预约失败:', error);
             showToast('加载数据失败，请检查网络', 'error');
             allBookings = previousBookings;
             bookingsLoaded = true;
-            renderAllViews();
+            renderAllViews({ force: true });
             return false;
         }
     } else {
@@ -1432,14 +1424,14 @@ async function loadBookings({ includeHistory = bookingHistoryLoaded } = {}) {
             sortBookings();
             renderAllViews();
             if (isSimpleVideoRecipient()) loadSimpleVideoTasks();
-            console.log('✅ 从本地加载了', allBookings.length, '条预约');
+            debugLog('✅ 从本地加载了', allBookings.length, '条预约');
             return true;
         } catch (error) {
             console.error('加载预约失败:', error);
             showToast('加载数据失败', 'error');
             allBookings = [];
             bookingsLoaded = true;
-            renderAllViews();
+            renderAllViews({ force: true });
             return false;
         }
     }
@@ -1469,18 +1461,18 @@ function upsertLocalBooking(booking) {
         allBookings.push(normalizedBooking);
     }
     sortBookings();
-    renderAllViews();
+    renderAllViews({ force: true });
 }
 
 function removeLocalBooking(bookingId) {
     allBookings = allBookings.filter(booking => booking.id !== bookingId);
-    renderAllViews();
+    renderAllViews({ force: true });
 }
 
 function restoreLocalBookings(snapshot) {
     allBookings = cloneBookings(snapshot);
     sortBookings();
-    renderAllViews();
+    renderAllViews({ force: true });
 }
 
 // 保存预约数据到 localStorage（仅本地模式使用）
@@ -1491,7 +1483,7 @@ function saveBookings() {
     }
     try {
         localStorage.setItem('bookings', JSON.stringify(allBookings));
-        console.log('✅ 已保存', allBookings.length, '条预约到 localStorage');
+        debugLog('✅ 已保存', allBookings.length, '条预约到 localStorage');
     } catch (error) {
         console.error('保存预约失败:', error);
         showToast('保存数据失败', 'error');
@@ -1506,8 +1498,50 @@ function sortBookings() {
     });
 }
 
+// 渲染签名：只要它没变，重画出来的 DOM 就和现在完全一样，可以整轮跳过。
+// 每 30 秒的轮询绝大多数时候拿回的是同一批数据，无谓重建 34 张卡片的 innerHTML
+// 会打断 hover / 焦点，移动端还会掉滚动位置。
+//
+// 时间也要进签名：预约状态（未开始 / 进行中 / 已结束）会随时间翻转，
+// 而所有预约时间都落在 15 分钟网格上，所以按 15 分钟取整就能覆盖全部状态切换点。
+function getRenderSignature() {
+    const bucketMinutes = Math.floor(timeToMinutes(getChinaCurrentTime()) / BOOKING_INTERVAL_MINUTES)
+        * BOOKING_INTERVAL_MINUTES;
+    const viewKey = [
+        getChinaDate(),
+        minutesToTime(bucketMinutes),
+        currentView,
+        currentDateRange,
+        selectedDate,
+        currentStudioCategory,
+        currentUser,
+        bookingsLoaded ? 1 : 0,
+        document.getElementById('filterMyBookings')?.checked ? 1 : 0
+    ].join('|');
+
+    const bookingsKey = allBookings.map(booking => [
+        booking.id,
+        booking.studio,
+        getDateOnly(booking.date),
+        booking.startTime,
+        booking.endTime,
+        booking.photographer,
+        booking.needsSimpleVideo ? 1 : 0,
+        getBookingNote(booking)
+    ].join(',')).join(';');
+
+    return `${viewKey}#${bookingsKey}`;
+}
+
+let lastRenderSignature = null;
+
 // 统一渲染所有视图
-function renderAllViews() {
+// force：DOM 结构刚被重建过（例如切换棚位分类）时必须强制重画。
+function renderAllViews({ force = false } = {}) {
+    const signature = getRenderSignature();
+    if (!force && signature === lastRenderSignature) return;
+    lastRenderSignature = signature;
+
     if (currentView === 'list') renderBookings();
     else if (currentView === 'stats') { initStatsView(); renderStatsView(); }
     updateTodayUsage();
@@ -1561,21 +1595,7 @@ function renderBookings() {
 }
 
 function getStudioBookedPercentage(studioBookings, dates) {
-    const startTimes = BOOKABLE_PERIODS.flatMap(period =>
-        getTimeOptions(period.start, period.end).slice(0, -1)
-    );
-    const totalSlots = startTimes.length * dates.length;
-    if (totalSlots === 0 || studioBookings.length === 0) return 0;
-
-    const bookedSlots = dates.reduce((total, date) => total + startTimes.filter(startTime => {
-        const endTime = minutesToTime(timeToMinutes(startTime) + BOOKING_INTERVAL_MINUTES);
-        return studioBookings.some(booking =>
-            getDateOnly(booking.date) === date
-            && !(endTime <= booking.startTime || startTime >= booking.endTime)
-        );
-    }).length, 0);
-
-    return Math.round((bookedSlots / totalSlots) * 100);
+    return getBookedSlotPercentage(studioBookings, dates);
 }
 
 function getStudioBookingsForDates(studioId, dates, bookingsToUse = allBookings) {
@@ -1657,7 +1677,7 @@ function getBookableEndDate() {
 }
 
 function isBookableDate(date) {
-    return date >= getBookableStartDate() && date <= getBookableEndDate();
+    return isValidBookingDate(date);
 }
 
 function getDefaultBookingDate() {
@@ -1671,16 +1691,14 @@ function hasAvailableBookingSlot(studioId, date) {
     const today = getBookableStartDate();
     const currentTime = getChinaCurrentTime();
     const existingBookings = getStudioBookingsForDates(studioId, [date]);
-    const startTimes = BOOKABLE_PERIODS.flatMap(period =>
-        getTimeOptions(period.start, period.end).slice(0, -1)
-    );
+    const startTimes = getBookingStartTimes();
 
     return startTimes.some(startTime => {
         if (date === today && startTime < currentTime) return false;
 
         const endTime = minutesToTime(timeToMinutes(startTime) + BOOKING_INTERVAL_MINUTES);
         return !existingBookings.some(booking =>
-            !(endTime <= booking.startTime || startTime >= booking.endTime)
+            hasTimeOverlap(startTime, endTime, booking.startTime, booking.endTime)
         );
     });
 }
@@ -1774,7 +1792,7 @@ function getAvailableTimeRanges(period, selectedDate, existingBookings) {
         const endTime = minutesToTime(timeToMinutes(startTime) + BOOKING_INTERVAL_MINUTES);
         const isPast = selectedDate === today && startTime < currentTime;
         const isBooked = existingBookings.some(booking =>
-            !(endTime <= booking.startTime || startTime >= booking.endTime)
+            hasTimeOverlap(startTime, endTime, booking.startTime, booking.endTime)
         );
 
         if (!isPast && !isBooked) {
@@ -2247,13 +2265,13 @@ function closeAddBookingForm() {
         simpleVideoBookingContext = null;
         document.getElementById('bookingModalTitle').textContent = '预约';
         document.getElementById('bookingSubmitButton').textContent = '确认预约';
-        console.log('弹窗已关闭');
+        debugLog('弹窗已关闭');
     }
 }
 
 // 添加预约
 async function addBooking() {
-    console.log('=== addBooking 函数被调用 ===');
+    debugLog('=== addBooking 函数被调用 ===');
 
     if (bookingSaveInFlight) return;
 
@@ -2270,7 +2288,7 @@ async function addBooking() {
         && isSimpleVideoEligibleStudio(studio)
         && document.getElementById('needsSimpleVideo')?.checked === true;
 
-    console.log('提交预约:', { studio, date, startTime, endTime, note });
+    debugLog('提交预约:', { studio, date, startTime, endTime, note });
 
     // 验证
     if (!date || !startTime || !endTime) {
@@ -2306,7 +2324,7 @@ async function addBooking() {
         return;
     }
 
-    if (date === getChinaDate() && startTime <= getChinaCurrentTime()) {
+    if (!isBookingStartAvailable(date, startTime)) {
         showToast('该开始时间已过期，请选择当前时间之后的时段', 'error');
         return;
     }
@@ -2318,12 +2336,10 @@ async function addBooking() {
             return false;
         }
 
-        // 检查时间段是否重叠
-        return !(endTime <= booking.startTime || startTime >= booking.endTime);
+        return hasTimeOverlap(startTime, endTime, booking.startTime, booking.endTime);
     });
 
     if (hasConflict) {
-        console.log('检测到时间冲突');
         showToast('该时间段已被预约，请选择其他时间', 'error');
         return;
     }
@@ -2362,7 +2378,7 @@ async function addBooking() {
             showToast(isEditing ? '正在同步修改...' : '正在同步预约...', 'success');
 
             // 云端模式：调用 API
-            console.log('正在保存预约到云端...');
+            debugLog('正在保存预约到云端...');
             const response = await apiFetch(activeEditingId ? `/api/bookings/${activeEditingId}` : '/api/bookings', {
                 method: activeEditingId ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2378,7 +2394,7 @@ async function addBooking() {
             upsertLocalBooking(savedBooking);
         } else {
             // 本地模式：保存到 localStorage
-            console.log('正在保存预约到 localStorage...');
+            debugLog('正在保存预约到 localStorage...');
             upsertLocalBooking(newBooking);
             saveBookings();
             closeAddBookingForm();
@@ -2386,7 +2402,7 @@ async function addBooking() {
 
         if (isSimpleVideoRecipient()) loadSimpleVideoTasks();
 
-        console.log('✅ 预约保存成功');
+        debugLog('✅ 预约保存成功');
         showToast(isEditing ? '预约时间已修改' : '预约成功', 'success');
 
     } catch (error) {
@@ -2486,12 +2502,6 @@ function canCancelBooking(booking) {
         && isBookingEditable(booking)
         && (booking.photographer === currentUser || currentUser === 'admin')
     );
-}
-
-function isBookingEditable(booking) {
-    const bookingDate = getDateOnly(booking?.date);
-    if (bookingDate === getChinaDate(1) || bookingDate === getChinaDate(2)) return true;
-    return bookingDate === getChinaDate() && booking.endTime > getChinaCurrentTime();
 }
 
 async function cancelBookingFromStudioDetail(event, bookingId, studioId) {
@@ -2712,9 +2722,42 @@ function renderMyBookings() {
 }
 
 // 显示提示
+// ============ 离线状态提示 ============
+// PWA 断网时页面仍然打得开，用户需要知道自己看的是缓存数据而不是实时数据。
+function getOfflineBanner() {
+    let banner = document.getElementById('offlineBanner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'offlineBanner';
+        banner.className = 'offline-banner hidden';
+        banner.setAttribute('role', 'status');
+        banner.setAttribute('aria-live', 'polite');
+        banner.textContent = '当前处于离线状态，显示的是最后一次同步的数据';
+        document.body.appendChild(banner);
+    }
+    return banner;
+}
+
+function updateOnlineStatus() {
+    const offline = navigator.onLine === false;
+    getOfflineBanner().classList.toggle('hidden', !offline);
+}
+
+window.addEventListener('offline', updateOnlineStatus);
+window.addEventListener('online', () => {
+    updateOnlineStatus();
+    if (!autoRefreshInterval) return;
+    showToast('网络已恢复，正在同步最新预约');
+    loadBookings();
+});
+
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
+    // 读屏用户需要听到"预约成功 / 失败"这类反馈：
+    // 错误用 alert（立即打断），其余用 status（等当前朗读结束）。
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
     toast.textContent = message;
 
     document.body.appendChild(toast);
@@ -3047,11 +3090,6 @@ function getDisplayDates() {
 }
 
 // 从日期字符串中提取日期部分（处理 ISO 格式）
-function getDateOnly(dateStr) {
-    if (!dateStr) return '';
-    return dateStr.split('T')[0];
-}
-
 // 创建时间轴预约项
 function createTimelineBookingItem(booking) {
     const item = document.createElement('div');
@@ -3096,37 +3134,6 @@ function createTimelineBookingItem(booking) {
 }
 
 // 判断预约状态
-function getBookingStatus(booking) {
-    const todayStr = getChinaDate();
-    const currentMinutes = timeToMinutes(getChinaCurrentTime());
-
-    // 提取日期部分（处理 ISO 格式）
-    const bookingDate = getDateOnly(booking.date);
-
-    // 不是今天的预约
-    if (bookingDate < todayStr) {
-        return 'completed'; // 过去的日期
-    } else if (bookingDate > todayStr) {
-        return 'upcoming'; // 未来的日期
-    }
-
-    // 今天的预约，判断时间
-    const startTime = booking.startTime.split(':');
-    const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
-    const endTime = booking.endTime.split(':');
-    const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
-
-    if (endMinutes <= currentMinutes) {
-        return 'completed'; // 已结束
-    }
-
-    if (startMinutes <= currentMinutes) {
-        return 'ongoing'; // 进行中
-    }
-
-    return 'upcoming'; // 未开始
-}
-
 // 应用筛选
 function applyFilters() {
     renderBookings();
@@ -3188,7 +3195,7 @@ showMainPage = function() {
 
 // 请求通知权限
 async function requestNotificationPermission() {
-    console.log('===== 请求通知权限 =====');
+    debugLog('===== 请求通知权限 =====');
 
     if (!('Notification' in window)) {
         console.error('❌ 浏览器不支持通知功能');
@@ -3196,11 +3203,11 @@ async function requestNotificationPermission() {
         return false;
     }
 
-    console.log('当前权限状态:', Notification.permission);
+    debugLog('当前权限状态:', Notification.permission);
 
     // 如果已经授权，直接返回true
     if (Notification.permission === 'granted') {
-        console.log('✅ 通知权限已授予');
+        debugLog('✅ 通知权限已授予');
         showToast('通知权限已开启', 'success');
         return true;
     }
@@ -3215,12 +3222,12 @@ async function requestNotificationPermission() {
 
     // 权限状态为 default，请求授权
     try {
-        console.log('📝 正在请求通知权限...');
+        debugLog('📝 正在请求通知权限...');
         const permission = await Notification.requestPermission();
-        console.log('用户选择:', permission);
+        debugLog('用户选择:', permission);
 
         if (permission === 'granted') {
-            console.log('✅ 用户授予了通知权限');
+            debugLog('✅ 用户授予了通知权限');
             showToast('通知权限已开启！', 'success');
 
             // 发送欢迎通知
@@ -3412,9 +3419,9 @@ function closeReminder() {
 
 // 发送浏览器通知
 function sendNotification(title, body) {
-    console.log('===== 发送通知 =====');
-    console.log('标题:', title);
-    console.log('内容:', body);
+    debugLog('===== 发送通知 =====');
+    debugLog('标题:', title);
+    debugLog('内容:', body);
 
     // 检查浏览器支持
     if (!('Notification' in window)) {
@@ -3424,11 +3431,11 @@ function sendNotification(title, body) {
 
     // 检查权限
     const permission = Notification.permission;
-    console.log('当前权限:', permission);
+    debugLog('当前权限:', permission);
 
     if (permission === 'granted') {
         try {
-            console.log('📤 正在创建通知...');
+            debugLog('📤 正在创建通知...');
             const notification = new Notification(title, {
                 body: body,
                 icon: 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f4f7.png',
@@ -3439,11 +3446,11 @@ function sendNotification(title, body) {
             });
 
             notification.onshow = function() {
-                console.log('✅ 通知已显示');
+                debugLog('✅ 通知已显示');
             };
 
             notification.onclick = function() {
-                console.log('👆 通知被点击');
+                debugLog('👆 通知被点击');
                 window.focus();
                 notification.close();
             };
@@ -3452,7 +3459,7 @@ function sendNotification(title, body) {
                 console.error('❌ 通知显示错误:', e);
             };
 
-            console.log('✅ 通知创建成功');
+            debugLog('✅ 通知创建成功');
         } catch (error) {
             console.error('❌ 创建通知失败:', error);
         }
@@ -3472,7 +3479,7 @@ function unlockAudio() {
     }
     if (globalAudioContext.state === 'suspended') {
         globalAudioContext.resume().then(() => {
-            console.log('✅ 音频上下文已解锁');
+            debugLog('✅ 音频上下文已解锁');
         });
     }
 }
@@ -3515,7 +3522,7 @@ function playNotificationSound() {
         playBeep(1000, now + 0.15, 0.15);
 
     } catch (error) {
-        console.log('无法播放提示音:', error);
+        debugLog('无法播放提示音:', error);
     }
 }
 
@@ -3570,7 +3577,7 @@ function closeReminderModal() {
 
 // 测试提醒功能
 function testReminder() {
-    console.log('===== 测试提醒功能 =====');
+    debugLog('===== 测试提醒功能 =====');
 
     // 强制尝试解锁音频
     unlockAudio();
@@ -3599,15 +3606,15 @@ function testReminder() {
     showToast('正在测试...', 'success');
 
     // 1. 播放声音
-    console.log('1️⃣ 播放提示音 (状态: ' + audioStatus + ')');
+    debugLog('1️⃣ 播放提示音 (状态: ' + audioStatus + ')');
     playNotificationSound();
 
     // 2. 发送系统通知
-    console.log('2️⃣ 发送系统通知');
+    debugLog('2️⃣ 发送系统通知');
     sendNotification('🔔 测试提醒成功', '声音和通知功能正常！\n(请保持网页在前台运行)');
 
     // 3. 显示页面弹窗
-    console.log('3️⃣ 显示页面弹窗');
+    debugLog('3️⃣ 显示页面弹窗');
     setTimeout(() => {
         const testBooking = {
             studio: '测试影棚',
@@ -3648,8 +3655,8 @@ function initStatsView() {
 // 渲染统计视图
 // 注意：统计功能显示所有历史数据（包括过去的预约），用于数据分析
 function renderStatsView() {
-    console.log('=== 渲染统计视图 ===');
-    console.log('总预约数:', allBookings.length);
+    debugLog('=== 渲染统计视图 ===');
+    debugLog('总预约数:', allBookings.length);
 
     const selectedMonth = document.getElementById('statsMonth');
     const selectedStudio = document.getElementById('statsStudio');
@@ -3663,8 +3670,8 @@ function renderStatsView() {
     const monthValue = selectedMonth.value;
     const studioValue = selectedStudio.value;
 
-    console.log('选择的月份:', monthValue);
-    console.log('选择的影棚:', studioValue);
+    debugLog('选择的月份:', monthValue);
+    debugLog('选择的影棚:', studioValue);
 
     // 根据选择过滤预约（使用 allBookings，包含所有历史数据）
     let filteredBookings = [...allBookings];
@@ -3677,7 +3684,7 @@ function renderStatsView() {
         filteredBookings = filteredBookings.filter(b => b.studio === studioValue);
     }
 
-    console.log('过滤后的预约数:', filteredBookings.length);
+    debugLog('过滤后的预约数:', filteredBookings.length);
 
     // 按摄影师分组统计
     const photographerStats = {};
@@ -3726,11 +3733,11 @@ function renderStatsView() {
 
     if (statsArray.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="6" class="empty-message">暂无数据</td></tr>';
-        console.log('统计数据为空');
+        debugLog('统计数据为空');
         return;
     }
 
-    console.log('生成统计表格，摄影师数量:', statsArray.length);
+    debugLog('生成统计表格，摄影师数量:', statsArray.length);
 
     tableBody.innerHTML = statsArray.map((stat, index) => {
         const rank = index + 1;

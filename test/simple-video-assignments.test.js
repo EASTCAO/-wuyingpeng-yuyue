@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 
 const appSource = fs.readFileSync('app.js', 'utf8');
 const serverSource = fs.readFileSync('api/server.js', 'utf8');
+const sharedRulesSource = fs.readFileSync('shared/booking-rules.js', 'utf8');
 
 const assignments = [
     ['曹东', '涂萱'], ['於佳莹', '向芷琪'], ['夏驰', '李冬梅'],
@@ -76,8 +77,9 @@ test('简易视频预约流程隐藏重复的简易视频开关', () => {
 
 test('简易视频人员刷新后仍能查看、修改和取消后天预约', () => {
     assert.match(appSource, /getChinaDate\(isSimpleVideoRecipient\(\) \? 2 : 1\)/);
-    assert.match(appSource, /bookingDate === getChinaDate\(1\) \|\| bookingDate === getChinaDate\(2\)/);
-    assert.match(serverSource, /booking\.date === getChinaDate\(1\) \|\| booking\.date === getChinaDate\(2\)/);
+    // 明天和后天的预约可改，由共享模块的 isBookingEditable 统一判定
+    // （行为覆盖见 test/booking-rules.test.js）。
+    assert.match(sharedRulesSource, /day === getChinaDate\(1, now\) \|\| day === getChinaDate\(2, now\)/);
     assert.match(serverSource, /booking\.date === getChinaDate\(2\) && date === getChinaDate\(2\)/);
 });
 

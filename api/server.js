@@ -1,17 +1,59 @@
 const express = require('express');
 const cors = require('cors');
-const { rateLimit } = require('express-rate-limit');
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const { Pool } = require('pg');
 const crypto = require('crypto');
+const { createTokenCodec } = require('./auth-token');
+// 与前端 app.js 共用同一份预约规则。booking-rules.js 由 shared/booking-rules.js
+// 自动同步生成（Zeabur 只以 ./api 为构建根目录），请勿手工修改。
+const {
+  getChinaDate,
+  isValidDateString,
+  isValidBookingRange,
+  isValidBookingDate,
+  isBookingStartAvailable,
+  isBookingEditable
+} = require('./booking-rules');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const AUTH_SECRET = process.env.AUTH_SECRET || process.env.DATABASE_URL;
-const DEFAULT_USER_PASSWORD = process.env.DEFAULT_USER_PASSWORD || '123456';
-const BOOKABLE_PERIODS = [
-  { start: '08:30', end: '12:30' },
-  { start: '14:00', end: '18:30' }
-];
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const AUTH_SECRET = process.env.AUTH_SECRET;
+const DEFAULT_USER_PASSWORD = process.env.DEFAULT_USER_PASSWORD;
+
+// AUTH_SECRET 以前会静默回退到 DATABASE_URL——数据库连接串出现在构建日志、错误堆栈
+// 和平台面板里的概率远高于专用密钥，一旦泄漏就能伪造任意用户（含 admin）的 token。
+// 现在生产环境缺失或复用就直接启动失败，绝不带病运行。
+if (IS_PRODUCTION) {
+  const fatal = [];
+  if (!AUTH_SECRET) fatal.push('AUTH_SECRET 未配置');
+  if (AUTH_SECRET && AUTH_SECRET.length < 16) fatal.push('AUTH_SECRET 太短，至少需要 16 位');
+  if (AUTH_SECRET && AUTH_SECRET === process.env.DATABASE_URL) fatal.push('AUTH_SECRET 不能复用 DATABASE_URL');
+  if (fatal.length > 0) {
+    console.error('启动失败，认证配置不安全：');
+    fatal.forEach(message => console.error(`  - ${message}`));
+    process.exit(1);
+  }
+  if (AUTH_SECRET.length < 32) {
+    console.warn('⚠️  AUTH_SECRET 建议使用 32 位以上的随机字符串');
+  }
+}
+
+// 没配 DEFAULT_USER_PASSWORD 时不再用内置的 123456 建号——那会让所有默认账号共用一个弱口令。
+// 这里只跳过初始化并告警，不阻断启动：默认账号早就建好了，缺这个变量不该导致线上停机。
+const CAN_SEED_DEFAULT_USERS = Boolean(DEFAULT_USER_PASSWORD) && DEFAULT_USER_PASSWORD.length >= 6;
+if (!CAN_SEED_DEFAULT_USERS) {
+  console.warn('⚠️  未配置 DEFAULT_USER_PASSWORD（或长度不足 6 位），已跳过默认账号初始化。');
+  console.warn('   需要新建默认账号时请先配置该变量，并要求用户首次登录后立即改密码。');
+}
+
+// 允许访问 API 的前端来源。同源工具（curl、健康检查）不带 Origin，直接放行。
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS
+  || 'https://photowhyy.zeabur.app,https://wuyingpeng-yuyue.vercel.app')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
 const STUDIO_IDS = [
   '大无影棚1（工位对面）',
   '大无影棚2（鄢军隔壁）',
@@ -93,10 +135,28 @@ const loginLimiter = rateLimit({
   message: { error: '登录尝试过于频繁，请稍后再试' }
 });
 
+// 写接口同样需要限流：登录限流挡不住已经拿到 token 的账号刷接口。
+// 60 次/分钟远高于正常操作频率（一次预约最多 2 个写请求），只挡住脚本级滥用。
+const writeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  keyGenerator: req => req.user?.username || ipKeyGenerator(req.ip),
+  message: { error: '操作过于频繁，请稍后再试' }
+});
+
 // 中间件
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
-app.use(cors());
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    // 返回 false 而不是抛错：跨域被拒时浏览器本来就会拦下响应，
+    // 抛错只会让服务端多出一堆 500 日志。
+    callback(null, false);
+  }
+}));
 app.use(express.json({ limit: '32kb' }));
 app.use((req, res, next) => {
   res.set('X-Content-Type-Options', 'nosniff');
@@ -117,31 +177,16 @@ function verifyPassword(password, storedHash) {
   return actual.length === expectedBuffer.length && crypto.timingSafeEqual(actual, expectedBuffer);
 }
 
+// token 的签发与校验见 auth-token.js（单元测试：test/auth-token.test.js）。
+const tokenCodec = AUTH_SECRET ? createTokenCodec(AUTH_SECRET) : null;
+
 function signToken(user) {
-  if (!AUTH_SECRET) throw new Error('AUTH_SECRET is not configured');
-  const payload = Buffer.from(JSON.stringify({
-    username: user.username,
-    role: user.role,
-    exp: Date.now() + 7 * 24 * 60 * 60 * 1000
-  })).toString('base64url');
-  const signature = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
-  return `${payload}.${signature}`;
+  if (!tokenCodec) throw new Error('AUTH_SECRET is not configured');
+  return tokenCodec.sign(user);
 }
 
 function readToken(token) {
-  if (!AUTH_SECRET || !token) return null;
-  const [payload, signature] = token.split('.');
-  if (!payload || !signature) return null;
-  const expected = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
-  if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    return parsed.exp > Date.now() ? parsed : null;
-  } catch {
-    return null;
-  }
+  return tokenCodec ? tokenCodec.read(token) : null;
 }
 
 async function requireAuth(req, res, next) {
@@ -150,10 +195,13 @@ async function requireAuth(req, res, next) {
   if (!tokenUser) return res.status(401).json({ error: '请先登录' });
 
   try {
-    const result = await pool.query('SELECT username, role FROM users WHERE username = $1', [tokenUser.username]);
+    const result = await pool.query('SELECT username, role, "passwordHash" FROM users WHERE username = $1', [tokenUser.username]);
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: '登录已失效，请重新登录' });
-    req.user = user;
+    if (!tokenCodec.matchesUser(tokenUser, user)) {
+      return res.status(401).json({ error: '密码已修改，请重新登录' });
+    }
+    req.user = { username: user.username, role: user.role };
     next();
   } catch (error) {
     next(error);
@@ -163,32 +211,6 @@ async function requireAuth(req, res, next) {
 function requireAdmin(req, res, next) {
   if (req.user?.role !== 'admin') return res.status(403).json({ error: '没有管理员权限' });
   next();
-}
-
-function minutes(time) {
-  const [hour, minute] = time.split(':').map(Number);
-  return hour * 60 + minute;
-}
-
-function getChinaDate(offsetDays = 0) {
-  const date = new Date(Date.now() + offsetDays * 86400000);
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit'
-  }).format(date);
-}
-
-function getChinaCurrentTime() {
-  return new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false
-  }).format(new Date());
-}
-
-function isBookingStartAvailable(date, startTime) {
-  return date !== getChinaDate() || startTime > getChinaCurrentTime();
-}
-
-function isValidBookingDate(date) {
-  return date === getChinaDate() || date === getChinaDate(1);
 }
 
 async function isAuthorizedSimpleVideoBooking(user, taskId, date, studio) {
@@ -204,20 +226,7 @@ async function isAuthorizedSimpleVideoBooking(user, taskId, date, studio) {
 }
 
 function isEditableBooking(booking) {
-  if (booking.date === getChinaDate(1) || booking.date === getChinaDate(2)) return true;
-  return booking.date === getChinaDate() && booking.endTime > new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false
-  }).format(new Date());
-}
-
-function isValidBookingRange(startTime, endTime) {
-  if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(startTime)
-    || !/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(endTime)) return false;
-  return BOOKABLE_PERIODS.some(period =>
-    startTime >= period.start && endTime <= period.end && minutes(startTime) < minutes(endTime)
-    && (minutes(startTime) - minutes(period.start)) % 15 === 0
-    && (minutes(endTime) - minutes(period.start)) % 15 === 0
-  );
+  return isBookingEditable(booking);
 }
 
 // 请求日志中间件
@@ -287,12 +296,14 @@ async function ensureDatabase() {
         value TEXT NOT NULL DEFAULT ''
       )
     `);
-    for (const username of DEFAULT_USER_NAMES) {
-      await client.query(
-        `INSERT INTO users (username, "passwordHash", role, "createdAt")
-         VALUES ($1, $2, $3, $4) ON CONFLICT (username) DO NOTHING`,
-        [username, hashPassword(DEFAULT_USER_PASSWORD), username === 'admin' ? 'admin' : 'photographer', new Date().toISOString()]
-      );
+    if (CAN_SEED_DEFAULT_USERS) {
+      for (const username of DEFAULT_USER_NAMES) {
+        await client.query(
+          `INSERT INTO users (username, "passwordHash", role, "createdAt")
+           VALUES ($1, $2, $3, $4) ON CONFLICT (username) DO NOTHING`,
+          [username, hashPassword(DEFAULT_USER_PASSWORD), username === 'admin' ? 'admin' : 'photographer', new Date().toISOString()]
+        );
+      }
     }
   } finally {
     client.release();
@@ -409,20 +420,28 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/users', requireAuth, requireAdmin, async (req, res) => {
+app.post('/api/users', requireAuth, requireAdmin, writeLimiter, async (req, res) => {
   try {
     const username = String(req.body?.username || '').trim();
     if (!username || username.length > 20) return res.status(400).json({ error: '用户名格式不正确' });
-    const password = String(req.body?.password || DEFAULT_USER_PASSWORD);
+
+    // 没有显式密码、也没配 DEFAULT_USER_PASSWORD 时，随机生成一个初始密码并回给管理员，
+    // 好过让所有新账号共用同一个固定弱口令。
+    const explicitPassword = String(req.body?.password || DEFAULT_USER_PASSWORD || '');
+    const generatedPassword = explicitPassword ? '' : crypto.randomBytes(6).toString('base64url');
+    const password = explicitPassword || generatedPassword;
     if (password.length < 6 || password.length > 100) {
       return res.status(400).json({ error: '密码长度需要为6到100位' });
     }
+
     const result = await pool.query(
       `INSERT INTO users (username, "passwordHash", role, "createdAt")
        VALUES ($1, $2, 'photographer', $3) RETURNING username, role, "createdAt"`,
       [username, hashPassword(password), new Date().toISOString()]
     );
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(generatedPassword
+      ? { ...result.rows[0], initialPassword: generatedPassword }
+      : result.rows[0]);
   } catch (error) {
     if (error.code === '23505') return res.status(409).json({ error: '用户已存在' });
     console.error('添加用户失败:', error);
@@ -430,7 +449,7 @@ app.post('/api/users', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/users/:username', requireAuth, requireAdmin, async (req, res) => {
+app.delete('/api/users/:username', requireAuth, requireAdmin, writeLimiter, async (req, res) => {
   try {
     const username = req.params.username;
     if (username === 'admin') return res.status(400).json({ error: '不能删除管理员' });
@@ -443,7 +462,7 @@ app.delete('/api/users/:username', requireAuth, requireAdmin, async (req, res) =
   }
 });
 
-app.post('/api/auth/change-password', requireAuth, async (req, res) => {
+app.post('/api/auth/change-password', requireAuth, writeLimiter, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body || {};
     if (!currentPassword || !newPassword || newPassword.length < 6 || newPassword.length > 100) {
@@ -453,33 +472,42 @@ app.post('/api/auth/change-password', requireAuth, async (req, res) => {
     if (!result.rows[0] || !verifyPassword(currentPassword, result.rows[0].passwordHash)) {
       return res.status(401).json({ error: '当前密码错误' });
     }
-    await pool.query('UPDATE users SET "passwordHash" = $1 WHERE username = $2', [hashPassword(newPassword), req.user.username]);
-    res.json({ message: '密码修改成功' });
+    const newPasswordHash = hashPassword(newPassword);
+    await pool.query('UPDATE users SET "passwordHash" = $1 WHERE username = $2', [newPasswordHash, req.user.username]);
+    // 改密码会让所有旧 token 失效（包括本次请求用的那个），
+    // 所以要立刻签发一个新 token 还给当前设备，避免用户改完密码就被踢下线。
+    res.json({
+      message: '密码修改成功',
+      token: signToken({ username: req.user.username, role: req.user.role, passwordHash: newPasswordHash })
+    });
   } catch (error) {
     console.error('修改密码失败:', error);
     res.status(500).json({ error: '修改密码失败' });
   }
 });
 
-// 获取所有预约
+// 获取预约。
+// 不带任何参数时只返回昨天到后天，而不是整张表——预约页只需要这个窗口，
+// 数据量长起来以后没有必要每 30 秒把全部历史扫一遍。
+// 统计视图是全员可见的团队看板，确实需要全量历史，用显式的 all=1 拿。
 app.get('/api/bookings', requireAuth, async (req, res) => {
   try {
     const fromDate = String(req.query.from || '');
     const toDate = String(req.query.to || '');
-    let result;
-    if (fromDate || toDate) {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(fromDate)
-        || !/^\d{4}-\d{2}-\d{2}$/.test(toDate)
-        || fromDate > toDate) {
-        return res.status(400).json({ error: '日期范围无效' });
-      }
-      result = await pool.query(
-        'SELECT * FROM bookings WHERE date >= $1 AND date <= $2 ORDER BY date, "startTime"',
-        [fromDate, toDate]
-      );
-    } else {
-      result = await pool.query('SELECT * FROM bookings ORDER BY date, "startTime"');
+
+    if (req.query.all === '1') {
+      const result = await pool.query('SELECT * FROM bookings ORDER BY date, "startTime"');
+      return res.json(result.rows);
     }
+
+    if ((fromDate || toDate) && (!isValidDateString(fromDate) || !isValidDateString(toDate) || fromDate > toDate)) {
+      return res.status(400).json({ error: '日期范围无效' });
+    }
+
+    const result = await pool.query(
+      'SELECT * FROM bookings WHERE date >= $1 AND date <= $2 ORDER BY date, "startTime"',
+      [fromDate || getChinaDate(-1), toDate || getChinaDate(2)]
+    );
     res.json(result.rows);
   } catch (error) {
     console.error('获取预约失败:', error);
@@ -488,7 +516,7 @@ app.get('/api/bookings', requireAuth, async (req, res) => {
 });
 
 // 创建新预约
-app.post('/api/bookings', requireAuth, async (req, res) => {
+app.post('/api/bookings', requireAuth, writeLimiter, async (req, res) => {
   try {
       const { id, studio, date, startTime, endTime, notes, simpleVideoTaskId } = req.body;
     const needsSimpleVideo = studio !== '6F无影棚' && isValidBookingDate(date) && req.body?.needsSimpleVideo === true;
@@ -554,7 +582,7 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
 });
 
 // 修改预约时间
-app.put('/api/bookings/:id', requireAuth, async (req, res) => {
+app.put('/api/bookings/:id', requireAuth, writeLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const { studio, date, startTime, endTime, notes } = req.body || {};
@@ -634,7 +662,7 @@ app.put('/api/bookings/:id', requireAuth, async (req, res) => {
 });
 
 // 删除预约
-app.delete('/api/bookings/:id', requireAuth, async (req, res) => {
+app.delete('/api/bookings/:id', requireAuth, writeLimiter, async (req, res) => {
   let client;
   let transactionStarted = false;
   try {

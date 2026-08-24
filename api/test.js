@@ -1,14 +1,18 @@
 #!/usr/bin/env node
 
 const crypto = require('crypto');
+// 时段、时间换算和冲突判断复用服务端同一份规则，避免冒烟测试和实现各写一套。
+const {
+  BOOKABLE_PERIODS,
+  getChinaDate,
+  timeToMinutes,
+  minutesToTime,
+  hasTimeOverlap
+} = require('./booking-rules');
 
 const API_BASE_URL = (process.argv[2] || 'http://localhost:3000').replace(/\/$/, '');
 const TEST_USERNAME = process.env.TEST_USERNAME || '';
 const TEST_PASSWORD = process.env.TEST_PASSWORD || '';
-const BOOKABLE_PERIODS = [
-  { start: '08:30', end: '12:30' },
-  { start: '14:00', end: '18:30' }
-];
 const STUDIO_IDS = [
   '大无影棚1（工位对面）', '大无影棚2（鄢军隔壁）',
   '小无影棚3', '小无影棚4', '6F无影棚',
@@ -25,21 +29,6 @@ const STUDIO_IDS = [
 let authToken = '';
 let passed = 0;
 let failed = 0;
-
-function getChinaDate(offsetDays = 0) {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit'
-  }).format(new Date(Date.now() + offsetDays * 86400000));
-}
-
-function timeToMinutes(time) {
-  const [hour, minute] = time.split(':').map(Number);
-  return hour * 60 + minute;
-}
-
-function minutesToTime(value) {
-  return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
-}
 
 async function request(path, options = {}) {
   const headers = new Headers(options.headers || {});
@@ -74,7 +63,8 @@ function findFreeSlot(bookings, date) {
       for (let start = timeToMinutes(period.start); start < timeToMinutes(period.end); start += 15) {
         const startTime = minutesToTime(start);
         const endTime = minutesToTime(start + 15);
-        const conflict = studioBookings.some(booking => !(endTime <= booking.startTime || startTime >= booking.endTime));
+        const conflict = studioBookings.some(booking =>
+          hasTimeOverlap(startTime, endTime, booking.startTime, booking.endTime));
         if (!conflict) return { studio, startTime, endTime };
       }
     }
@@ -127,6 +117,27 @@ async function run() {
         expectStatus(result, 200);
         if (!Array.isArray(result.data)) throw new Error('预约列表格式错误');
         bookings = result.data;
+      });
+
+      await test('不带参数只返回昨天到后天的窗口', async () => {
+        const result = await request('/api/bookings');
+        expectStatus(result, 200);
+        const from = getChinaDate(-1);
+        const to = getChinaDate(2);
+        const outOfRange = result.data.find(booking => booking.date < from || booking.date > to);
+        if (outOfRange) throw new Error(`返回了窗口外的预约: ${outOfRange.date}`);
+      });
+
+      await test('统计视图可以用 all=1 读取全量历史', async () => {
+        const result = await request('/api/bookings?all=1');
+        expectStatus(result, 200);
+        if (!Array.isArray(result.data)) throw new Error('预约列表格式错误');
+        if (result.data.length < bookings.length) throw new Error('全量结果不应少于窗口结果');
+      });
+
+      await test('拒绝非法日期范围', async () => {
+        const result = await request('/api/bookings?from=2026-13-01&to=2026-13-02');
+        expectStatus(result, 400);
       });
 
       const date = getChinaDate(1);
