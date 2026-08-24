@@ -417,37 +417,37 @@ textarea:focus-visible,
 
 .login-container {
     width: 100%;
-    max-width: 400px;
+    max-width: 372px;
     padding: 20px;
 }
 
 .login-card {
     background: white;
-    padding: 32px;
-    border-radius: var(--radius-xl);
+    padding: 30px;
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-raised);
     text-align: left;
 }
 
 .login-brand {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 16px;
+    justify-content: center;
+    gap: 11px;
     margin-top: 8px;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
 }
 
 .login-icon {
-    width: 56px;
-    height: 56px;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    background: #FFFFFF;
+    background: #F8FAFC;
+    border: 1px solid #E5E7EB;
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
 }
 
 .login-icon svg {
@@ -461,12 +461,12 @@ textarea:focus-visible,
 }
 
 .login-title {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--ink);
+    font-size: 15px;
+    font-weight: 500;
+    color: #1F2937;
     margin: 0;
-    line-height: 1.2;
-    letter-spacing: -0.4px;
+    line-height: 34px;
+    letter-spacing: 0;
 }
 
 .login-form {
@@ -474,15 +474,15 @@ textarea:focus-visible,
 }
 
 .form-field {
-    margin-bottom: 16px;
+    margin-bottom: 15px;
 }
 
 .field-label {
     display: block;
     font-size: 12px;
     font-weight: 500;
-    color: var(--ink-muted);
-    margin-bottom: 8px;
+    color: #374151;
+    margin-bottom: 7px;
 }
 
 .field-label .required {
@@ -504,14 +504,13 @@ textarea:focus-visible,
 
 .login-form input {
     width: 100%;
-    padding: 11px 12px 11px 36px;
-    border: none;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid #E5E7EB;
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-ring);
-    font-size: 14px;
-    color: var(--ink);
-    transition: box-shadow 0.2s ease;
-    background: #FFFFFF;
+    font-size: 13px;
+    color: #1F2937;
+    transition: all 0.2s;
+    background: #F8FAFC;
 }
 
 .login-form input[type="password"] {
@@ -542,11 +541,12 @@ textarea:focus-visible,
 
 .login-form input:focus {
     outline: none;
-    box-shadow: 0 0 0 1px var(--ink), 0 0 0 4px rgba(36, 36, 36, 0.08);
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .remember-me {
-    margin-bottom: 24px;
+    margin-bottom: 14px;
 }
 
 .checkbox-label {
@@ -567,49 +567,45 @@ textarea:focus-visible,
 
 .login-btn {
     width: 100%;
-    min-height: 44px;
-    padding: 0 16px;
-    background: var(--ink);
-    color: #FFFFFF;
+    min-height: 42px;
+    padding: 0 12px;
+    background: var(--accent-solid);
+    color: white;
     border: none;
     border-radius: var(--radius-md);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
-    transition: opacity 0.2s ease, transform 0.12s ease;
+    transition: all 0.2s;
     margin-bottom: 12px;
 }
 
-/* Cal.com 规范第 94 行：Dark Primary 的悬停是降透明度，不是换色 */
 .login-btn:hover {
-    opacity: 0.82;
+    background: var(--accent-ink);
 }
 
-.guest-btn:hover {
-    box-shadow: 0 0 0 1px rgba(34, 42, 53, 0.18);
-}
-
-.login-btn:active,
-.guest-btn:active {
-    transform: translateY(1px);
+.login-btn:active {
+    transform: scale(0.98);
 }
 
 .guest-btn {
     width: 100%;
-    min-height: 44px;
-    padding: 0 16px;
-    background: #FFFFFF;
-    color: var(--ink);
-    border: none;
+    min-height: 42px;
+    padding: 0 12px;
+    background: white;
+    color: #374151;
+    border: 1px solid #E5E7EB;
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-ring);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: box-shadow 0.2s ease, transform 0.12s ease;
+    transition: all 0.2s;
 }
 
+.guest-btn:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+}
 
 /* 旧的登录样式保留兼容 */
 .login-box {
@@ -653,12 +649,13 @@ textarea:focus-visible,
     background: white;
 }
 
-/* 这条用 ID 选择器覆盖了 .login-title 的字号。保留选择器是为了不动
-   其他依赖它的样式，但字号/字重交回给 .login-title 统一管理。 */
 #loginPage .login-title {
-    color: var(--ink);
+    color: #262626;
+    font-size: 14px;
     margin: 0;
-    text-align: center;
+    text-align: left;
+    font-weight: 500;
+    letter-spacing: 0;
 }
 
 /* 按钮 */
@@ -1741,8 +1738,8 @@ textarea:focus-visible,
     }
 
     /* 登录页面 */
-    .login-title {
-        font-size: 21px;
+    #loginPage .login-title {
+        font-size: 14px;
     }
 
     .login-box {
