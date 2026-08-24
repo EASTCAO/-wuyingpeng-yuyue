@@ -67,9 +67,9 @@ test('6F 自由画布使用无边框全尺寸视口', () => {
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*\{[\s\S]*?display:\s*block;/);
     assert.match(layoutStyles, /\.sixth-floor-canvas-viewport\s*\{[\s\S]*?width:\s*100%;[\s\S]*?height:\s*100%;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;[\s\S]*?box-shadow:\s*none;/);
     assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active \.preview-workspace-6f\s*\{[\s\S]*?padding:\s*0 0 4px;/);
-    assert.match(layoutStyles, /\.preview-workspace-6f \.preview-status-legend,[\s\S]*?\.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?right:\s*8px;[\s\S]*?width:\s*184px;[\s\S]*?height:\s*27px;[\s\S]*?justify-content:\s*center;/);
+    assert.match(layoutStyles, /\.preview-workspace-6f \.preview-status-legend,[\s\S]*?\.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?right:\s*8px;[\s\S]*?width:\s*152px;[\s\S]*?height:\s*23px;[\s\S]*?justify-content:\s*center;/);
     assert.match(layoutStyles, /\.preview-workspace-6f \.preview-status-legend\s*\{[\s\S]*?top:\s*8px;[\s\S]*?flex-wrap:\s*nowrap;/);
-    assert.match(layoutStyles, /\.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*41px;/);
+    assert.match(layoutStyles, /\.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*37px;/);
     assert.match(layoutStyles, /\.sixth-floor-canvas\s*\{[\s\S]*?top:\s*calc\(50% \+ 28px\);/);
     assert.match(layoutStyles, /@media \(max-width:\s*768px\)\s*\{[\s\S]*?\.sixth-floor-canvas\s*\{[\s\S]*?top:\s*calc\(50% \+ 92px\);/);
     assert.match(layoutSource, /viewport\.clientWidth - SIXTH_FLOOR_FRAME_INSETS\.left/);
@@ -188,9 +188,81 @@ test('预约状态说明固定在实景棚预览右上角且不撑满整行', ()
 });
 
 test('预约状态说明和画布工具在右上角紧凑排列', () => {
-    assert.match(layoutStyles, /\.preview-status-legend\s*\{[\s\S]*?gap:\s*8px;[\s\S]*?padding:\s*4px 7px;/);
+    assert.match(layoutStyles, /\.preview-status-legend\s*\{[\s\S]*?gap:\s*6px;[\s\S]*?padding:\s*3px 6px;/);
     assert.match(layoutStyles, /\.studio-booking-page \.list-view\.real-scene-active\s*\{[\s\S]*?padding:\s*8px 6px 0;/);
-    assert.match(layoutStyles, /\.preview-workspace-6f \.preview-status-legend,[\s\S]*?\.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?width:\s*184px;[\s\S]*?height:\s*27px;/);
-    assert.match(layoutStyles, /\.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*2px;[\s\S]*?right:\s*0;[\s\S]*?gap:\s*2px;[\s\S]*?padding:\s*2px;/);
-    assert.match(layoutStyles, /\.sixth-floor-canvas-toolbar button\s*\{[\s\S]*?min-width:\s*21px;[\s\S]*?height:\s*21px;/);
+    assert.match(layoutStyles, /\.preview-workspace-6f \.preview-status-legend,[\s\S]*?\.preview-workspace-6f \.sixth-floor-canvas-toolbar\s*\{[\s\S]*?width:\s*152px;[\s\S]*?height:\s*23px;/);
+    assert.match(layoutStyles, /\.sixth-floor-canvas-toolbar\s*\{[\s\S]*?top:\s*2px;[\s\S]*?right:\s*0;[\s\S]*?gap:\s*2px;[\s\S]*?padding:\s*1px;/);
+    assert.match(layoutStyles, /\.sixth-floor-canvas-toolbar button\s*\{[\s\S]*?min-width:\s*19px;[\s\S]*?height:\s*19px;/);
+});
+
+// 用花括号配平切出每条规则。之前用 [\s\S]*? 的嵌套正则会跨过块边界匹配到别的规则，
+// 也会把注释算进选择器，所以这里老老实实扫一遍。
+function parseRules(css) {
+    const source = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const rules = [];
+    let depth = 0;
+    let selectorStart = 0;
+    let blockStart = 0;
+
+    for (let index = 0; index < source.length; index += 1) {
+        const char = source[index];
+        if (char === '{') {
+            if (depth === 0) blockStart = index;
+            depth += 1;
+        } else if (char === '}') {
+            depth -= 1;
+            if (depth === 0) {
+                const selector = source.slice(selectorStart, blockStart).trim();
+                const body = source.slice(blockStart + 1, index);
+                // @media 之类的包装块：递归取里面的规则
+                if (selector.startsWith('@')) rules.push(...parseRules(body));
+                else rules.push({ selector, body });
+                selectorStart = index + 1;
+            }
+        }
+    }
+    return rules;
+}
+
+const LAYOUT_RULES = parseRules(layoutStyles);
+
+function findRule(selector) {
+    const normalize = value => value.split(',').map(part => part.trim()).filter(Boolean).join(',');
+    const rule = LAYOUT_RULES.find(item => normalize(item.selector) === selector);
+    assert.ok(rule, `没有找到 CSS 规则: ${selector}`);
+    return rule.body;
+}
+
+function pxValue(body, property) {
+    const match = body.match(new RegExp(`(?:^|[;{\\s])${property}:\\s*(\\d+)px`));
+    assert.ok(match, `规则里没有 ${property} 的像素值`);
+    return Number(match[1]);
+}
+
+const SIXTH_FLOOR_PREFIX = '.studio-booking-page .list-view.real-scene-active .preview-workspace-6f';
+const SHARED_BOX_SELECTOR = `${SIXTH_FLOOR_PREFIX} .preview-status-legend,${SIXTH_FLOOR_PREFIX} .sixth-floor-canvas-toolbar`;
+
+test('工具条紧贴在状态说明下方且两者等宽', () => {
+    // 共用同一条尺寸规则是"等宽"的结构保证，比分别断言两个宽度更难写歪。
+    const sharedBox = findRule(SHARED_BOX_SELECTOR);
+    const height = pxValue(sharedBox, 'height');
+    const legendTop = pxValue(findRule(`${SIXTH_FLOOR_PREFIX} .preview-status-legend`), 'top');
+    const toolbarTop = pxValue(findRule(`${SIXTH_FLOOR_PREFIX} .sixth-floor-canvas-toolbar`), 'top');
+
+    // 工具条必须落在状态说明下沿之后，且间距保持在 4-8px 的紧凑区间内。
+    const gap = toolbarTop - (legendTop + height);
+    assert.ok(gap >= 4 && gap <= 8, `两者间距应为 4-8px，实际 ${gap}px`);
+});
+
+test('按钮高度正好填满工具条，不会溢出圆角边框', () => {
+    const sharedBox = findRule(SHARED_BOX_SELECTOR);
+    assert.match(sharedBox, /box-sizing:\s*border-box;/);
+
+    const toolbarHeight = pxValue(sharedBox, 'height');
+    const toolbarPadding = pxValue(findRule('.sixth-floor-canvas-toolbar'), 'padding');
+    const buttonHeight = pxValue(findRule('.sixth-floor-canvas-toolbar button'), 'height');
+
+    // 外框高 - 上下 1px 边框 - 上下内边距 = 按钮可用高度
+    const available = toolbarHeight - 2 - toolbarPadding * 2;
+    assert.equal(buttonHeight, available, `按钮应为 ${available}px，实际 ${buttonHeight}px`);
 });
