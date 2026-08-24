@@ -1461,8 +1461,7 @@ function getRenderSignature() {
         selectedDate,
         currentStudioCategory,
         currentUser,
-        bookingsLoaded ? 1 : 0,
-        document.getElementById('filterMyBookings')?.checked ? 1 : 0
+        bookingsLoaded ? 1 : 0
     ].join('|');
 
     const bookingsKey = allBookings.map(booking => [
@@ -2800,156 +2799,6 @@ function showStatsLoading() {
     if (tableBody) tableBody.innerHTML = '<tr><td colspan="6" class="empty-message">正在加载统计数据...</td></tr>';
 }
 
-// 渲染时间轴视图
-function renderTimelineView() {
-    // 时间轴配置
-    const startHour = 9;
-    const endHour = 18;
-    const hourHeight = 28; // 与 CSS 中的 timeline-time-slot 高度一致
-
-    // 获取要显示的日期列表
-    const dates = getDisplayDates();
-
-    // 获取筛选后的预约
-    const filteredBookings = getFilteredBookings();
-
-    // 为每个影棚渲染时间轴
-    getAllStudios().forEach((studioInfo, index) => {
-        const studio = studioInfo.id;
-        const timelineBody = document.getElementById(`timeline${index + 1}Body`);
-        if (!timelineBody) return;
-
-        timelineBody.innerHTML = '';
-
-        // 创建时间轴内容容器
-        const timelineContent = document.createElement('div');
-        timelineContent.className = 'timeline-content';
-
-        // 创建时间列
-        const timeCol = document.createElement('div');
-        timeCol.className = 'timeline-time-col';
-
-        for (let hour = startHour; hour <= endHour; hour++) {
-            const timeSlot = document.createElement('div');
-            timeSlot.className = 'timeline-time-slot';
-            timeSlot.textContent = `${String(hour).padStart(2, '0')}:00`;
-            timeCol.appendChild(timeSlot);
-        }
-        timelineContent.appendChild(timeCol);
-
-        // 创建预约列
-        const bookingCol = document.createElement('div');
-        bookingCol.className = 'timeline-booking-col';
-        bookingCol.style.position = 'relative';
-        bookingCol.style.height = ((endHour - startHour + 1) * hourHeight) + 'px';
-
-        // 创建时间槽背景
-        for (let hour = startHour; hour <= endHour; hour++) {
-            const slot = document.createElement('div');
-            slot.className = 'timeline-booking-slot';
-            bookingCol.appendChild(slot);
-        }
-
-        // 获取该影棚的预约
-        const studioBookings = filteredBookings.filter(b => {
-            const bookingDate = getDateOnly(b.date);
-            return b.studio === studio && dates.includes(bookingDate);
-        });
-
-        // 渲染预约块
-        studioBookings.forEach(booking => {
-            const startParts = booking.startTime.split(':');
-            const endParts = booking.endTime.split(':');
-
-            const startMinutes = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
-            const endMinutes = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
-
-            // 计算位置和高度
-            const startFromTop = startMinutes - (startHour * 60);
-            const duration = endMinutes - startMinutes;
-
-            // 只显示在时间轴范围内的预约
-            if (startMinutes >= startHour * 60 && startMinutes < (endHour + 1) * 60) {
-                const top = (startFromTop / 60) * hourHeight;
-                const height = Math.max((duration / 60) * hourHeight - 4, 18); // 最小高度18px
-
-                const bookingBlock = createTimelineBookingBlock(booking);
-                bookingBlock.style.position = 'absolute';
-                bookingBlock.style.top = top + 'px';
-                bookingBlock.style.height = height + 'px';
-
-                bookingCol.appendChild(bookingBlock);
-            }
-        });
-
-        timelineContent.appendChild(bookingCol);
-        timelineBody.appendChild(timelineContent);
-    });
-}
-
-// 创建时间轴预约块
-function createTimelineBookingBlock(booking) {
-    const block = document.createElement('div');
-    const isMyBooking = booking.photographer === currentUser;
-    const status = getBookingStatus(booking);
-    const statusClass = status === 'completed' ? 'booking-completed' : '';
-    const studioInfo = getStudioById(booking.studio);
-
-    block.className = `timeline-booking-block ${isMyBooking ? 'my-booking' : ''} ${statusClass}`;
-    block.setAttribute('data-studio', booking.studio);
-    block.setAttribute('data-studio-group', studioInfo ? studioInfo.groupKey : 'unknown');
-    block.onclick = () => showBookingDetail(booking.id);
-
-    const timeDiv = document.createElement('div');
-    timeDiv.className = 'timeline-booking-time';
-    timeDiv.textContent = `${booking.startTime}-${booking.endTime}`;
-    block.appendChild(timeDiv);
-
-    const userDiv = document.createElement('div');
-    userDiv.className = 'timeline-booking-user';
-    userDiv.textContent = booking.photographer;
-    block.appendChild(userDiv);
-
-    if (booking.note) {
-        const noteDiv = document.createElement('div');
-        noteDiv.className = 'timeline-booking-note';
-        noteDiv.textContent = booking.note;
-        block.appendChild(noteDiv);
-    }
-
-    return block;
-}
-
-// 显示新建预约表单并预填时间
-function showAddBookingFormWithTime(studio, startHour) {
-    showAddBookingForm(studio);
-
-    // 预填开始时间
-    const startTime = `${String(startHour).padStart(2, '0')}:00`;
-    const endTime = `${String(startHour + 1).padStart(2, '0')}:00`;
-
-    document.getElementById('startTime').value = startTime;
-    document.getElementById('endTime').value = endTime;
-}
-
-// 获取指定小时内的预约（只返回在该小时开始的预约，避免重复显示）
-function getBookingsForHourSlot(studio, dates, hour, bookingsToUse = allBookings) {
-    return bookingsToUse.filter(booking => {
-        if (booking.studio !== studio) return false;
-
-        // 处理 ISO 格式日期
-        const bookingDate = getDateOnly(booking.date);
-        if (!dates.includes(bookingDate)) return false;
-
-        // 解析预约的开始时间
-        const startTimeParts = booking.startTime.split(':');
-        const bookingStartHour = parseInt(startTimeParts[0]);
-
-        // 只在预约开始时间所在的小时格子显示
-        return hour === bookingStartHour;
-    });
-}
-
 // 获取要显示的日期
 function getDisplayDates() {
     switch (currentDateRange) {
@@ -2966,74 +2815,6 @@ function getDisplayDates() {
         default:
             return [getChinaDate()];
     }
-}
-
-// 从日期字符串中提取日期部分（处理 ISO 格式）
-// 创建时间轴预约项
-function createTimelineBookingItem(booking) {
-    const item = document.createElement('div');
-    const isMyBooking = booking.photographer === currentUser;
-    const studioInfo = getStudioById(booking.studio);
-
-    // 判断预约状态
-    const status = getBookingStatus(booking);
-    const statusClass = status === 'completed' ? 'booking-completed' : '';
-
-    item.className = `timeline-booking-item ${isMyBooking ? 'my-booking' : ''} ${statusClass}`;
-    item.setAttribute('data-studio', booking.studio);
-    item.setAttribute('data-studio-group', studioInfo ? studioInfo.groupKey : 'unknown');
-    item.onclick = () => showBookingDetail(booking.id);
-
-    // 添加已过期标签
-    if (status === 'completed') {
-        const expiredLabel = document.createElement('div');
-        expiredLabel.className = 'expired-label';
-        expiredLabel.textContent = '已过期';
-        item.appendChild(expiredLabel);
-    }
-
-    const timeDiv = document.createElement('div');
-    timeDiv.className = 'timeline-booking-time';
-    timeDiv.textContent = `${booking.startTime}-${booking.endTime}`;
-    item.appendChild(timeDiv);
-
-    const userDiv = document.createElement('div');
-    userDiv.className = 'timeline-booking-user';
-    userDiv.textContent = booking.photographer;
-    item.appendChild(userDiv);
-
-    if (booking.note) {
-        const noteDiv = document.createElement('div');
-        noteDiv.className = 'timeline-booking-note';
-        noteDiv.textContent = booking.note;
-        item.appendChild(noteDiv);
-    }
-
-    return item;
-}
-
-// 判断预约状态
-// 应用筛选
-function applyFilters() {
-    renderBookings();
-}
-
-// 获取筛选后的预约列表（仅用于时间轴和列表视图）
-// 注意：统计视图使用 allBookings，不使用此函数
-function getFilteredBookings() {
-    let filtered = [...allBookings];
-
-    // 首先过滤掉昨天及之前的预约（只保留今天及以后的）
-    const today = getChinaDate();
-    filtered = filtered.filter(b => getDateOnly(b.date) >= today);
-
-    // 只看我的预约
-    const filterMyBookings = document.getElementById('filterMyBookings');
-    if (filterMyBookings && filterMyBookings.checked) {
-        filtered = filtered.filter(b => b.photographer === currentUser);
-    }
-
-    return filtered;
 }
 
 // 更新今日使用情况
@@ -3063,9 +2844,7 @@ function updateTodayUsage() {
 const originalShowMainPage = showMainPage;
 showMainPage = function() {
     originalShowMainPage();
-    // updateTodayUsage 和 renderTimelineView 已经在 loadBookings -> renderAllViews 中被调用了，这里只需初始化提醒
-
-    // 初始化提醒功能
+    // 视图渲染已经在 loadBookings -> renderAllViews 里做过了，这里只负责初始化提醒
     initReminder();
 };
 
@@ -3073,12 +2852,14 @@ showMainPage = function() {
 // ============ 提醒功能 ============
 
 // 请求通知权限
-async function requestNotificationPermission() {
+// silent: 页面加载时的自动授权走静默模式——不弹 toast、不弹 alert、不发欢迎通知。
+// 否则默认开启提醒后，用户每次打开页面都会被打扰一遍。
+async function requestNotificationPermission({ silent = false } = {}) {
     debugLog('===== 请求通知权限 =====');
 
     if (!('Notification' in window)) {
         console.error('❌ 浏览器不支持通知功能');
-        showToast('您的浏览器不支持通知功能', 'error');
+        if (!silent) showToast('您的浏览器不支持通知功能', 'error');
         return false;
     }
 
@@ -3087,15 +2868,17 @@ async function requestNotificationPermission() {
     // 如果已经授权，直接返回true
     if (Notification.permission === 'granted') {
         debugLog('✅ 通知权限已授予');
-        showToast('通知权限已开启', 'success');
+        if (!silent) showToast('通知权限已开启', 'success');
         return true;
     }
 
     // 如果被拒绝，提示用户手动开启
     if (Notification.permission === 'denied') {
         console.warn('❌ 通知权限已被拒绝');
-        showToast('通知权限被拒绝，请在浏览器设置中允许', 'error');
-        alert('通知权限已被拒绝\n\n手动开启方法：\n1. 点击地址栏左侧的锁图标\n2. 找到"通知"选项\n3. 改为"允许"\n4. 刷新页面');
+        if (!silent) {
+            showToast('通知权限被拒绝，请在浏览器设置中允许', 'error');
+            alert('通知权限已被拒绝\n\n手动开启方法：\n1. 点击地址栏左侧的锁图标\n2. 找到"通知"选项\n3. 改为"允许"\n4. 刷新页面');
+        }
         return false;
     }
 
@@ -3107,30 +2890,31 @@ async function requestNotificationPermission() {
 
         if (permission === 'granted') {
             debugLog('✅ 用户授予了通知权限');
-            showToast('通知权限已开启！', 'success');
-
-            // 发送欢迎通知
-            setTimeout(() => {
-                try {
-                    new Notification('✅ 通知已开启', {
-                        body: '现在可以接收预约提醒了！',
-                        icon: 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2705.png',
-                        silent: false
-                    });
-                } catch (e) {
-                    console.error('发送欢迎通知失败:', e);
-                }
-            }, 500);
-
+            if (!silent) {
+                showToast('通知权限已开启！', 'success');
+                setTimeout(() => {
+                    try {
+                        new Notification('✅ 通知已开启', {
+                            body: '现在可以接收预约提醒了！',
+                            icon: 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2705.png',
+                            silent: false
+                        });
+                    } catch (e) {
+                        console.error('发送欢迎通知失败:', e);
+                    }
+                }, 500);
+            }
             return true;
-        } else {
-            console.warn('❌ 用户拒绝了通知权限');
-            showToast('您拒绝了通知权限', 'error');
-            return false;
         }
+
+        console.warn('❌ 用户拒绝了通知权限');
+        if (!silent) showToast('您拒绝了通知权限', 'error');
+        return false;
     } catch (error) {
+        // Safari 等浏览器要求 requestPermission 必须由用户手势触发，
+        // 自动请求会在这里失败——用户之后从菜单里手动打开即可。
         console.error('❌ 请求通知权限出错:', error);
-        showToast('请求权限失败: ' + error.message, 'error');
+        if (!silent) showToast('请求权限失败: ' + error.message, 'error');
         return false;
     }
 }
@@ -3407,23 +3191,26 @@ function playNotificationSound() {
 
 // 初始化提醒功能
 function initReminder() {
-    // 恢复保存的设置
-    const reminderEnabled = localStorage.getItem('reminderEnabled') === 'true';
-    const enableReminderCheckbox = document.getElementById('enableReminder');
+    // 没有存过偏好时默认开启：所有人都需要预约提醒，
+    // 不该让他们先去菜单里翻出来打开。只有显式关掉过才保持关闭。
+    const stored = localStorage.getItem('reminderEnabled');
+    const enabled = stored === null ? true : stored === 'true';
 
-    if (reminderEnabled && enableReminderCheckbox) {
-        enableReminderCheckbox.checked = true;
+    const checkbox = document.getElementById('enableReminder');
+    if (checkbox) checkbox.checked = enabled;
+    if (!enabled) return;
 
-        // 自动请求权限并开启提醒
-        requestNotificationPermission().then(granted => {
-            if (granted) {
-                startReminderCheck();
-            } else {
-                enableReminderCheckbox.checked = false;
-                localStorage.setItem('reminderEnabled', 'false');
-            }
-        });
-    }
+    requestNotificationPermission({ silent: true }).then(granted => {
+        if (granted) {
+            startReminderCheck();
+            localStorage.setItem('reminderEnabled', 'true');
+            return;
+        }
+        // 权限没拿到就先取消勾选，但不写 localStorage：
+        // 可能只是这次没授权（或浏览器要求手势），下次打开还应该再试一次，
+        // 而不是被永久记成"用户关掉了提醒"。
+        if (checkbox) checkbox.checked = false;
+    });
 }
 
 // 显示提醒弹窗

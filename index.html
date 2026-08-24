@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="favicon.svg">
     
     <title>影棚预约系统</title>
-    <link rel="stylesheet" href="style.css?v=20260824-sidebar-v1">
+    <link rel="stylesheet" href="style.css?v=20260824-reminder-default-v1">
     <link rel="stylesheet" href="studio-layout.css?v=20260824-contrast-v1">
 </head>
 <body class="studio-booking-page">
@@ -151,6 +151,14 @@
                         <span id="userMenuDot" class="user-menu-dot hidden" aria-hidden="true"></span>
                     </button>
                     <div id="userMenu" class="user-menu-panel hidden" role="menu" aria-labelledby="userMenuButton">
+                        <!-- 提醒默认开启，开关收在这里：不占主界面空间，
+                             但用户仍能确认它开着、必要时关掉或在被浏览器拒绝后重试授权 -->
+                        <label class="user-menu-switch">
+                            <span>预约提醒</span>
+                            <input type="checkbox" id="enableReminder" onchange="toggleReminder()">
+                            <span class="switch-slider"></span>
+                        </label>
+                        <div class="user-menu-divider" role="separator"></div>
                         <a href="javascript:void(0)" role="menuitem" onclick="runFromUserMenu(() => switchView('stats'))" class="user-menu-item">统计</a>
                         <a href="javascript:void(0)" role="menuitem" onclick="runFromUserMenu(() => switchView('simple-video'))" class="user-menu-item simple-video-link hidden">简易视频待办 <span id="simpleVideoTaskBadge" class="simple-video-task-badge hidden">0</span></a>
                         <a href="javascript:void(0)" role="menuitem" onclick="runFromUserMenu(() => switchView('users'))" class="user-menu-item admin-only" style="display:none;">用户管理</a>
@@ -180,20 +188,6 @@
                     <div class="date-nav">
                         <div id="bookingDateList" class="booking-date-list" role="group" aria-label="选择预约日期"></div>
                         <div id="studioToolbarControls" class="studio-toolbar-controls" aria-label="影棚筛选"></div>
-                        <!-- 两个开关放在这里而不是收进菜单：状态需要一眼可见，
-                             尤其"提醒"——藏起来用户就不知道它开没开 -->
-                        <div class="toolbar-switches">
-                            <label class="switch-row">
-                                <span>只看我的</span>
-                                <input type="checkbox" id="filterMyBookings" onchange="applyFilters()">
-                                <span class="switch-slider"></span>
-                            </label>
-                            <label class="switch-row">
-                                <span>提醒</span>
-                                <input type="checkbox" id="enableReminder" onchange="toggleReminder()">
-                                <span class="switch-slider"></span>
-                            </label>
-                        </div>
                     </div>
                 </div>
 
@@ -435,7 +429,7 @@
     </div>
 
     <script src="shared/booking-rules.js?v=20260824-toolbar-v1"></script>
-    <script src="app.js?v=20260824-sidebar-v1"></script>
+    <script src="app.js?v=20260824-reminder-default-v1"></script>
     <script src="studio-layout.js?v=20260824-toolbar-v1"></script>
 
     <!-- PWA Service Worker 注册 -->

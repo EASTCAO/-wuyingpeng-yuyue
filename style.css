@@ -337,6 +337,24 @@ textarea:focus-visible,
     background: #EDF0F4;
 }
 
+/* 菜单里的开关行：和菜单项同宽同内边距，但不是可点击的 menuitem */
+.user-menu-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: #374151;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.user-menu-switch:hover {
+    background: #F3F6FB;
+}
+
 /* 登录页面 */
 #loginPage {
     display: flex;
@@ -2180,16 +2198,6 @@ textarea:focus-visible,
         width: 100%;
     }
 
-    .toolbar-switches {
-        width: 100%;
-        justify-content: flex-start;
-        gap: 20px;
-    }
-
-    /* 换行后竖线分隔就不合适了 */
-    .toolbar-switches::before {
-        display: none;
-    }
 
     .booking-date-list {
         flex: 1 1 auto;
@@ -2306,7 +2314,8 @@ textarea:focus-visible,
     color: #666;
 }
 
-.switch-row input[type="checkbox"] {
+.switch-row input[type="checkbox"],
+.user-menu-switch input[type="checkbox"] {
     position: relative;
     width: 30px;
     height: 17px;
@@ -2320,11 +2329,13 @@ textarea:focus-visible,
     flex-shrink: 0;
 }
 
-.switch-row input[type="checkbox"]:checked {
+.switch-row input[type="checkbox"]:checked,
+.user-menu-switch input[type="checkbox"]:checked {
     background: #4C7DFF;
 }
 
-.switch-row input[type="checkbox"]::before {
+.switch-row input[type="checkbox"]::before,
+.user-menu-switch input[type="checkbox"]::before {
     content: '';
     position: absolute;
     width: 13px;
@@ -2336,11 +2347,13 @@ textarea:focus-visible,
     transition: 0.2s;
 }
 
-.switch-row input[type="checkbox"]:checked::before {
+.switch-row input[type="checkbox"]:checked::before,
+.user-menu-switch input[type="checkbox"]:checked::before {
     left: 15px;
 }
 
-.switch-row .switch-slider {
+.switch-row .switch-slider,
+.user-menu-switch .switch-slider {
     display: none;
 }
 
@@ -2476,32 +2489,10 @@ textarea:focus-visible,
     justify-content: flex-end;
     flex: 0 0 auto;
     min-width: 0;
-    /* 把这一组连同后面的开关一起推到工具栏右侧 */
+    /* 推到工具栏右侧，和左边的日期形成两段 */
     margin-left: auto;
 }
 
-/* "只看我的"和"提醒"留在工具栏而不是收进用户菜单：
-   状态需要一眼可见，尤其"提醒"——藏进菜单用户就不知道它开没开。 */
-.toolbar-switches {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    flex: 0 0 auto;
-}
-
-.toolbar-switches::before {
-    content: '';
-    align-self: stretch;
-    width: 1px;
-    margin-right: 2px;
-    background: #E8EBF0;
-}
-
-.toolbar-switches .switch-row {
-    gap: 8px;
-    justify-content: flex-start;
-    white-space: nowrap;
-}
 
 .studio-toolbar-tabs-grid {
     display: flex;
