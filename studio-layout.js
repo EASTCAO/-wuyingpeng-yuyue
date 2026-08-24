@@ -1,7 +1,6 @@
 const baseRenderStudioSections = renderStudioSections;
 const baseRenderBookings = renderBookings;
 const baseInitStudioUI = initStudioUI;
-const STUDIO_OVERVIEW_SEGMENTS = 18;
 const STUDIO_SCENE_REFERENCES = {
     '洗衣房景别': {
         src: 'assets/real-studio/laundry.webp?v=20260804-laundry-reference',
@@ -238,71 +237,14 @@ function getRealSceneState(studio, date) {
     const availableRanges = BOOKABLE_PERIODS.flatMap(period =>
         getAvailableTimeRanges(period, date, bookings)
     );
-    const totalBookableMinutes = BOOKABLE_PERIODS.reduce(
-        (total, period) => total + timeToMinutes(period.end) - timeToMinutes(period.start),
-        0
-    );
-    const totalSlots = Math.round(totalBookableMinutes / BOOKING_INTERVAL_MINUTES);
-    const availableSlots = availableRanges.reduce(
-        (total, range) => total + (timeToMinutes(range.end) - timeToMinutes(range.start)) / BOOKING_INTERVAL_MINUTES,
-        0
-    );
-    const remainingSegments = totalSlots > 0
-        ? Math.min(
-            STUDIO_OVERVIEW_SEGMENTS,
-            Math.max(availableSlots > 0 ? 1 : 0, Math.round((availableSlots / totalSlots) * STUDIO_OVERVIEW_SEGMENTS))
-        )
-        : 0;
-    const occupiedSegments = STUDIO_OVERVIEW_SEGMENTS - remainingSegments;
-    const occupiedPercentage = Math.round((occupiedSegments / STUDIO_OVERVIEW_SEGMENTS) * 100);
     const isPastDate = date < getChinaDate();
     const lastBookableStart = minutesToTime(timeToMinutes(BOOKING_END_TIME) - BOOKING_INTERVAL_MINUTES);
     const isEndedToday = date === getChinaDate() && getChinaCurrentTime() > lastBookableStart;
 
-    if (isPastDate || isEndedToday) {
-        return {
-            type: 'ended',
-            label: '已过期',
-            bookings,
-            availableRanges: [],
-            remainingSegments,
-            occupiedSegments,
-            occupiedPercentage,
-            totalSegments: STUDIO_OVERVIEW_SEGMENTS
-        };
-    }
-    if (availableRanges.length === 0) {
-        return { type: 'full', label: '已约满', bookings, availableRanges, remainingSegments: 0, occupiedSegments: STUDIO_OVERVIEW_SEGMENTS, occupiedPercentage: 100, totalSegments: STUDIO_OVERVIEW_SEGMENTS };
-    }
-    if (bookings.length > 0) {
-        return { type: 'partial', label: '部分预约', bookings, availableRanges, remainingSegments, occupiedSegments, occupiedPercentage, totalSegments: STUDIO_OVERVIEW_SEGMENTS };
-    }
-    return { type: 'available', label: '可预约', bookings, availableRanges, remainingSegments, occupiedSegments, occupiedPercentage, totalSegments: STUDIO_OVERVIEW_SEGMENTS };
-}
-
-// 卡片上的时段条：上午 8 格 + 下午 9 格，每格 30 分钟，中间留出午休间隙。
-// 原来这里是一条聚合进度条 + "14/18"——它告诉你还剩几格，却不告诉你是哪几格，
-// 而且只有已预约的卡片才有。摄影师真正要判断的是"我下午 3 点能不能用"。
-function renderSceneTimeline(studioId, state) {
-    // 日期自己取，避免从 renderRealSceneOverview 一路透传两层参数
-    const date = getStudioOverviewDate();
-    const bookings = getStudioBookingsForDates(studioId, [date]);
-    const timeline = getDayTimeline(bookings, date);
-    const label = `${state.label}。${describeDayTimeline(timeline)}`;
-
-    const groups = timeline.map(period => `
-        <span class="preview-scene-slot-group">
-            ${period.cells.map(cell =>
-                `<i class="preview-scene-slot is-${cell.state}"></i>`
-            ).join('')}
-        </span>
-    `).join('');
-
-    return `
-        <div class="preview-scene-slots" role="img" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">
-            ${groups}
-        </div>
-    `;
+    if (isPastDate || isEndedToday) return { type: 'ended', label: '已过期', bookings, availableRanges: [] };
+    if (availableRanges.length === 0) return { type: 'full', label: '已约满', bookings, availableRanges };
+    if (bookings.length > 0) return { type: 'partial', label: '部分预约', bookings, availableRanges };
+    return { type: 'available', label: '可预约', bookings, availableRanges };
 }
 
 function renderRealSceneOverview() {
@@ -366,7 +308,9 @@ function renderRealSceneCard(studio, state, index, layout = null) {
             </div>
             ${state.type === 'ended' ? `
                 <span class="preview-scene-expired-label" role="status">已过期</span>
-            ` : renderSceneTimeline(studio.id, state)}
+            ` : state.type === 'full' ? `
+                <span class="preview-scene-full-label" role="status" aria-label="当前日期已约满">已约满</span>
+            ` : ''}
             ${reference ? `
                 <figure class="preview-scene-reference-popover" aria-hidden="true">
                     <img src="${escapeHtml(reference.src)}" alt="${escapeHtml(reference.alt)}" decoding="async">
