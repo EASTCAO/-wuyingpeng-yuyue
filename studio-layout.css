@@ -461,10 +461,6 @@
     position: absolute;
 }
 
-.preview-floor-map-sixth-floor .preview-scene-card h4 {
-    color: #252B33;
-}
-
 .preview-floor-map-sixth-floor .preview-scene-card {
     min-height: 0;
     padding: 12px;
@@ -477,6 +473,36 @@
 
 .preview-floor-map-sixth-floor .preview-scene-card h4 {
     color: #252B33;
+}
+
+/* 6F 画布默认缩放到 70%，声明值会被整体压掉三成：
+   14px 的景名实际只有 9.8px、8px 的进度条数字只有 5.6px，都低于可读下限。
+   这里按 1/0.7 反向补偿回来。7F 实景棚是 1:1 渲染，不受影响也不需要跟着放大。 */
+.preview-floor-map-sixth-floor .preview-scene-card h4 {
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.preview-floor-map-sixth-floor .preview-scene-progress {
+    width: 78%;
+    margin-top: 12px;
+}
+
+.preview-floor-map-sixth-floor .preview-scene-progress-track {
+    height: 10px;
+    border-radius: 5px;
+}
+
+.preview-floor-map-sixth-floor .preview-scene-progress small {
+    margin-top: 6px;
+    font-size: 14px;
+}
+
+.preview-floor-map-sixth-floor .preview-scene-full-label,
+.preview-floor-map-sixth-floor .preview-scene-expired-label {
+    padding: 4px 9px;
+    font-size: 13px;
 }
 
 .preview-scene-card {
