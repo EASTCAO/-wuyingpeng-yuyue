@@ -1255,11 +1255,17 @@ function openSimpleVideoBooking(taskId, targetDate) {
     showAddBookingForm(undefined, null, { taskId, targetDate });
 }
 
-// 顶部日期切换器：只渲染真正能选的日期。
-// 以前这里是 7 天周历 + 上/下周翻页，但可选范围只有今天和明天——
-// 5 个日期按钮永久禁用，两个翻页箭头一周里有 6 天也是禁用的。
+// 顶部日期条：展示整周 7 天，但只有真正能选的（今天/明天，管理员多一个昨天）可点。
+// 其余日期置灰——它们提供"今天是星期几、在一周里的哪个位置"这个参照。
 function getToolbarDates() {
-    return getSelectableDates({ isAdmin: currentUser === 'admin' });
+    const isAdmin = currentUser === 'admin';
+    const selectable = new Map(getSelectableDates({ isAdmin }).map(item => [item.date, item.label]));
+    return getVisibleWeekDates({ isAdmin }).map(date => ({
+        date,
+        label: selectable.get(date) || '',
+        weekday: getWeekdayLabel(date),
+        selectable: selectable.has(date)
+    }));
 }
 
 function renderBookingDateSwitcher() {
@@ -1270,15 +1276,20 @@ function renderBookingDateSwitcher() {
     list.innerHTML = getToolbarDates().map(option => {
         const [, month, day] = option.date.split('-');
         const isActive = option.date === activeDate;
-        return `<button type="button" class="booking-date-item${isActive ? ' active' : ''}" onclick="selectBookingDate('${option.date}')" aria-pressed="${isActive}">
-            <span class="booking-date-name">${option.label}</span>
-            <small class="booking-date-detail">${getWeekdayLabel(option.date)} ${Number(month)}.${Number(day)}</small>
+        const classes = ['booking-date-item'];
+        if (isActive) classes.push('active');
+        if (!option.selectable) classes.push('is-locked');
+        // 今天/明天用口语标签，其余显示星期几；title 里给完整信息避免歧义
+        const title = `${option.weekday} ${Number(month)}月${Number(day)}日${option.selectable ? '' : '（不在可预约范围内）'}`;
+        return `<button type="button" class="${classes.join(' ')}" onclick="selectBookingDate('${option.date}')" aria-pressed="${isActive}" title="${escapeHtml(title)}"${option.selectable ? '' : ' disabled'}>
+            <span class="booking-date-name">${option.label || option.weekday}</span>
+            <small class="booking-date-detail">${Number(month)}.${Number(day)}</small>
         </button>`;
     }).join('');
 }
 
 function selectBookingDate(date) {
-    if (!getToolbarDates().some(option => option.date === date)) return;
+    if (!isSelectableDate(date, { isAdmin: currentUser === 'admin' })) return;
     selectedDate = date;
     currentDateRange = 'custom';
     renderBookingDateSwitcher();

@@ -220,6 +220,32 @@
         return parts.join('，');
     }
 
+    // 纯日期加减，不依赖"现在"。用 UTC 构造避免本地时区把日期算偏一天。
+    function shiftDate(date, offsetDays) {
+        const [year, month, day] = getDateOnly(date).split('-').map(Number);
+        return new Date(Date.UTC(year, month - 1, day + offsetDays)).toISOString().slice(0, 10);
+    }
+
+    // 顶部日期条展示的 7 天。正常情况就是今天所在的周一到周日。
+    //
+    // 边界：周日时"明天"是下周一，落在本周之外；管理员在周一时"昨天"是上周日。
+    // 严格按周一到周日切会让这些可选日期点不到，所以窗口整体平移到刚好装下它们
+    // （可选日期最多连续 3 天，7 天窗口一定装得下）。星期几标签照实显示，不会有歧义。
+    function getVisibleWeekDates({ isAdmin = false, now = Date.now() } = {}) {
+        const selectable = getSelectableDates({ isAdmin, now }).map(item => item.date);
+        const today = getChinaDate(0, now);
+        const [year, month, day] = today.split('-').map(Number);
+        const mondayOffset = (new Date(Date.UTC(year, month - 1, day)).getUTCDay() + 6) % 7;
+
+        let start = shiftDate(today, -mondayOffset);
+        const first = selectable[0];
+        const last = selectable[selectable.length - 1];
+        if (first < start) start = first;
+        else if (last > shiftDate(start, 6)) start = shiftDate(last, -6);
+
+        return Array.from({ length: 7 }, (_, index) => shiftDate(start, index));
+    }
+
     return {
         BOOKING_INTERVAL_MINUTES,
         BOOKING_START_TIME,
@@ -244,6 +270,8 @@
         getSelectableDates,
         isSelectableDate,
         getWeekdayLabel,
+        shiftDate,
+        getVisibleWeekDates,
         getDayTimeline,
         describeDayTimeline
     };

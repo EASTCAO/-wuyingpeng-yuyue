@@ -2199,16 +2199,26 @@ textarea:focus-visible,
     }
 
 
+    /* 手机端 7 天平分整行 */
     .booking-date-list {
         flex: 1 1 auto;
-        gap: 6px;
+        gap: 2px;
     }
 
     .booking-date-item {
         flex: 1 1 0;
-        justify-content: center;
-        min-height: 34px;
-        padding: 5px 9px;
+        width: auto;
+        min-width: 0;
+        min-height: 40px;
+        padding: 4px 1px;
+    }
+
+    .booking-date-name {
+        font-size: 11px;
+    }
+
+    .booking-date-detail {
+        font-size: 10px;
     }
 
     .studio-toolbar-tabs-grid {
@@ -2507,41 +2517,57 @@ textarea:focus-visible,
     gap: 3px;
 }
 
-/* 日期切换器：可选日期通常只有 2 个（管理员 3 个），用一组胶囊按钮就够了 */
+/* 日期切换器：展示整周 7 天，只有今天/明天（管理员多一个昨天）可点。
+   置灰的 5 天不是摆设——它们给出"今天是星期几、在一周里的哪个位置"这个参照。 */
 .booking-date-list {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     min-width: 0;
 }
 
 .booking-date-item {
     display: flex;
-    align-items: baseline;
-    gap: 6px;
-    min-height: 32px;
-    padding: 6px 14px;
-    border: 1px solid #E3E7EC;
-    border-radius: 999px;
-    background: #FFFFFF;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    width: 52px;
+    min-height: 38px;
+    padding: 4px 2px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
     color: #374151;
     font: inherit;
     cursor: pointer;
 }
 
-.booking-date-item:hover:not(.active) {
-    border-color: #B8C3D3;
+.booking-date-item:hover:not(.active):not(:disabled) {
+    border-color: #D8DEE8;
     background: #F7F9FC;
 }
 
+/* 不可选的日期：保留可读性但明确不可交互，不要淡到看不见 */
+.booking-date-item.is-locked {
+    color: #A8B0BB;
+    cursor: not-allowed;
+}
+
 .booking-date-name {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
+    line-height: 1.2;
 }
 
 .booking-date-detail {
     color: #8A94A2;
     font-size: 11px;
+    line-height: 1.2;
+}
+
+.booking-date-item.is-locked .booking-date-detail {
+    color: #B6BDC7;
 }
 
 /* 日期用浅色选中态、影棚 tab 用实心蓝：同一行里两个实心蓝块会互相抢注意力 */

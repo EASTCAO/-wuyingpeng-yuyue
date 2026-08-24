@@ -292,3 +292,58 @@ test('时段条能压成一句给读屏用的话', () => {
     );
     assert.match(rules.describeDayTimeline(partial), /^上午剩 4 个时段可约，最早 10:30，下午全天可约$/);
 });
+
+test('日期条展示整周 7 天', () => {
+    const week = rules.getVisibleWeekDates({ now: NOON });
+    assert.equal(week.length, 7);
+    // 2026-08-24 是周一，正常情况就是周一到周日
+    assert.deepEqual(week, [
+        '2026-08-24', '2026-08-25', '2026-08-26', '2026-08-27',
+        '2026-08-28', '2026-08-29', '2026-08-30'
+    ]);
+    assert.deepEqual(week.map(rules.getWeekdayLabel),
+        ['周一', '周二', '周三', '周四', '周五', '周六', '周日']);
+});
+
+test('可选日期跨周时窗口整体平移，保证每个可选日期都在窗口内', () => {
+    const cases = [
+        ['周三', chinaTime(2026, 8, 26, 12), false],
+        ['周六', chinaTime(2026, 8, 29, 12), false],
+        ['周日（明天是下周一）', chinaTime(2026, 8, 30, 12), false],
+        ['周一管理员（昨天是上周日）', chinaTime(2026, 8, 24, 12), true],
+        ['周日管理员', chinaTime(2026, 8, 30, 12), true],
+        ['跨月周一', chinaTime(2026, 8, 31, 12), false],
+        ['跨年', chinaTime(2026, 12, 31, 12), true]
+    ];
+    for (const [name, now, isAdmin] of cases) {
+        const week = rules.getVisibleWeekDates({ isAdmin, now });
+        assert.equal(week.length, 7, `${name}: 始终 7 天`);
+        // 连续 7 天，不跳日
+        for (let i = 1; i < week.length; i += 1) {
+            assert.equal(week[i], rules.shiftDate(week[i - 1], 1), `${name}: 第 ${i} 天必须连续`);
+        }
+        // 所有可选日期都必须点得到
+        for (const item of rules.getSelectableDates({ isAdmin, now })) {
+            assert.ok(week.includes(item.date), `${name}: 可选日期 ${item.date}(${item.label}) 必须在窗口内`);
+        }
+        assert.ok(week.includes(rules.getChinaDate(0, now)), `${name}: 今天必须在窗口内`);
+    }
+});
+
+test('周二到周六这些常规日子，窗口就是标准的周一到周日', () => {
+    for (const day of [25, 26, 27, 28, 29]) {
+        const week = rules.getVisibleWeekDates({ now: chinaTime(2026, 8, day, 12) });
+        assert.equal(rules.getWeekdayLabel(week[0]), '周一', `8.${day} 应从周一开始`);
+        assert.equal(rules.getWeekdayLabel(week[6]), '周日', `8.${day} 应到周日结束`);
+    }
+});
+
+test('shiftDate 是纯日期加减，能跨月跨年', () => {
+    assert.equal(rules.shiftDate('2026-08-24', 1), '2026-08-25');
+    assert.equal(rules.shiftDate('2026-08-31', 1), '2026-09-01');
+    assert.equal(rules.shiftDate('2026-09-01', -1), '2026-08-31');
+    assert.equal(rules.shiftDate('2026-12-31', 1), '2027-01-01');
+    assert.equal(rules.shiftDate('2027-01-01', -1), '2026-12-31');
+    assert.equal(rules.shiftDate('2026-02-28', 1), '2026-03-01', '2026 不是闰年');
+    assert.equal(rules.shiftDate('2026-08-24', 0), '2026-08-24');
+});
