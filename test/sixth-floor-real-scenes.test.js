@@ -109,7 +109,7 @@ test('点击已过期实景棚会自动切换到下一可预约日期并打开�
     );
     assert.match(openCardSource, /getRealSceneState\(studio, overviewDate\)/);
     assert.match(openCardSource, /if \(state\?\.type === 'ended'\)/);
-    assert.match(openCardSource, /selectWeekDate\(targetDate\);/);
+    assert.match(openCardSource, /selectBookingDate\(targetDate\);/);
     assert.match(openCardSource, /showToast\(`当前日期已过期，已为你切换到\$\{formatShortDate\(targetDate\)\}`/);
     assert.match(openCardSource, /showAddBookingForm\(studioId\);/);
 });
@@ -175,7 +175,7 @@ test('楼层和影棚类型使用四选一高频切换控件', () => {
     assert.match(pageStyles, /\.studio-toolbar-controls\s*\{/);
     assert.match(pageStyles, /display:\s*flex;/);
     assert.match(pageStyles, /justify-content:\s*flex-end;/);
-    assert.match(pageStyles, /\.studio-view-tabs\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(2,/);
+    assert.match(pageStyles, /\.studio-view-tabs\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(4,/);
     assert.match(pageStyles, /\.studio-view-tab\s*\{[\s\S]*?min-height:\s*30px;[\s\S]*?border-radius:\s*4px;/);
     assert.match(pageStyles, /\.studio-view-tab\.active\s*\{[\s\S]*?background:\s*#4C7DFF;[\s\S]*?color:\s*#FFFFFF;/);
 });

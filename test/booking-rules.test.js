@@ -186,3 +186,39 @@ test('营业时段常量是冻结的，不会被调用方意外改掉', () => {
     assert.equal(rules.BOOKABLE_PERIODS[0].start, '08:30');
     assert.equal(rules.BOOKABLE_PERIODS[1].end, '18:30');
 });
+
+test('可选日期只有今天和明天，管理员多一个昨天', () => {
+    const photographer = rules.getSelectableDates({ now: NOON });
+    assert.deepEqual(photographer.map(item => item.date), ['2026-08-24', '2026-08-25']);
+    assert.deepEqual(photographer.map(item => item.label), ['今天', '明天']);
+
+    const admin = rules.getSelectableDates({ isAdmin: true, now: NOON });
+    assert.deepEqual(admin.map(item => item.date), ['2026-08-23', '2026-08-24', '2026-08-25']);
+    assert.deepEqual(admin.map(item => item.label), ['昨天', '今天', '明天']);
+    assert.equal(admin[0].offset, -1, '昨天排在最前面');
+});
+
+test('可选日期与"能不能预约"是两条独立规则', () => {
+    // 管理员能查看昨天，但昨天依然不可预约。
+    assert.ok(rules.isSelectableDate('2026-08-23', { isAdmin: true, now: NOON }));
+    assert.ok(!rules.isValidBookingDate('2026-08-23', NOON));
+
+    assert.ok(!rules.isSelectableDate('2026-08-23', { now: NOON }), '普通用户看不到昨天');
+    assert.ok(!rules.isSelectableDate('2026-08-26', { isAdmin: true, now: NOON }), '后天不在切换器里');
+});
+
+test('可选日期跨月跨年都连续', () => {
+    const acrossMonth = rules.getSelectableDates({ isAdmin: true, now: chinaTime(2026, 8, 31, 10) });
+    assert.deepEqual(acrossMonth.map(item => item.date), ['2026-08-30', '2026-08-31', '2026-09-01']);
+
+    const acrossYear = rules.getSelectableDates({ isAdmin: true, now: chinaTime(2026, 12, 31, 10) });
+    assert.deepEqual(acrossYear.map(item => item.date), ['2026-12-30', '2026-12-31', '2027-01-01']);
+});
+
+test('星期几只由日期字符串决定，不受运行环境时区影响', () => {
+    assert.equal(rules.getWeekdayLabel('2026-08-24'), '周一');
+    assert.equal(rules.getWeekdayLabel('2026-08-25'), '周二');
+    assert.equal(rules.getWeekdayLabel('2026-08-29'), '周六');
+    assert.equal(rules.getWeekdayLabel('2026-08-30'), '周日');
+    assert.equal(rules.getWeekdayLabel('2026-08-24T16:00:00.000Z'), '周一', 'ISO 时间戳也只看日期部分');
+});

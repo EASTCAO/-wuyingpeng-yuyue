@@ -156,6 +156,30 @@
         return Math.round((bookedSlots / totalSlots) * 100);
     }
 
+    // 顶部日期切换器实际可选的日期。普通摄影师只有今天和明天，
+    // 管理员多一个昨天用于查看昨天的记录。
+    // 以前这里是一个 7 天周历：5 个按钮永久禁用，翻页箭头一周里有 6 天也点不动。
+    function getSelectableDates({ isAdmin = false, now = Date.now() } = {}) {
+        const dates = [
+            { date: getChinaDate(0, now), label: '今天', offset: 0 },
+            { date: getChinaDate(1, now), label: '明天', offset: 1 }
+        ];
+        if (isAdmin) dates.unshift({ date: getChinaDate(-1, now), label: '昨天', offset: -1 });
+        return dates;
+    }
+
+    function isSelectableDate(date, options) {
+        return getSelectableDates(options).some(item => item.date === getDateOnly(date));
+    }
+
+    // 星期几，只依赖日期字符串本身，不受运行环境时区影响。
+    function getWeekdayLabel(date) {
+        const [year, month, day] = getDateOnly(date).split('-').map(Number);
+        return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][
+            new Date(Date.UTC(year, month - 1, day)).getUTCDay()
+        ];
+    }
+
     return {
         BOOKING_INTERVAL_MINUTES,
         BOOKING_START_TIME,
@@ -176,6 +200,9 @@
         isBookingStartAvailable,
         isBookingEditable,
         getBookingStatus,
-        getBookedSlotPercentage
+        getBookedSlotPercentage,
+        getSelectableDates,
+        isSelectableDate,
+        getWeekdayLabel
     };
 });

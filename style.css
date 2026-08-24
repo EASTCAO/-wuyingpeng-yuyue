@@ -2147,14 +2147,26 @@ textarea:focus-visible,
         flex-wrap: wrap;
     }
 
-    .week-date-selector {
+    .booking-date-list {
         flex: 1 1 auto;
-        overflow: hidden;
+        gap: 6px;
+    }
+
+    .booking-date-item {
+        flex: 1 1 0;
+        justify-content: center;
+        min-height: 36px;
+        padding: 6px 10px;
     }
 
     .studio-toolbar-controls {
         width: 100%;
         justify-content: flex-end;
+    }
+
+    /* 手机端换行显示，竖线分隔就不合适了 */
+    .studio-toolbar-controls::before {
+        display: none;
     }
 
     .studio-toolbar-tabs-grid {
@@ -2164,29 +2176,6 @@ textarea:focus-visible,
     .studio-toolbar-tabs-stack {
         align-items: flex-end;
         gap: 6px;
-    }
-
-    .week-date-list {
-        flex: 1 1 auto;
-        overflow-x: auto;
-        scrollbar-width: none;
-        grid-template-columns: repeat(7, 48px);
-        gap: 4px;
-    }
-
-    .week-date-list::-webkit-scrollbar {
-        display: none;
-    }
-
-    .week-date-item {
-        width: 48px;
-        min-width: 48px;
-    }
-
-    .week-nav-button {
-        width: 30px;
-        height: 30px;
-        flex-basis: 30px;
     }
 
     .date-btn {
@@ -2466,27 +2455,34 @@ textarea:focus-visible,
     justify-content: flex-start;
 }
 
+/* 日期和楼层棚型都是"我在看哪一批预约"的筛选条件，靠在一起成为一条筛选栏。
+   以前用 space-between 把两组顶到两端，中间留出 1000px 以上的空白，
+   视线要来回横跨整个屏幕。 */
 .date-nav {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    justify-content: flex-start;
+    gap: 20px;
     min-width: 0;
     width: 100%;
 }
 
-.week-date-selector {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-}
 
 .studio-toolbar-controls {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: flex-start;
     flex: 0 0 auto;
     min-width: 0;
+}
+
+/* 一条竖线把"选哪天"和"选哪个棚"分开，避免两组按钮糊成一片 */
+.studio-toolbar-controls::before {
+    content: '';
+    align-self: stretch;
+    width: 1px;
+    margin-right: 20px;
+    background: #E8EBF0;
 }
 
 .studio-toolbar-tabs-grid {
@@ -2502,61 +2498,52 @@ textarea:focus-visible,
     gap: 3px;
 }
 
-.week-date-list {
-    display: grid;
-    grid-template-columns: repeat(7, 54px);
-    gap: 8px;
-}
-
-.week-nav-button {
-    width: 34px;
-    height: 34px;
-    flex: 0 0 34px;
-    border: 0;
-    border-radius: 50%;
-    background: #eef6ff;
-    color: #2563eb;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-.week-date-item {
-    width: 54px;
-    min-height: 48px;
-    padding: 5px 3px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: #374151;
-    cursor: pointer;
+/* 日期切换器：可选日期通常只有 2 个（管理员 3 个），用一组胶囊按钮就够了 */
+.booking-date-list {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 2px;
+    gap: 8px;
+    min-width: 0;
 }
 
-.week-date-item span {
+.booking-date-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-height: 32px;
+    padding: 6px 14px;
+    border: 1px solid #E3E7EC;
+    border-radius: 999px;
+    background: #FFFFFF;
+    color: #374151;
+    font: inherit;
+    cursor: pointer;
+}
+
+.booking-date-item:hover:not(.active) {
+    border-color: #B8C3D3;
+    background: #F7F9FC;
+}
+
+.booking-date-name {
     font-size: 13px;
-}
-
-.week-date-item small {
-    color: #6b7280;
-    font-size: 11px;
-}
-
-.week-date-item.today:not(.active) {
-    background: #f3f4f6;
-}
-
-.week-date-item.active {
-    background: #e6f1ff;
-    color: #1677ff;
     font-weight: 600;
 }
 
-.week-date-item.active small {
-    color: #1677ff;
+.booking-date-detail {
+    color: #8A94A2;
+    font-size: 11px;
+}
+
+/* 日期用浅色选中态、影棚 tab 用实心蓝：同一行里两个实心蓝块会互相抢注意力 */
+.booking-date-item.active {
+    border-color: #BFD4FF;
+    background: #E9F1FF;
+    color: #1D4ED8;
+}
+
+.booking-date-item.active .booking-date-detail {
+    color: #4C7DFF;
 }
 
 .date-btn {
@@ -4914,9 +4901,10 @@ textarea:focus-visible,
 }
 
 /* 新增影棚四选一功能沿用正式站的蓝灰控件风格。 */
+/* 4 个组合排成一行，任意视图都是一步到位；两行网格会把整条工具栏撑高一截 */
 .studio-view-tabs {
     display: grid;
-    grid-template-columns: repeat(2, minmax(104px, 1fr));
+    grid-template-columns: repeat(4, minmax(88px, auto));
     gap: 4px;
 }
 
@@ -4946,6 +4934,7 @@ textarea:focus-visible,
 }
 
 @media (max-width: 768px) {
+    /* 手机屏放不下一行 4 个，回到两行两列 */
     .studio-view-tabs {
         width: 100%;
         grid-template-columns: repeat(2, minmax(0, 1fr));

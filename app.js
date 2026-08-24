@@ -20,7 +20,7 @@ let selectedBookingId = null;
 let currentView = 'list'; // 'list' or 'stats'
 let currentDateRange = 'today'; // 'today', 'tomorrow', 'week'
 let selectedDate = null;
-let visibleWeekDate = null;
+
 let pendingCancelBookingId = null;
 let pendingCancelStudioId = null;
 let reminderInterval = null;
@@ -1150,7 +1150,7 @@ function showMainPage() {
     document.getElementById('mainPage').classList.remove('hidden');
     document.getElementById('currentUser').textContent = currentUser;
     initStudioUI();
-    renderWeekDateSelector();
+    renderBookingDateSwitcher();
     switchView('list');
 
     // admin 用户显示用户管理入口
@@ -1265,57 +1265,34 @@ function openSimpleVideoBooking(taskId, targetDate) {
     showAddBookingForm(undefined, null, { taskId, targetDate });
 }
 
-function renderWeekDateSelector() {
-    const list = document.getElementById('weekDateList');
-    if (!list || !window.WeekDateSelector) return;
+// 顶部日期切换器：只渲染真正能选的日期。
+// 以前这里是 7 天周历 + 上/下周翻页，但可选范围只有今天和明天——
+// 5 个日期按钮永久禁用，两个翻页箭头一周里有 6 天也是禁用的。
+function getToolbarDates() {
+    return getSelectableDates({ isAdmin: currentUser === 'admin' });
+}
 
-    const today = getChinaDate();
-    const activeDate = selectedDate || today;
-    const weekAnchor = visibleWeekDate || activeDate;
-    const weekDates = WeekDateSelector.getWeekDates(weekAnchor);
-    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    const minimumDate = currentUser === 'admin' ? getChinaDate(-1) : today;
-    const maximumDate = getChinaDate(1);
+function renderBookingDateSwitcher() {
+    const list = document.getElementById('bookingDateList');
+    if (!list) return;
 
-    list.innerHTML = weekDates.map((date, index) => {
-        const [, month, day] = date.split('-');
-        const classes = ['week-date-item'];
-        const isSelectable = date >= minimumDate && date <= maximumDate;
-        if (date === activeDate) classes.push('active');
-        if (date === today) classes.push('today');
-        return `<button type="button" class="${classes.join(' ')}" onclick="selectWeekDate('${date}')" aria-pressed="${date === activeDate}"${isSelectable ? '' : ' disabled'}>
-            <span>${weekdays[index]}</span>
-            <small>${Number(month)}.${Number(day)}</small>
+    const activeDate = selectedDate || getChinaDate();
+    list.innerHTML = getToolbarDates().map(option => {
+        const [, month, day] = option.date.split('-');
+        const isActive = option.date === activeDate;
+        return `<button type="button" class="booking-date-item${isActive ? ' active' : ''}" onclick="selectBookingDate('${option.date}')" aria-pressed="${isActive}">
+            <span class="booking-date-name">${option.label}</span>
+            <small class="booking-date-detail">${getWeekdayLabel(option.date)} ${Number(month)}.${Number(day)}</small>
         </button>`;
     }).join('');
-
-    const canMoveToWeek = direction => WeekDateSelector.weekIntersectsRange(
-        WeekDateSelector.shiftDate(weekAnchor, direction * 7),
-        minimumDate,
-        maximumDate
-    );
-    document.querySelector('[data-week-direction="previous"]')?.toggleAttribute('disabled', !canMoveToWeek(-1));
-    document.querySelector('[data-week-direction="next"]')?.toggleAttribute('disabled', !canMoveToWeek(1));
 }
 
-function selectWeekDate(date) {
-    const minimumDate = currentUser === 'admin' ? getChinaDate(-1) : getChinaDate();
-    if (date < minimumDate || date > getChinaDate(1)) return;
+function selectBookingDate(date) {
+    if (!getToolbarDates().some(option => option.date === date)) return;
     selectedDate = date;
-    visibleWeekDate = date;
     currentDateRange = 'custom';
-    renderWeekDateSelector();
+    renderBookingDateSwitcher();
     if (currentView === 'list') renderBookings();
-}
-
-function shiftWeek(direction) {
-    const anchor = visibleWeekDate || selectedDate || getChinaDate();
-    const nextDate = WeekDateSelector.shiftDate(anchor, direction * 7);
-    const minimumDate = currentUser === 'admin' ? getChinaDate(-1) : getChinaDate();
-    const maximumDate = getChinaDate(1);
-    if (!WeekDateSelector.weekIntersectsRange(nextDate, minimumDate, maximumDate)) return;
-    visibleWeekDate = nextDate;
-    renderWeekDateSelector();
 }
 
 // 初始化移动端侧边栏状态
@@ -2852,73 +2829,6 @@ function showStatsLoading() {
     if (totalHours) totalHours.textContent = '...';
     if (totalPhotographers) totalPhotographers.textContent = '...';
     if (tableBody) tableBody.innerHTML = '<tr><td colspan="6" class="empty-message">正在加载统计数据...</td></tr>';
-}
-
-// 选择日期范围
-function selectDateRange(range, btn) {
-    currentDateRange = range;
-
-    // 更新按钮状态
-    document.querySelectorAll('.date-btn').forEach(b => {
-        b.classList.remove('active');
-    });
-    if (btn) {
-        btn.classList.add('active');
-    }
-
-    // 重新渲染视图
-    if (currentView === 'list') {
-        renderBookings();
-    } else if (currentView === 'stats') {
-        // 统计视图不需要日期范围切换，因为它有自己的月份筛选器
-        // 但如果未来需要，可以在这里添加
-    }
-
-    // 更新今日使用情况
-    updateTodayUsage();
-}
-
-// 显示日期选择器
-function showDatePicker() {
-    const input = document.createElement('input');
-    input.type = 'date';
-    input.style.position = 'fixed';
-    input.style.top = '-100px';
-    input.style.left = '-100px';
-    input.style.opacity = '0';
-    input.style.pointerEvents = 'none';
-    document.body.appendChild(input);
-
-    const cleanup = () => {
-        if (input.parentNode) {
-            document.body.removeChild(input);
-        }
-    };
-
-    input.addEventListener('change', () => {
-        selectedDate = input.value;
-        currentDateRange = 'custom';
-
-        // 更新按钮状态
-        document.querySelectorAll('.date-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector('.date-picker-btn').classList.add('active');
-
-        // 重新渲染
-        if (currentView === 'list') {
-            renderBookings();
-        }
-
-        cleanup();
-    });
-
-    // 如果用户取消选择，也要清理
-    input.addEventListener('blur', () => {
-        setTimeout(cleanup, 200);
-    });
-
-    input.click();
 }
 
 // 渲染时间轴视图

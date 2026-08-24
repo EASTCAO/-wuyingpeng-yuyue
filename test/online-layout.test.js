@@ -21,7 +21,7 @@ test('登录页保持正式站的卡片和按钮尺寸', () => {
 });
 
 test('新增影棚四选一控件保留正式站视觉语言', () => {
-    assert.match(styles, /\.studio-view-tabs[\s\S]*grid-template-columns: repeat\(2/);
+    assert.match(styles, /\.studio-view-tabs[\s\S]*grid-template-columns: repeat\(4/);
     assert.match(styles, /\.studio-view-tab[\s\S]*border-radius: 4px/);
     assert.match(styles, /\.studio-view-tab\.active[\s\S]*background: #4C7DFF/);
 });

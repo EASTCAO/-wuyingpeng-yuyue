@@ -496,7 +496,7 @@ function openRealSceneCard(studioId) {
         const targetDate = overviewDate < getChinaDate() && getChinaCurrentTime() <= BOOKING_END_TIME
             ? getChinaDate()
             : getChinaDate(1);
-        selectWeekDate(targetDate);
+        selectBookingDate(targetDate);
         showToast(`当前日期已过期，已为你切换到${formatShortDate(targetDate)}`, 'success');
     }
     showAddBookingForm(studioId);
