@@ -368,6 +368,16 @@
     pointer-events: none;
 }
 
+/* 实景棚画布底色。
+   原来画布是 #F8FAFC、卡片实际画出来是 #FCFCFD~#F5F7F9，两者对比只有 1.02:1，
+   边框还是 rgba(255,255,255,.8)——比背景更亮，等于没有边框，
+   整块画面的层次全挤在 1.02~1.18 之间，看久了就是一片发灰、找不到边。
+   这里把底压深，让接近纯白的卡片能浮起来。 */
+.studio-booking-page .list-view.real-scene-active,
+.sixth-floor-canvas-viewport {
+    background: #E9EEF4;
+}
+
 .sixth-floor-canvas-viewport {
     position: relative;
     width: 100%;
@@ -375,7 +385,6 @@
     overflow: hidden;
     border: 0;
     border-radius: 0;
-    background: #F8FAFC;
     box-shadow: none;
     cursor: grab;
 }
@@ -459,7 +468,9 @@
 .preview-floor-map-sixth-floor .preview-scene-card {
     min-height: 0;
     padding: 12px;
-    border-color: #DCE1E8;
+    /* 跟着 --card-border 走，不要写死颜色：写死会让 6F 画布上的
+       "部分预约 / 已约满" 卡片丢掉自己的橙色边框。 */
+    border-color: var(--card-border);
     border-radius: 14px;
     background: #FFFFFF;
 }
@@ -471,8 +482,10 @@
 .preview-scene-card {
     --scene-base: #F1F4F7;
     --state-wash: rgba(255, 255, 255, 0);
-    --card-edge: color-mix(in srgb, var(--scene-base), #70808C 12%);
-    --card-border: rgba(255, 255, 255, 0.8);
+    --card-edge: color-mix(in srgb, var(--scene-base), #70808C 30%);
+    /* 实色边框：对画布底 3.01:1、对卡片 3.51:1，达到 WCAG 对非文字 UI 边界的 3:1 要求。
+       原来是半透明白，比背景还亮，边界完全靠投影撑。 */
+    --card-border: #7C8A9E;
     --card-shadow: rgba(44, 58, 68, 0.11);
     --card-depth: 2px;
     --card-hover-depth: 3px;
@@ -488,13 +501,15 @@
     overflow: hidden;
     border: 1px solid var(--card-border);
     border-radius: 8px;
+    /* 卡片提到接近纯白，只在底部留一点场景固有色。
+       原来顶部是 72% 白覆盖，画出来和画布底几乎同色。 */
     background:
         linear-gradient(var(--state-wash), var(--state-wash)),
         linear-gradient(
             138deg,
-            color-mix(in srgb, var(--scene-base), #FFFFFF 72%) 0%,
-            color-mix(in srgb, var(--scene-base), #FFFFFF 38%) 45%,
-            color-mix(in srgb, var(--scene-base), #FFFFFF 10%) 100%
+            #FFFFFF 0%,
+            color-mix(in srgb, var(--scene-base), #FFFFFF 82%) 55%,
+            color-mix(in srgb, var(--scene-base), #FFFFFF 58%) 100%
         );
     backdrop-filter: blur(14px) saturate(108%);
     -webkit-backdrop-filter: blur(14px) saturate(108%);
