@@ -13,11 +13,32 @@ test('全局界面不再加载 Apple 风格覆盖层', () => {
     assert.doesNotMatch(studioStyles, /Apple-inspired product-surface refinements/);
 });
 
-test('登录页保持正式站的卡片和按钮尺寸', () => {
-    assert.match(styles, /\.login-card\s*\{[\s\S]*?padding: 30px;[\s\S]*?border-radius: var\(--radius-lg\);[\s\S]*?box-shadow: var\(--shadow-raised\)/);
-    assert.match(styles, /\.login-form input\s*\{[\s\S]*?padding: 10px 12px 10px 36px;[\s\S]*?border-radius: var\(--radius-md\);/);
-    assert.match(styles, /\.login-btn\s*\{[\s\S]*?min-height: 42px;[\s\S]*?border-radius: var\(--radius-md\);/);
-    assert.match(styles, /\.guest-btn\s*\{[\s\S]*?min-height: 42px;[\s\S]*?border-radius: var\(--radius-md\);/);
+test('登录页走设计系统而不是散落的字面值', () => {
+    // 不再钉死具体 px：token 层建立后，该断言的是"用了哪个 token"，
+    // 而不是"这个值是多少"——否则每次调尺寸都要改测试。
+    const block = name => {
+        const start = styles.indexOf(`${name} {`);
+        assert.notEqual(start, -1, `找不到 ${name}`);
+        return styles.slice(start, styles.indexOf('}', start));
+    };
+
+    for (const name of ['.login-card', '.login-form input', '.login-btn', '.guest-btn']) {
+        assert.match(block(name), /border-radius: var\(--radius-/, `${name} 圆角必须走 token`);
+    }
+    // 卡片和输入框用 Cal.com 的阴影体系，输入框靠 ring 而非 border 围合
+    assert.match(block('.login-card'), /box-shadow: var\(--shadow-/);
+    assert.match(block('.login-form input'), /box-shadow: var\(--shadow-ring\)/);
+    assert.match(block('.guest-btn'), /box-shadow: var\(--shadow-ring\)/);
+
+    // 主按钮是 Cal.com 的 Dark Primary，不是强调蓝
+    assert.match(block('.login-btn'), /background: var\(--ink\)/);
+    assert.doesNotMatch(block('.login-btn'), /var\(--accent/);
+
+    // 触控目标不小于 44px
+    for (const name of ['.login-btn', '.guest-btn']) {
+        const m = block(name).match(/min-height: (\d+)px/);
+        assert.ok(m && Number(m[1]) >= 44, `${name} 触控高度应 >= 44px`);
+    }
 });
 
 test('新增影棚四选一控件保留正式站视觉语言', () => {
