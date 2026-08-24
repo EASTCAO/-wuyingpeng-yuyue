@@ -176,7 +176,7 @@ test('楼层和影棚类型使用四选一高频切换控件', () => {
     assert.match(pageStyles, /display:\s*flex;/);
     assert.match(pageStyles, /justify-content:\s*flex-end;/);
     assert.match(pageStyles, /\.studio-view-tabs\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(4,/);
-    assert.match(pageStyles, /\.studio-view-tab\s*\{[\s\S]*?min-height:\s*30px;[\s\S]*?border-radius:\s*4px;/);
+    assert.match(pageStyles, /\.studio-view-tab\s*\{[\s\S]*?min-height:\s*26px;[\s\S]*?border-radius:\s*4px;/);
     assert.match(pageStyles, /\.studio-view-tab\.active\s*\{[\s\S]*?background:\s*#4C7DFF;[\s\S]*?color:\s*#FFFFFF;/);
 });
 

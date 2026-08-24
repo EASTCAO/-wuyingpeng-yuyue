@@ -584,54 +584,59 @@ function stopBookingAvailabilityRefresh() {
     }
 }
 
-// ============ 移动端侧边栏控制 ============
+// ============ 右上角用户菜单 ============
+// 统计 / 简易视频待办 / 用户管理 / 修改密码 / 退出登录都收在这里。
+// 原来它们在一条 160px 的固定侧栏里，摄影师日常几乎不用，白占了主内容区的宽度。
+// "只看我的" 和 "提醒" 两个开关没有收进来——状态需要一眼可见，留在工具栏上。
 
-// 打开/关闭侧边栏
-function toggleSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-
-    if (sidebar && overlay) {
-        const isActive = sidebar.classList.contains('active');
-
-        if (isActive) {
-            // 关闭侧边栏
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-            if (window.innerWidth <= 768) {
-                sidebar.style.left = '-280px';
-            }
-        } else {
-            // 打开侧边栏
-            sidebar.classList.add('active');
-            overlay.classList.add('active');
-            if (window.innerWidth <= 768) {
-                sidebar.style.left = '0';
-            }
-        }
-    }
+function isUserMenuOpen() {
+    const menu = document.getElementById('userMenu');
+    return Boolean(menu) && !menu.classList.contains('hidden');
 }
 
-// 关闭侧边栏
-function closeSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-
-    if (sidebar && overlay) {
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-        if (window.innerWidth <= 768) {
-            sidebar.style.left = '-280px';
-        }
-    }
+function openUserMenu() {
+    const menu = document.getElementById('userMenu');
+    const button = document.getElementById('userMenuButton');
+    if (!menu || !button) return;
+    menu.classList.remove('hidden');
+    button.setAttribute('aria-expanded', 'true');
+    menu.querySelector('.user-menu-item:not(.hidden):not([style*="display:none"])')?.focus({ preventScroll: true });
 }
+
+function closeUserMenu({ restoreFocus = false } = {}) {
+    const menu = document.getElementById('userMenu');
+    const button = document.getElementById('userMenuButton');
+    if (!menu || !button) return;
+    menu.classList.add('hidden');
+    button.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) button.focus({ preventScroll: true });
+}
+
+function toggleUserMenu() {
+    if (isUserMenuOpen()) closeUserMenu({ restoreFocus: true });
+    else openUserMenu();
+}
+
+// 菜单项统一走这里：先关菜单再执行，避免弹窗打开后菜单还浮在上面。
+function runFromUserMenu(action) {
+    closeUserMenu();
+    action();
+}
+
+document.addEventListener('click', event => {
+    if (!isUserMenuOpen()) return;
+    if (event.target.closest('.user-menu')) return;
+    closeUserMenu();
+});
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && isUserMenuOpen()) closeUserMenu({ restoreFocus: true });
+});
 
 // 初始化应用
 window.addEventListener('DOMContentLoaded', async () => {
     debugLog('✅ 应用初始化成功（使用 localStorage）');
 
-    // 初始化移动端侧边栏（确保页面加载时是隐藏的）
-    initMobileSidebar();
     updateOnlineStatus();
 
     // 监听任意点击以解锁音频（iOS必须）
@@ -687,23 +692,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     // 设置今天的日期为默认值
     const today = getChinaDate();
     document.getElementById('bookingDate').value = today;
-
-    // 监听窗口大小变化，确保移动端侧边栏正确显示
-    window.addEventListener('resize', () => {
-        const sidebar = document.querySelector('.sidebar');
-        if (sidebar && window.innerWidth <= 768) {
-            if (!sidebar.classList.contains('active')) {
-                sidebar.style.left = '-280px';
-            }
-        } else if (sidebar && window.innerWidth > 768) {
-            // 桌面端重置内联样式
-            sidebar.style.position = '';
-            sidebar.style.left = '';
-            sidebar.style.top = '';
-            sidebar.style.width = '';
-            sidebar.style.zIndex = '';
-        }
-    });
 });
 
 // ============ 用户账户配置 ============
@@ -1166,7 +1154,6 @@ function showMainPage() {
     }
 
     // 确保移动端侧边栏初始状态为隐藏
-    initMobileSidebar();
 
     // 加载预约数据
     loadBookings();
@@ -1237,6 +1224,9 @@ function updateSimpleVideoTaskBadge() {
     document.querySelectorAll('.simple-video-link').forEach(el => {
         el.classList.toggle('hidden', !isSimpleVideoRecipient());
     });
+    // 待办入口收进了用户菜单，菜单收起时看不到角标，
+    // 所以在菜单按钮上补一个小红点，未读时才显示。
+    document.getElementById('userMenuDot')?.classList.toggle('hidden', count === 0);
 }
 
 function renderSimpleVideoTasks() {
@@ -1293,27 +1283,6 @@ function selectBookingDate(date) {
     currentDateRange = 'custom';
     renderBookingDateSwitcher();
     if (currentView === 'list') renderBookings();
-}
-
-// 初始化移动端侧边栏状态
-function initMobileSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-
-    if (sidebar && overlay) {
-        // 确保侧边栏是隐藏的
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-
-        // 对于移动端，强制设置样式
-        if (window.innerWidth <= 768) {
-            sidebar.style.position = 'fixed';
-            sidebar.style.left = '-280px';
-            sidebar.style.top = '50px';
-            sidebar.style.width = '260px';
-            sidebar.style.zIndex = '999';
-        }
-    }
 }
 
 // 标签切换
@@ -2769,7 +2738,7 @@ async function switchView(view) {
         view = 'list';
     }
     currentView = view;
-    if (window.innerWidth <= 768) closeSidebar();
+    if (window.innerWidth <= 768) closeUserMenu();
 
     // 更新桌面端按钮状态
     document.querySelectorAll('.view-btn').forEach(btn => {

@@ -240,6 +240,103 @@ textarea:focus-visible,
     background: #E5E7EB;
 }
 
+/* ===== 右上角用户菜单 =====
+   统计 / 简易视频待办 / 用户管理 / 修改密码 / 退出都收在这里。
+   原来它们在一条 160px 的固定侧栏里，摄影师日常几乎不用，白占主内容区宽度。 */
+.user-menu {
+    position: relative;
+}
+
+.user-menu-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    background: #F3F4F6;
+    color: #1F2937;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.user-menu-button:hover {
+    background: #E5E7EB;
+}
+
+.user-menu-button[aria-expanded="true"] {
+    border-color: #4C7DFF;
+    background: #EEF3FF;
+}
+
+.user-menu-caret {
+    color: #6B7280;
+    font-size: 11px;
+    line-height: 1;
+}
+
+/* 待办入口收进菜单后角标看不见了，菜单收起时用这个小红点提示未读 */
+.user-menu-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #FF4D4F;
+}
+
+.user-menu-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    min-width: 170px;
+    padding: 6px;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    background: #FFFFFF;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+}
+
+.user-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: #374151;
+    font-size: 13px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.user-menu-item:hover,
+.user-menu-item:focus-visible {
+    background: #F3F6FB;
+    color: #4C7DFF;
+    outline: none;
+}
+
+.user-menu-item-danger {
+    color: #B42318;
+}
+
+.user-menu-item-danger:hover,
+.user-menu-item-danger:focus-visible {
+    background: #FEF3F2;
+    color: #B42318;
+}
+
+.user-menu-divider {
+    height: 1px;
+    margin: 5px 6px;
+    background: #EDF0F4;
+}
+
 /* 登录页面 */
 #loginPage {
     display: flex;
@@ -1494,29 +1591,8 @@ textarea:focus-visible,
 
 /* 响应式设计 */
 /* 移动端菜单按钮（默认隐藏） */
-.mobile-menu-btn {
-    display: none;
-    background: rgba(0, 0, 0, 0.08);
-    border: 1.5px solid rgba(0, 0, 0, 0.15);
-    color: #262626; /* 深色，确保在白色背景上可见 */
-    cursor: pointer;
-    padding: 10px;
-    margin-right: 12px;
-    border-radius: 8px;
-    transition: all 0.2s;
-    min-width: 40px;
-    min-height: 40px;
-}
 
-.mobile-menu-btn:hover {
-    background: rgba(0, 0, 0, 0.12);
-    border-color: rgba(0, 0, 0, 0.25);
-}
 
-.mobile-menu-btn:active {
-    background: rgba(0, 0, 0, 0.18);
-    transform: scale(0.95);
-}
 
 /* 移动端专属元素（默认隐藏） */
 .mobile-fab,
@@ -1525,23 +1601,7 @@ textarea:focus-visible,
 }
 
 /* 侧边栏遮罩层（默认隐藏） */
-.sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 998;
-    opacity: 0;
-    transition: opacity 0.3s;
-}
 
-.sidebar-overlay.active {
-    display: block;
-    opacity: 1;
-}
 
 @media (max-width: 768px) {
     .booking-form-layout {
@@ -1567,13 +1627,6 @@ textarea:focus-visible,
     /* 基础布局 */
     .container {
         padding: 0;
-    }
-
-    /* 显示移动端菜单按钮 */
-    .mobile-menu-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
     /* 头部优化 */
@@ -1635,34 +1688,8 @@ textarea:focus-visible,
     }
 
     /* 侧边栏抽屉 */
-    .sidebar {
-        position: fixed !important;
-        left: -280px !important;
-        top: 50px !important;
-        bottom: 0;
-        width: 260px !important;
-        max-width: 80vw;
-        background: #ffffff;
-        z-index: 999;
-        transition: left 0.3s ease;
-        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-        overflow-y: auto;
-        padding: 16px;
-        border-right: none;
-        display: block !important;
-        flex-direction: initial !important;
-        gap: initial !important;
-        backdrop-filter: none !important;
-    }
 
-    .sidebar.active {
-        left: 0 !important;
-    }
 
-    .sidebar h3 {
-        font-size: 15px;
-        margin-bottom: 12px;
-    }
 
     .filter-section,
     .quota-section,
@@ -1697,8 +1724,8 @@ textarea:focus-visible,
 
     /* 工具栏 */
     .toolbar {
-        padding: 12px 15px;
-        gap: 12px;
+        padding: 8px 12px;
+        gap: 8px;
         flex-wrap: wrap;
         background: #ffffff;
         border-bottom: 1px solid #f0f0f0;
@@ -2140,11 +2167,28 @@ textarea:focus-visible,
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
     }
 
-    /* 隐藏PC端的一些元素 */
+    /* 手机端换行成三段：日期整行、影棚 tab 整行、开关整行 */
     .date-nav {
         width: 100%;
         overflow: visible;
         flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .studio-toolbar-controls {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .toolbar-switches {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 20px;
+    }
+
+    /* 换行后竖线分隔就不合适了 */
+    .toolbar-switches::before {
+        display: none;
     }
 
     .booking-date-list {
@@ -2155,18 +2199,8 @@ textarea:focus-visible,
     .booking-date-item {
         flex: 1 1 0;
         justify-content: center;
-        min-height: 36px;
-        padding: 6px 10px;
-    }
-
-    .studio-toolbar-controls {
-        width: 100%;
-        justify-content: flex-end;
-    }
-
-    /* 手机端换行显示，竖线分隔就不合适了 */
-    .studio-toolbar-controls::before {
-        display: none;
+        min-height: 34px;
+        padding: 5px 9px;
     }
 
     .studio-toolbar-tabs-grid {
@@ -2257,41 +2291,10 @@ textarea:focus-visible,
 }
 
 /* 侧边栏 */
-.sidebar {
-    width: 160px;
-    background: #ffffff;
-    padding: 16px;
-    overflow-y: auto;
-    border-right: 1px solid #F0F0F0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
 
-.sidebar-top {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
 
-.sidebar-bottom {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
 
-.sidebar-link {
-    color: #999;
-    font-size: 12px;
-    text-decoration: none;
-    line-height: 18px;
-    padding: 3px 0;
-    transition: color 0.2s;
-}
 
-.sidebar-link:hover {
-    color: #4C7DFF;
-}
 
 .switch-row {
     display: flex;
@@ -2455,14 +2458,13 @@ textarea:focus-visible,
     justify-content: flex-start;
 }
 
-/* 日期和楼层棚型都是"我在看哪一批预约"的筛选条件，靠在一起成为一条筛选栏。
-   以前用 space-between 把两组顶到两端，中间留出 1000px 以上的空白，
-   视线要来回横跨整个屏幕。 */
+/* 日期靠左，影棚 tab 和开关成组靠右：
+   左边回答"看哪天"，右边回答"看哪个棚"以及视图偏好。 */
 .date-nav {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 20px;
+    gap: 16px;
     min-width: 0;
     width: 100%;
 }
@@ -2471,18 +2473,34 @@ textarea:focus-visible,
 .studio-toolbar-controls {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: flex-end;
     flex: 0 0 auto;
     min-width: 0;
+    /* 把这一组连同后面的开关一起推到工具栏右侧 */
+    margin-left: auto;
 }
 
-/* 一条竖线把"选哪天"和"选哪个棚"分开，避免两组按钮糊成一片 */
-.studio-toolbar-controls::before {
+/* "只看我的"和"提醒"留在工具栏而不是收进用户菜单：
+   状态需要一眼可见，尤其"提醒"——藏进菜单用户就不知道它开没开。 */
+.toolbar-switches {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex: 0 0 auto;
+}
+
+.toolbar-switches::before {
     content: '';
     align-self: stretch;
     width: 1px;
-    margin-right: 20px;
+    margin-right: 2px;
     background: #E8EBF0;
+}
+
+.toolbar-switches .switch-row {
+    gap: 8px;
+    justify-content: flex-start;
+    white-space: nowrap;
 }
 
 .studio-toolbar-tabs-grid {
@@ -4901,16 +4919,17 @@ textarea:focus-visible,
 }
 
 /* 新增影棚四选一功能沿用正式站的蓝灰控件风格。 */
-/* 4 个组合排成一行，任意视图都是一步到位；两行网格会把整条工具栏撑高一截 */
+/* 4 个组合排成一行，任意视图都是一步到位；两行网格会把整条工具栏撑高一截。
+   尺寸按导航控件收紧——它们是入口，不该抢主内容的视觉分量。 */
 .studio-view-tabs {
     display: grid;
-    grid-template-columns: repeat(4, minmax(88px, auto));
-    gap: 4px;
+    grid-template-columns: repeat(4, minmax(76px, auto));
+    gap: 3px;
 }
 
 .studio-view-tab {
-    min-height: 30px;
-    padding: 5px 8px;
+    min-height: 26px;
+    padding: 3px 9px;
     border: 1px solid #D8DEE8;
     border-radius: 4px;
     background: #FFFFFF;
@@ -4938,9 +4957,10 @@ textarea:focus-visible,
     .studio-view-tabs {
         width: 100%;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
     }
 
     .studio-view-tab {
-        min-height: 38px;
+        min-height: 34px;
     }
 }
