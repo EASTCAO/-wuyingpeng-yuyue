@@ -1,3 +1,33 @@
+/* ============ 设计 Token ============
+   改版前审计发现：界面没有设计系统，只有历史累积——3 种蓝、17 种圆角，
+   且品牌主色存在无障碍问题。
+
+   强调色：同一色相三个角色。#4C7DFF 对白只有 3.69:1，达不到 WCAG AA
+   正文要求的 4.5:1。所以"承载白字的填充"和"强调色当文字用"改用加深值；
+   纯图形元素（开关、勾选框）适用 3:1 标准，可继续用主色。
+
+   圆角：17 个历史值映射到 6 档 + 胶囊，单处位移不超过 4px。 */
+:root {
+    --accent: #4C7DFF;          /* 图形、边框、指示器（图形 AA 需 3:1） */
+    --accent-solid: #2563EB;    /* 承载白字的按钮 / 激活态（5.17:1） */
+    --accent-ink: #1D4ED8;      /* 强调色作为文字用在浅底（6.70:1） */
+    --accent-soft: #E9F1FF;     /* 浅色选中底 */
+
+    --radius-xs: 4px;           /* <- 2 3 4 5 */
+    --radius-sm: 6px;           /* <- 6 7 */
+    --radius-md: 8px;           /* <- 8 9 10 */
+    --radius-lg: 12px;          /* <- 12 14 */
+    --radius-xl: 16px;          /* <- 16 17 18 */
+    --radius-2xl: 20px;         /* <- 20 24 */
+    --radius-pill: 999px;
+
+    --danger: #EF4444;          /* 危险色文字 / 图形 */
+    --danger-solid: #DC2626;    /* 承载白字的危险按钮（4.83:1；#EF4444 只有 3.76） */
+
+    --ink: #262626;             /* 正文；不使用纯黑 */
+    --ink-muted: #616B79;       /* 次要文字（白底 5.40:1、选中底 4.76:1 均达 AA） */
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -10,6 +40,7 @@ body {
     background-image: none;
     background-attachment: fixed;
     min-height: 100vh;
+    min-height: 100dvh;
     color: #262626;
     margin: 0;
     padding: 0;
@@ -37,7 +68,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 [role="button"]:focus-visible {
-    outline: 2px solid #4C7DFF;
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
 
@@ -58,7 +89,7 @@ textarea:focus-visible,
     height: 18px;
     padding: 0 5px;
     margin-left: 4px;
-    border-radius: 9px;
+    border-radius: var(--radius-md);
     background: #e5484d;
     color: #fff;
     font-size: 11px;
@@ -77,8 +108,8 @@ textarea:focus-visible,
     margin: 0 0 14px;
     box-sizing: border-box;
     border: 1px solid #e5e7eb;
-    border-left: 4px solid #4c7dff;
-    border-radius: 12px;
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius-lg);
     background: #fff;
     box-shadow: 0 4px 14px rgba(31, 41, 55, 0.08);
 }
@@ -229,7 +260,7 @@ textarea:focus-visible,
     color: #374151;
     border: 1px solid #E5E7EB;
     padding: 10px 24px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
@@ -253,7 +284,7 @@ textarea:focus-visible,
     gap: 6px;
     padding: 8px 14px;
     border: 1px solid #E5E7EB;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: #F3F4F6;
     color: #1F2937;
     font: inherit;
@@ -268,7 +299,7 @@ textarea:focus-visible,
 }
 
 .user-menu-button[aria-expanded="true"] {
-    border-color: #4C7DFF;
+    border-color: var(--accent);
     background: #EEF3FF;
 }
 
@@ -296,7 +327,7 @@ textarea:focus-visible,
     min-width: 170px;
     padding: 6px;
     border: 1px solid #E5E7EB;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: #FFFFFF;
     box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
 }
@@ -307,7 +338,7 @@ textarea:focus-visible,
     justify-content: space-between;
     gap: 8px;
     padding: 9px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: #374151;
     font-size: 13px;
     text-decoration: none;
@@ -317,7 +348,7 @@ textarea:focus-visible,
 .user-menu-item:hover,
 .user-menu-item:focus-visible {
     background: #F3F6FB;
-    color: #4C7DFF;
+    color: var(--accent);
     outline: none;
 }
 
@@ -344,7 +375,7 @@ textarea:focus-visible,
     justify-content: space-between;
     gap: 14px;
     padding: 9px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: #374151;
     font-size: 13px;
     white-space: nowrap;
@@ -361,6 +392,7 @@ textarea:focus-visible,
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    min-height: 100dvh;
     background: #F6F8FB;
 }
 
@@ -374,7 +406,7 @@ textarea:focus-visible,
     background: white;
     padding: 30px;
     border: 1px solid #E5E7EB;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
     text-align: left;
 }
@@ -397,7 +429,7 @@ textarea:focus-visible,
     flex: 0 0 auto;
     background: #F8FAFC;
     border: 1px solid #E5E7EB;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
 }
 
 .login-icon svg {
@@ -436,7 +468,7 @@ textarea:focus-visible,
 }
 
 .field-label .required {
-    color: #EF4444;
+    color: var(--danger);
     margin-right: 4px;
 }
 
@@ -456,7 +488,7 @@ textarea:focus-visible,
     width: 100%;
     padding: 10px 12px 10px 36px;
     border: 1px solid #E5E7EB;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 13px;
     color: #1F2937;
     transition: all 0.2s;
@@ -512,17 +544,17 @@ textarea:focus-visible,
     width: 16px;
     height: 16px;
     cursor: pointer;
-    accent-color: #2563EB;
+    accent-color: var(--accent-solid);
 }
 
 .login-btn {
     width: 100%;
     min-height: 42px;
     padding: 0 12px;
-    background: #2563EB;
+    background: var(--accent-solid);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -531,7 +563,7 @@ textarea:focus-visible,
 }
 
 .login-btn:hover {
-    background: #1D4ED8;
+    background: var(--accent-ink);
 }
 
 .login-btn:active {
@@ -545,7 +577,7 @@ textarea:focus-visible,
     background: white;
     color: #374151;
     border: 1px solid #E5E7EB;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -561,7 +593,7 @@ textarea:focus-visible,
 .login-box {
     background: white;
     padding: 48px;
-    border-radius: 24px;
+    border-radius: var(--radius-2xl);
     box-shadow: 0 8px 32px rgba(15, 23, 42, 0.15);
     text-align: center;
     max-width: 420px;
@@ -580,7 +612,7 @@ textarea:focus-visible,
     width: 100%;
     padding: 14px 18px;
     border: 1.5px solid #F0F0F0;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     font-size: 15px;
     margin-bottom: 24px;
     transition: all 0.3s;
@@ -594,7 +626,7 @@ textarea:focus-visible,
 
 .login-box input:focus {
     outline: none;
-    border-color: #4C7DFF;
+    border-color: var(--accent);
     box-shadow: 0 0 0 4px rgba(76, 125, 255, 0.1);
     background: white;
 }
@@ -612,7 +644,7 @@ textarea:focus-visible,
 .btn {
     padding: 12px 28px;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     font-size: 15px;
     cursor: pointer;
     transition: all 0.3s;
@@ -629,9 +661,9 @@ textarea:focus-visible,
 
 .btn-primary:hover,
 .btn-success:hover {
-    background: linear-gradient(135deg, #4C7DFF 0%, #6B9AFF 100%);
+    background: linear-gradient(135deg, var(--accent-ink) 0%, var(--accent-solid) 100%);
     color: white;
-    border-color: #4C7DFF;
+    border-color: var(--accent);
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(76, 125, 255, 0.3);
 }
@@ -659,7 +691,7 @@ textarea:focus-visible,
 .btn-small {
     padding: 10px 20px;
     font-size: 14px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 2px 8px rgba(76, 125, 255, 0.15);
 }
 
@@ -676,7 +708,7 @@ textarea:focus-visible,
     margin-bottom: 20px;
     background: white;
     padding: 10px;
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
@@ -688,13 +720,13 @@ textarea:focus-visible,
     color: #8C8C8C;
     font-size: 15px;
     cursor: pointer;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     transition: all 0.2s;
     font-weight: 500;
 }
 
 .tab-btn.active {
-    background: #4C7DFF;
+    background: var(--accent-solid);
     color: white;
 }
 
@@ -714,7 +746,7 @@ textarea:focus-visible,
 .studio-section {
     background: white;
     padding: 28px 32px;
-    border-radius: 20px;
+    border-radius: var(--radius-2xl);
     margin-bottom: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     border: 1px solid #F0F0F0;
@@ -753,7 +785,7 @@ textarea:focus-visible,
     width: 160px;
     height: 80px;
     padding: 14px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     border-left: 4px solid #BFBFBF;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -810,12 +842,12 @@ textarea:focus-visible,
     position: absolute;
     top: 4px;
     right: 8px;
-    background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+    background: linear-gradient(135deg, var(--danger-solid) 0%, var(--danger) 100%);
     color: white;
     font-size: 10px;
     font-weight: 600;
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
     z-index: 10;
 }
@@ -847,7 +879,7 @@ textarea:focus-visible,
 }
 
 .booking-photographer {
-    color: #4C7DFF;
+    color: var(--accent);
     font-weight: 600;
     font-size: 12px;
     margin-top: 6px;
@@ -894,7 +926,7 @@ textarea:focus-visible,
 .modal-content {
     background: white;
     border: 1px solid #F0F0F0;
-    border-radius: 20px;
+    border-radius: var(--radius-2xl);
     max-width: 500px;
     width: 100%;
     max-height: 90vh;
@@ -958,7 +990,7 @@ textarea:focus-visible,
     width: 100%;
     padding: 12px 16px;
     border: 1.5px solid #F0F0F0;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     font-size: 15px;
     font-family: inherit;
     background: #F7F9FC;
@@ -975,7 +1007,7 @@ textarea:focus-visible,
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #4C7DFF;
+    border-color: var(--accent);
     box-shadow: 0 0 0 4px rgba(76, 125, 255, 0.1);
     background: white;
 }
@@ -1001,6 +1033,7 @@ textarea:focus-visible,
 
     #addBookingModal .modal-content {
         max-height: calc(100vh - 24px);
+        max-height: calc(100dvh - 24px);
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -1075,7 +1108,7 @@ textarea:focus-visible,
     #addBookingModal .availability-booking-item {
         min-width: 0;
         padding: 7px 9px;
-        border-radius: 8px;
+        border-radius: var(--radius-md);
     }
 
     #addBookingModal .availability-empty {
@@ -1113,7 +1146,7 @@ textarea:focus-visible,
     margin: -2px 0 14px;
     padding: 12px 14px;
     border: 1px solid #DCE5F2;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     background: #F7FAFF;
 }
 
@@ -1144,7 +1177,7 @@ textarea:focus-visible,
 
 .booking-addon-state {
     padding: 2px 6px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: #E9EEF7;
     color: #64748B;
     font-size: 10px;
@@ -1177,7 +1210,7 @@ textarea:focus-visible,
     -webkit-appearance: none;
     appearance: none;
     border: 0;
-    border-radius: 20px;
+    border-radius: var(--radius-2xl);
     background: #CBD5E1;
     cursor: pointer;
     transition: background 0.2s ease;
@@ -1197,7 +1230,7 @@ textarea:focus-visible,
 }
 
 .booking-addon-control input[type="checkbox"]:checked {
-    background: #4C7DFF;
+    background: var(--accent);
 }
 
 .booking-addon-control input[type="checkbox"]:checked::before {
@@ -1205,7 +1238,7 @@ textarea:focus-visible,
 }
 
 .booking-addon-control input[type="checkbox"]:focus-visible {
-    outline: 2px solid #4C7DFF;
+    outline: 2px solid var(--accent);
     outline-offset: 3px;
 }
 
@@ -1242,7 +1275,7 @@ textarea:focus-visible,
 .booking-schedule-summary .availability-booking-item {
     min-width: 0;
     padding: 8px 10px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
 }
 
 .form-row {
@@ -1254,7 +1287,7 @@ textarea:focus-visible,
 .booking-availability-panel {
     background: #F8FAFC;
     border: 1px solid #E5E7EB;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     padding: 16px;
     min-width: 0;
 }
@@ -1299,7 +1332,7 @@ textarea:focus-visible,
 .availability-legend i {
     width: 9px;
     height: 9px;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     display: inline-block;
 }
 
@@ -1308,7 +1341,7 @@ textarea:focus-visible,
 }
 
 .legend-booked {
-    background: #EF4444;
+    background: var(--danger-solid);
 }
 
 .legend-past {
@@ -1347,7 +1380,7 @@ textarea:focus-visible,
     color: #047857;
     background: #D1FAE5;
     border: 1px solid #6EE7B7;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     padding: 4px 8px;
     font-size: 13px;
     font-weight: 600;
@@ -1368,7 +1401,7 @@ textarea:focus-visible,
 
 .availability-slot {
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     min-height: 34px;
     padding: 0 4px;
     font-size: 12px;
@@ -1459,13 +1492,13 @@ textarea:focus-visible,
 .availability-slot.selected-start,
 .availability-slot.selected-end {
     color: white;
-    background: #4C7DFF;
+    background: var(--accent-solid);
     border-color: #3D6EFF;
     box-shadow: 0 0 0 3px rgba(76, 125, 255, 0.16);
 }
 
 .availability-slot.selected-range {
-    color: #1D4ED8;
+    color: var(--accent-ink);
     background: #DBEAFE;
     border-color: #BFDBFE;
 }
@@ -1484,7 +1517,7 @@ textarea:focus-visible,
     font-size: 13px;
     background: white;
     border: 1px dashed #CBD5E1;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 12px;
     text-align: center;
 }
@@ -1496,7 +1529,7 @@ textarea:focus-visible,
     align-items: center;
     background: white;
     border: 1px solid #E5E7EB;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 9px 10px;
 }
 
@@ -1516,7 +1549,7 @@ textarea:focus-visible,
 }
 
 .availability-booking-item.manageable:focus-visible {
-    outline: 2px solid #4C7DFF;
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
 
@@ -1579,7 +1612,7 @@ textarea:focus-visible,
 
 .cancel-booking-summary {
     border: 1px solid #FECACA;
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     background: #FEF2F2;
     padding: 16px;
     margin-bottom: 18px;
@@ -1700,6 +1733,7 @@ textarea:focus-visible,
     /* 主容器 */
     .main-container {
         height: calc(100vh - 50px);
+        height: calc(100dvh - 50px);
         overflow: hidden;
         display: block !important;
         position: relative;
@@ -1799,7 +1833,7 @@ textarea:focus-visible,
     }
 
     .nav-item.active {
-        color: #4C7DFF;
+        color: var(--accent);
     }
 
     .nav-item.active .nav-icon {
@@ -1818,7 +1852,7 @@ textarea:focus-visible,
         width: 56px;
         height: 56px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #4C7DFF 0%, #6B9AFF 100%);
+        background: linear-gradient(135deg, var(--accent-ink) 0%, var(--accent-solid) 100%);
         color: white;
         border: none;
         box-shadow: 0 4px 12px rgba(76, 125, 255, 0.4);
@@ -1944,7 +1978,7 @@ textarea:focus-visible,
         padding: 6px;
         font-size: 11px;
         margin-bottom: 4px;
-        border-radius: 4px;
+        border-radius: var(--radius-xs);
         cursor: pointer;
         min-height: 40px;
         display: flex;
@@ -2254,7 +2288,7 @@ textarea:focus-visible,
     background: #613400;
     color: #FFF7E6;
     padding: 10px 18px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
     font-size: 13px;
     font-weight: 500;
@@ -2269,7 +2303,7 @@ textarea:focus-visible,
     right: 20px;
     background: white;
     padding: 16px 20px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     z-index: 2000;
     animation: slideIn 0.3s ease-out;
@@ -2305,6 +2339,7 @@ textarea:focus-visible,
 .main-container {
     display: flex;
     height: calc(100vh - 72px);
+    height: calc(100dvh - 72px);
     overflow: hidden;
 }
 
@@ -2333,7 +2368,7 @@ textarea:focus-visible,
     appearance: none;
     background: #D1D5DB;
     outline: none;
-    border-radius: 17px;
+    border-radius: var(--radius-xl);
     transition: 0.2s;
     cursor: pointer;
     flex-shrink: 0;
@@ -2341,7 +2376,7 @@ textarea:focus-visible,
 
 .switch-row input[type="checkbox"]:checked,
 .user-menu-switch input[type="checkbox"]:checked {
-    background: #4C7DFF;
+    background: var(--accent);
 }
 
 .switch-row input[type="checkbox"]::before,
@@ -2389,7 +2424,7 @@ textarea:focus-visible,
     -webkit-appearance: none;
     background: #BFBFBF;
     outline: none;
-    border-radius: 18px;
+    border-radius: var(--radius-xl);
     transition: 0.3s;
     cursor: pointer;
     flex-shrink: 0;
@@ -2419,7 +2454,7 @@ textarea:focus-visible,
 .quota-section {
     padding: 10px 12px;
     background: white;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #F0F0F0;
 }
@@ -2536,7 +2571,7 @@ textarea:focus-visible,
     min-height: 38px;
     padding: 4px 2px;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: transparent;
     color: #374151;
     font: inherit;
@@ -2561,7 +2596,7 @@ textarea:focus-visible,
 }
 
 .booking-date-detail {
-    color: #8A94A2;
+    color: var(--ink-muted);
     font-size: 11px;
     line-height: 1.2;
 }
@@ -2573,12 +2608,13 @@ textarea:focus-visible,
 /* 日期用浅色选中态、影棚 tab 用实心蓝：同一行里两个实心蓝块会互相抢注意力 */
 .booking-date-item.active {
     border-color: #BFD4FF;
-    background: #E9F1FF;
-    color: #1D4ED8;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
 }
 
 .booking-date-item.active .booking-date-detail {
-    color: #4C7DFF;
+    /* 选中底是 --accent-soft，主色压上去只有 3.25:1，必须用加深值 */
+    color: var(--accent-ink);
 }
 
 .date-btn {
@@ -2598,11 +2634,11 @@ textarea:focus-visible,
 }
 
 .date-btn:hover {
-    color: #4C7DFF;
+    color: var(--accent);
 }
 
 .date-btn.active {
-    color: #4C7DFF;
+    color: var(--accent);
     font-weight: 500;
 }
 
@@ -2624,12 +2660,12 @@ textarea:focus-visible,
 }
 
 .view-btn.active {
-    color: #4C7DFF;
+    color: var(--accent);
     font-weight: 600;
 }
 
 .view-btn:hover:not(.active) {
-    color: #4C7DFF;
+    color: var(--accent);
 }
 
 .studio-toolbar-controls .studio-category-tabs {
@@ -2645,7 +2681,7 @@ textarea:focus-visible,
 .studio-toolbar-controls .preview-floor-tabs .studio-category-tab {
     min-height: 24px;
     padding: 2px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     font-size: 12px;
     font-weight: 500;
 }
@@ -2653,7 +2689,7 @@ textarea:focus-visible,
 .studio-toolbar-controls .preview-category-tabs .studio-category-tab {
     min-height: 22px;
     padding: 1px 5px;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     font-size: 11px;
 }
 
@@ -2673,10 +2709,10 @@ textarea:focus-visible,
 .granularity-label {
     padding: 8px 14px;
     background: #E6F0FF;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     font-size: 12px;
-    color: #4C7DFF;
-    border: 1px solid #4C7DFF;
+    color: var(--accent);
+    border: 1px solid var(--accent);
     font-weight: 600;
 }
 
@@ -2750,11 +2786,11 @@ textarea:focus-visible,
 }
 
 .btn-add-inline {
-    background: #4C7DFF;
+    background: var(--accent-solid);
     color: white;
     border: none;
     padding: 4px 10px !important;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 11px !important;
     font-weight: 500;
     cursor: pointer;
@@ -2824,7 +2860,7 @@ textarea:focus-visible,
     border-left: 3px solid #BFBFBF;
     padding: 6px 8px;
     margin: 0;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all 0.2s;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -2887,12 +2923,12 @@ textarea:focus-visible,
     position: absolute;
     top: -6px;
     right: 4px;
-    background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+    background: linear-gradient(135deg, var(--danger-solid) 0%, var(--danger) 100%);
     color: white;
     font-size: 9px;
     font-weight: 600;
     padding: 1px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     box-shadow: 0 1px 2px rgba(239, 68, 68, 0.3);
 }
 
@@ -2922,7 +2958,7 @@ textarea:focus-visible,
 .available-slot {
     background: white;
     border: 2px dashed #52C41A;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 8px;
     text-align: center;
     color: #52C41A;
@@ -2984,7 +3020,7 @@ textarea:focus-visible,
 .stats-filters select {
     padding: 10px 16px;
     border: 1.5px solid #F0F0F0;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     font-size: 14px;
     background: white;
     cursor: pointer;
@@ -2999,7 +3035,7 @@ textarea:focus-visible,
 
 .stats-filters select:focus {
     outline: none;
-    border-color: #4C7DFF;
+    border-color: var(--accent);
     box-shadow: 0 0 0 4px rgba(76, 125, 255, 0.1);
 }
 
@@ -3014,7 +3050,7 @@ textarea:focus-visible,
 .stats-card {
     background: white;
     padding: 24px;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #F0F0F0;
     transition: all 0.2s ease;
@@ -3029,7 +3065,7 @@ textarea:focus-visible,
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #4C7DFF 0%, #6B9AFF 100%);
+    background: linear-gradient(90deg, var(--accent) 0%, #6B9AFF 100%);
 }
 
 .stats-card:hover {
@@ -3054,7 +3090,7 @@ textarea:focus-visible,
 
 .stats-table-container {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #F0F0F0;
@@ -3096,7 +3132,7 @@ textarea:focus-visible,
 
 .stats-table td:first-child {
     font-weight: 600;
-    color: #4C7DFF;
+    color: var(--accent);
 }
 
 .stats-table .rank-1 {
@@ -3115,8 +3151,8 @@ textarea:focus-visible,
     display: inline-block;
     padding: 4px 10px;
     background: #E6F0FF;
-    color: #4C7DFF;
-    border-radius: 6px;
+    color: var(--accent);
+    border-radius: var(--radius-sm);
     font-size: 12px;
     font-weight: 600;
 }
@@ -3184,7 +3220,7 @@ textarea:focus-visible,
 .reminder-settings {
     padding: 10px 12px;
     background: white;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 1px solid #F0F0F0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -3210,7 +3246,7 @@ textarea:focus-visible,
 .account-settings {
     padding: 10px 12px;
     background: white;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 1px solid #F0F0F0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     margin-top: 12px;
@@ -3317,7 +3353,7 @@ textarea:focus-visible,
 .reminder-modal-time {
     background: #F7F9FC;
     padding: 16px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     font-size: 20px;
     font-weight: 600;
     color: #262626;
@@ -3354,7 +3390,7 @@ textarea:focus-visible,
     margin-bottom: 12px;
     padding: 3px;
     border: 1px solid #D8DEE8;
-    border-radius: 7px;
+    border-radius: var(--radius-sm);
     background: #EEF1F5;
 }
 
@@ -3362,7 +3398,7 @@ textarea:focus-visible,
     min-height: 32px;
     padding: 5px 14px;
     border: 0;
-    border-radius: 5px;
+    border-radius: var(--radius-xs);
     background: transparent;
     color: #526070;
     cursor: pointer;
@@ -3377,7 +3413,7 @@ textarea:focus-visible,
 }
 
 .studio-category-tab:focus-visible {
-    outline: 2px solid #4C7DFF;
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
 
@@ -3390,7 +3426,7 @@ textarea:focus-visible,
 
 .studio-map-zone {
     border: 1px solid #E5E7EB;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 12px;
     display: flex;
     flex-direction: column;
@@ -3416,7 +3452,7 @@ textarea:focus-visible,
 .real-studio-floor {
     padding: 18px;
     border: 1px solid #E1E6EC;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: #FFFFFF;
 }
 
@@ -3445,7 +3481,7 @@ textarea:focus-visible,
     font-size: 11px;
     padding: 6px 8px;
     border: 1px solid #E7EBF0;
-    border-radius: 7px;
+    border-radius: var(--radius-sm);
     background: #FFFFFF;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
@@ -3461,7 +3497,7 @@ textarea:focus-visible,
     width: 11px;
     height: 11px;
     border: 1px solid #D7DEE8;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     background: #F8FAFC;
 }
 
@@ -3489,6 +3525,7 @@ textarea:focus-visible,
     row-gap: 20px;
     align-items: stretch;
     height: calc(100vh - 300px);
+    height: calc(100dvh - 300px);
     min-height: 416px;
     padding: 12px 16px 8px;
 }
@@ -3571,7 +3608,7 @@ textarea:focus-visible,
 }
 
 .studio-map-zone-seventh-floor .studio-floor-header h3 {
-    color: #1D4ED8;
+    color: var(--accent-ink);
     font-size: 19px;
 }
 
@@ -3606,7 +3643,7 @@ textarea:focus-visible,
 }
 
 .studio-map-zone-large .studio-map-zone-header h3 {
-    color: #1D4ED8;
+    color: var(--accent-ink);
 }
 
 .studio-map-zone-small .studio-map-zone-header h3 {
@@ -3647,7 +3684,7 @@ textarea:focus-visible,
 .studio-section {
     background: white;
     padding: 13px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     margin-bottom: 0;
     box-shadow: 0 2px 7px rgba(15, 23, 42, 0.055);
     border: 1px solid rgba(226, 232, 240, 0.9);
@@ -3688,13 +3725,13 @@ textarea:focus-visible,
 }
 
 .studio-overview-card.studio-frozen .studio-section-header h2 {
-    color: #000000;
+    color: var(--ink);
 }
 
 .studio-frozen-label {
     flex: 0 0 auto;
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     background: #E2E8F0;
     color: #64748B;
     font-size: 11px;
@@ -3741,7 +3778,7 @@ textarea:focus-visible,
 }
 
 .studio-overview-card.studio-fully-booked .studio-section-header h2 {
-    color: #000000;
+    color: var(--ink);
 }
 
 .studio-overview-card:hover,
@@ -3791,7 +3828,7 @@ textarea:focus-visible,
 .studio-section-header h2 .studio-card-location {
     display: inline;
     margin-left: 4px;
-    color: #1D4ED8;
+    color: var(--accent-ink);
     font-size: 12px;
     line-height: inherit;
     font-weight: 500;
@@ -3816,11 +3853,11 @@ textarea:focus-visible,
     align-items: center;
     height: 22px;
     padding: 0 8px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: 12px;
     font-weight: 700;
     color: white;
-    background: #4C7DFF;
+    background: var(--accent-solid);
 }
 
 .studio-detail-overview[data-studio-group="small"] .studio-type-badge {
@@ -3880,14 +3917,14 @@ textarea:focus-visible,
     width: fit-content;
     font-size: 12px;
     font-weight: 700;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     padding: 4px 8px;
 }
 
 .studio-status-dot {
     width: 7px;
     height: 7px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: currentColor;
 }
 
@@ -3902,7 +3939,7 @@ textarea:focus-visible,
 }
 
 .studio-summary-upcoming {
-    color: #1D4ED8;
+    color: var(--accent-ink);
     background: #DBEAFE;
 }
 
@@ -3923,7 +3960,7 @@ textarea:focus-visible,
     flex-direction: column;
     gap: 6px;
     min-height: 54px;
-    border-radius: 9px;
+    border-radius: var(--radius-md);
     background: #FAFFFA;
     border: 1px solid #ECFDF5;
     padding: 9px 10px;
@@ -3947,7 +3984,7 @@ textarea:focus-visible,
 .studio-summary-booking .summary-booking-user {
     font-size: 12px;
     font-weight: 700;
-    color: #2563EB;
+    color: var(--accent-solid);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -4026,7 +4063,7 @@ textarea:focus-visible,
     position: absolute;
     top: 6px;
     right: 7px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: #E5E7EB;
     color: #6B7280;
     font-size: 9px;
@@ -4040,7 +4077,7 @@ textarea:focus-visible,
     font-size: 13px;
     background: #F8FAFC;
     border: 1px dashed #CBD5E1;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 8px;
 }
 
@@ -4049,7 +4086,7 @@ textarea:focus-visible,
     font-size: 12px;
     font-weight: 700;
     background: #F3F4F6;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 5px 8px;
     text-align: center;
 }
@@ -4065,7 +4102,7 @@ textarea:focus-visible,
     font-size: 12px;
     color: #374151;
     background: #F3F4F6;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     padding: 4px 6px;
 }
 
@@ -4080,7 +4117,7 @@ textarea:focus-visible,
     overflow: hidden;
     background: #F7F9FB;
     border: 1px solid #DCE3EA;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06);
     animation: real-scene-card-enter 360ms ease both;
     animation-delay: calc(var(--scene-index, 0) * 38ms);
@@ -4105,7 +4142,7 @@ textarea:focus-visible,
     justify-content: center;
     min-height: 20px;
     padding: 3px 7px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: 10px;
     line-height: 1.2;
     letter-spacing: 0;
@@ -4143,7 +4180,7 @@ textarea:focus-visible,
     width: 100%;
     height: 5px;
     overflow: hidden;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: rgba(255, 255, 255, 0.48);
 }
 
@@ -4153,7 +4190,6 @@ textarea:focus-visible,
     height: 100%;
     border-radius: inherit;
     background: #FFFFFF;
-    transition: width 220ms ease;
 }
 
 .real-scene-occupancy small {
@@ -4223,7 +4259,7 @@ textarea:focus-visible,
     min-height: 50px;
     gap: 5px;
     padding: 8px 9px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     box-shadow: none;
 }
 
@@ -4260,7 +4296,7 @@ textarea:focus-visible,
 
 .studio-overview-card.real-scene-card:focus-visible {
     outline: none;
-    border-color: #4C7DFF;
+    border-color: var(--accent);
     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.11), 0 0 0 2px rgba(76, 125, 255, 0.42);
 }
 
@@ -4329,7 +4365,7 @@ textarea:focus-visible,
 }
 
 .studio-detail-overview {
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     border: 1px solid #E5E7EB;
     padding: 16px;
     margin-bottom: 16px;
@@ -4374,7 +4410,7 @@ textarea:focus-visible,
     gap: 6px;
     margin-top: 14px;
     padding: 5px 10px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: 13px;
     font-weight: 700;
 }
@@ -4392,7 +4428,7 @@ textarea:focus-visible,
     color: #374151;
     background: rgba(255, 255, 255, 0.78);
     border: 1px solid rgba(148, 163, 184, 0.24);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 6px 10px;
 }
 
@@ -4406,7 +4442,7 @@ textarea:focus-visible,
     color: #6B7280;
     background: #F9FAFB;
     border: 1px dashed #D1D5DB;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 24px;
     margin: 0;
 }
@@ -4414,7 +4450,7 @@ textarea:focus-visible,
 .studio-detail-booking {
     width: 100%;
     border: 1px solid #E5E7EB;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: white;
     padding: 12px;
     cursor: pointer;
@@ -4427,7 +4463,7 @@ textarea:focus-visible,
 }
 
 .studio-detail-booking:hover {
-    border-color: #4C7DFF;
+    border-color: var(--accent);
     box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
@@ -4448,9 +4484,9 @@ textarea:focus-visible,
 .studio-detail-booking-status {
     font-size: 12px;
     font-weight: 700;
-    color: #1D4ED8;
+    color: var(--accent-ink);
     background: #DBEAFE;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     padding: 4px 8px;
     white-space: nowrap;
 }
@@ -4467,7 +4503,7 @@ textarea:focus-visible,
 
 .studio-detail-booking-cancel {
     border: 1px solid #FECACA;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: #FEF2F2;
     color: #B91C1C;
     cursor: pointer;
@@ -4701,14 +4737,14 @@ textarea:focus-visible,
     margin-bottom: 6px;
     padding: 3px 8px;
     background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     display: inline-block;
 }
 
 /* 时间轴卡片 */
 .timeline-card {
     background: white;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     border: 1px solid #F0F0F0;
     overflow: hidden;
@@ -4780,8 +4816,8 @@ textarea:focus-visible,
     left: 2px;
     right: 2px;
     background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
-    border-left: 2px solid #4C7DFF;
-    border-radius: 3px;
+    border-left: 2px solid var(--accent);
+    border-radius: var(--radius-xs);
     padding: 3px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -4855,13 +4891,13 @@ textarea:focus-visible,
     flex: 1;
     padding: 8px 12px;
     border: 1px solid #E5E7EB;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 14px;
     outline: none;
 }
 
 .user-mgmt-add input:focus {
-    border-color: #4C7DFF;
+    border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(76, 125, 255, 0.1);
 }
 
@@ -4888,7 +4924,7 @@ textarea:focus-visible,
     gap: 6px;
     padding: 6px 10px;
     border: 1px solid #E5E7EB;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: #F9FAFB;
     color: #4B5563;
     font-size: 13px;
@@ -4913,7 +4949,7 @@ textarea:focus-visible,
     padding: 10px 14px;
     background: white;
     border: 1px solid #E5E7EB;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
 }
 
 .user-mgmt-name {
@@ -4922,17 +4958,17 @@ textarea:focus-visible,
 }
 
 .btn-danger {
-    background: #EF4444;
+    background: var(--danger-solid);
     color: white;
     border: none;
     padding: 4px 10px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
     cursor: pointer;
 }
 
 .btn-danger:hover {
-    background: #DC2626;
+    background: var(--danger-solid);
 }
 
 /* 新增影棚四选一功能沿用正式站的蓝灰控件风格。 */
@@ -4948,7 +4984,7 @@ textarea:focus-visible,
     min-height: 26px;
     padding: 3px 9px;
     border: 1px solid #D8DEE8;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     background: #FFFFFF;
     color: #4B5563;
     font: inherit;
@@ -4960,12 +4996,12 @@ textarea:focus-visible,
 .studio-view-tab:hover:not(.active) {
     border-color: #B8C3D3;
     background: #F7F9FC;
-    color: #4C7DFF;
+    color: var(--accent);
 }
 
 .studio-view-tab.active {
-    border-color: #4C7DFF;
-    background: #4C7DFF;
+    border-color: var(--accent);
+    background: var(--accent-solid);
     color: #FFFFFF;
 }
 

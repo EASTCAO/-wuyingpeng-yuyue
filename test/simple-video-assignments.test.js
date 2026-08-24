@@ -134,7 +134,7 @@ test('简易视频待办只用文字区分已预约与待预约并保持卡片�
     const styles = fs.readFileSync('style.css', 'utf8');
     assert.match(appSource, /simple-video-task-card \$\{booking\.simpleVideoCompleted \? 'is-booked' : 'is-pending'\}/);
     assert.match(appSource, /simple-video-task-status">\$\{booking\.simpleVideoCompleted \? '已预约' : '待预约'\}/);
-    assert.match(styles, /\.simple-video-task-card\s*\{[\s\S]*border-left: 4px solid #4c7dff;[\s\S]*background: #fff;/);
+    assert.match(styles, /\.simple-video-task-card\s*\{[\s\S]*border-left: 4px solid var\(--accent\);[\s\S]*background: #fff;/);
     assert.match(styles, /\.simple-video-task-card\.is-booked \.simple-video-task-status\s*\{[\s\S]*color: #15803d;/);
     assert.match(styles, /\.simple-video-task-card\.is-pending \.simple-video-task-status\s*\{[\s\S]*color: #c2410c;/);
     assert.doesNotMatch(styles, /\.simple-video-task-card\.is-(?:booked|pending)\s*\{[\s\S]*background:/);

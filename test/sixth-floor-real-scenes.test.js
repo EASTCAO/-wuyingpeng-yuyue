@@ -124,7 +124,7 @@ test('6F 卡片拖动时不会选中文字', () => {
 });
 
 test('6F 实景卡片使用圆润圆角', () => {
-    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor \.preview-scene-card\s*\{[\s\S]*?border-radius:\s*14px;/);
+    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor \.preview-scene-card\s*\{[\s\S]*?border-radius:\s*var\(--radius-lg\);/);
 });
 
 test('7F 无影棚区域不显示最外层线框', () => {
@@ -176,8 +176,8 @@ test('楼层和影棚类型使用四选一高频切换控件', () => {
     assert.match(pageStyles, /display:\s*flex;/);
     assert.match(pageStyles, /justify-content:\s*flex-end;/);
     assert.match(pageStyles, /\.studio-view-tabs\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(4,/);
-    assert.match(pageStyles, /\.studio-view-tab\s*\{[\s\S]*?min-height:\s*26px;[\s\S]*?border-radius:\s*4px;/);
-    assert.match(pageStyles, /\.studio-view-tab\.active\s*\{[\s\S]*?background:\s*#4C7DFF;[\s\S]*?color:\s*#FFFFFF;/);
+    assert.match(pageStyles, /\.studio-view-tab\s*\{[\s\S]*?min-height:\s*26px;[\s\S]*?border-radius:\s*var\(--radius-xs\);/);
+    assert.match(pageStyles, /\.studio-view-tab\.active\s*\{[\s\S]*?background:\s*var\(--accent-solid\);[\s\S]*?color:\s*#FFFFFF;/);
 });
 
 test('预约状态说明固定在实景棚预览右上角且不撑满整行', () => {

@@ -16,13 +16,13 @@
     gap: 2px;
     width: 116px;
     padding: 2px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
 }
 
 .preview-floor-tabs .studio-category-tab {
     min-height: 24px;
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     font-size: 12px;
 }
 
@@ -35,13 +35,13 @@
     gap: 2px;
     width: 142px;
     padding: 2px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
 }
 
 .preview-category-tabs .studio-category-tab {
     min-height: 24px;
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     font-size: 12px;
 }
 
@@ -148,7 +148,7 @@
 .preview-single-floor-map .studio-map-zone-large .studio-map-zone-header h3,
 .preview-single-floor-map .studio-map-zone-small .studio-map-zone-header h3,
 .preview-single-floor-map .studio-map-zone-seventh-floor .studio-card-location {
-    color: #1D4ED8;
+    color: var(--accent-ink);
 }
 
 .preview-single-floor-map .studio-map-zone-seventh-floor .studio-map-cards {
@@ -157,7 +157,7 @@
 
 .preview-single-floor-map .studio-map-zone-seventh-floor .studio-overview-card {
     border: 0;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: #FFFFFF;
     box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.3);
 }
@@ -173,7 +173,7 @@
 
 .preview-single-floor-map .studio-map-zone-seventh-floor .studio-overview-card:hover,
 .preview-single-floor-map .studio-map-zone-seventh-floor .studio-overview-card:focus {
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: #FFFFFF;
     box-shadow: inset 0 0 0 1px rgba(29, 78, 216, 0.36);
     transform: none;
@@ -295,7 +295,7 @@
     max-width: calc(100% - 16px);
     padding: 3px 6px;
     border: 1px solid #E3E7EC;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 4px 12px rgba(42, 51, 61, 0.06);
 }
@@ -315,7 +315,7 @@
     height: 7px;
     flex: 0 0 auto;
     border: 1px solid transparent;
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
@@ -341,6 +341,7 @@
     gap: 16px;
     width: min(1500px, 100%);
     height: calc(100vh - 294px);
+    height: calc(100dvh - 294px);
     min-height: 420px;
     margin: 0 auto;
     padding: 14px 20px 22px;
@@ -401,7 +402,7 @@
     gap: 2px;
     padding: 1px;
     border: 1px solid #E1E7ED;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.94);
     box-shadow: 0 4px 12px rgba(42, 51, 61, 0.08);
 }
@@ -412,7 +413,7 @@
     height: 19px;
     padding: 0 4px;
     border: 0;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     background: #F4F6F8;
     color: #4B5563;
     font-size: 12px;
@@ -467,7 +468,7 @@
     /* 跟着 --card-border 走，不要写死颜色：写死会让 6F 画布上的
        "部分预约 / 已约满" 卡片丢掉自己的橙色边框。 */
     border-color: var(--card-border);
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     background: #FFFFFF;
 }
 
@@ -491,7 +492,7 @@
 
 .preview-floor-map-sixth-floor .preview-scene-progress-track {
     height: 10px;
-    border-radius: 5px;
+    border-radius: var(--radius-xs);
 }
 
 .preview-floor-map-sixth-floor .preview-scene-progress small {
@@ -526,7 +527,7 @@
     padding: 16px 17px;
     overflow: hidden;
     border: 1px solid var(--card-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     /* 卡片提到接近纯白，只在底部留一点场景固有色。
        原来顶部是 72% 白覆盖，画出来和画布底几乎同色。 */
     background:
@@ -555,7 +556,7 @@
     position: absolute;
     inset: 1px 10% auto 2px;
     height: 1px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: linear-gradient(90deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0));
     pointer-events: none;
 }
@@ -758,7 +759,7 @@
     width: 100%;
     height: 6px;
     overflow: hidden;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     background: #DCE2E8;
 }
 
@@ -767,7 +768,6 @@
     height: 100%;
     border-radius: inherit;
     background: #8EA4B8;
-    transition: width 220ms ease;
 }
 
 .preview-scene-progress small {
@@ -787,7 +787,7 @@
     z-index: 1;
     padding: 3px 7px;
     border: 1px solid rgba(181, 68, 22, 0.16);
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     background: rgba(255, 255, 255, 0.9);
     color: #A53D14;
     font-size: 10px;
@@ -803,7 +803,7 @@
     z-index: 1;
     padding: 3px 7px;
     border: 1px solid #D1D5DB;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     background: rgba(255, 255, 255, 0.88);
     color: #6B7280;
     font-size: 10px;
@@ -861,7 +861,7 @@
     visibility: hidden;
     opacity: 0;
     border: 1px solid #D8E0E7;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: #FFFFFF;
     box-shadow: 0 16px 36px rgba(28, 39, 49, 0.2);
     pointer-events: none;
@@ -874,7 +874,7 @@
     display: block;
     width: 100%;
     max-height: min(52vh, 400px);
-    border-radius: 5px;
+    border-radius: var(--radius-xs);
     object-fit: contain;
 }
 

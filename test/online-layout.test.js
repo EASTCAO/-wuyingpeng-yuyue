@@ -14,14 +14,14 @@ test('全局界面不再加载 Apple 风格覆盖层', () => {
 });
 
 test('登录页保持正式站的卡片和按钮尺寸', () => {
-    assert.match(styles, /\.login-card\s*\{[\s\S]*?padding: 30px;[\s\S]*?border-radius: 12px;[\s\S]*?box-shadow: 0 14px 34px/);
-    assert.match(styles, /\.login-form input\s*\{[\s\S]*?padding: 10px 12px 10px 36px;[\s\S]*?border-radius: 8px;/);
-    assert.match(styles, /\.login-btn\s*\{[\s\S]*?min-height: 42px;[\s\S]*?border-radius: 8px;/);
-    assert.match(styles, /\.guest-btn\s*\{[\s\S]*?min-height: 42px;[\s\S]*?border-radius: 8px;/);
+    assert.match(styles, /\.login-card\s*\{[\s\S]*?padding: 30px;[\s\S]*?border-radius: var\(--radius-lg\);[\s\S]*?box-shadow: 0 14px 34px/);
+    assert.match(styles, /\.login-form input\s*\{[\s\S]*?padding: 10px 12px 10px 36px;[\s\S]*?border-radius: var\(--radius-md\);/);
+    assert.match(styles, /\.login-btn\s*\{[\s\S]*?min-height: 42px;[\s\S]*?border-radius: var\(--radius-md\);/);
+    assert.match(styles, /\.guest-btn\s*\{[\s\S]*?min-height: 42px;[\s\S]*?border-radius: var\(--radius-md\);/);
 });
 
 test('新增影棚四选一控件保留正式站视觉语言', () => {
     assert.match(styles, /\.studio-view-tabs[\s\S]*grid-template-columns: repeat\(4/);
-    assert.match(styles, /\.studio-view-tab[\s\S]*border-radius: 4px/);
-    assert.match(styles, /\.studio-view-tab\.active[\s\S]*background: #4C7DFF/);
+    assert.match(styles, /\.studio-view-tab[\s\S]*border-radius: var\(--radius-xs\)/);
+    assert.match(styles, /\.studio-view-tab\.active[\s\S]*background: var\(--accent-solid\)/);
 });
