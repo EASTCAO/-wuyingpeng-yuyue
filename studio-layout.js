@@ -280,31 +280,6 @@ function getRealSceneState(studio, date) {
     return { type: 'available', label: '可预约', bookings, availableRanges, remainingSegments, occupiedSegments, occupiedPercentage, totalSegments: STUDIO_OVERVIEW_SEGMENTS };
 }
 
-// 卡片上的时段条：上午 8 格 + 下午 9 格，每格 30 分钟，中间留出午休间隙。
-// 只在这个棚当天有预约时才画——全空的卡片画一整排空格子既没信息量又占版面，
-// 空闲状态本身已经由卡片底色表达了。
-// 原来这里是一条聚合进度条 + "14/18"，它告诉你还剩几格，却不告诉你是哪几格。
-function renderSceneTimeline(studioId, state) {
-    // 日期自己取，避免从 renderRealSceneOverview 一路透传两层参数
-    const date = getStudioOverviewDate();
-    const bookings = getStudioBookingsForDates(studioId, [date]);
-    const timeline = getDayTimeline(bookings, date);
-    const label = `${state.label}。${describeDayTimeline(timeline)}`;
-
-    const groups = timeline.map(period => `
-        <span class="preview-scene-slot-group">
-            ${period.cells.map(cell =>
-                `<i class="preview-scene-slot is-${cell.state}"></i>`
-            ).join('')}
-        </span>
-    `).join('');
-
-    return `
-        <div class="preview-scene-slots" role="img" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">
-            ${groups}
-        </div>
-    `;
-}
 
 function renderRealSceneOverview() {
     const content = document.getElementById('studioPreviewContent');
@@ -367,7 +342,22 @@ function renderRealSceneCard(studio, state, index, layout = null) {
             </div>
             ${state.type === 'ended' ? `
                 <span class="preview-scene-expired-label" role="status">已过期</span>
-            ` : state.bookings.length > 0 ? renderSceneTimeline(studio.id, state) : ''}
+            ` : state.bookings.length > 0 && state.type === 'full' ? `
+                <span class="preview-scene-full-label" role="status" aria-label="当前日期已约满">已约满</span>
+            ` : state.bookings.length > 0 ? `
+                <div
+                    class="preview-scene-progress"
+                    role="progressbar"
+                    aria-label="当前日期已预约时段"
+                    aria-valuemin="0"
+                    aria-valuemax="${state.totalSegments}"
+                    aria-valuenow="${state.occupiedSegments}"
+                    title="已预约 ${state.occupiedSegments} 个时段，剩余 ${state.remainingSegments} 个"
+                >
+                    <span class="preview-scene-progress-track"><i style="width:${state.occupiedPercentage}%"></i></span>
+                    <small>${state.remainingSegments}/${state.totalSegments}</small>
+                </div>
+            ` : ''}
             ${reference ? `
                 <figure class="preview-scene-reference-popover" aria-hidden="true">
                     <img src="${escapeHtml(reference.src)}" alt="${escapeHtml(reference.alt)}" decoding="async">
