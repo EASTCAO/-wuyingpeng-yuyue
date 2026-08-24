@@ -48,7 +48,7 @@ test('切换账号后重置到预约首页且无权限用户不能停留在简�
 });
 
 test('今天和明天的摄影预约分别生成明天和后天的简易视频待办', () => {
-    assert.match(appSource, /!simpleVideoBookingContext[\s\S]*isSimpleVideoEligibleStudio\(studioSelect\.value\)[\s\S]*isBookableDate\(dateInput\.value\)/);
+    assert.match(appSource, /!simpleVideoBookingContext[\s\S]*isSimpleVideoEligibleStudio\(studioSelect\.value\)[\s\S]*isBookableDate\(dateInput\.value, studioSelect\.value\)/);
     assert.match(serverSource, /isValidBookingDate\(date\) && req\.body\?\.needsSimpleVideo === true/g);
     assert.match(serverSource, /date IN \(\$1, \$3\)/);
     assert.match(serverSource, /CASE WHEN bookings\.date = \$1 THEN \$3 ELSE \$6 END AS "simpleVideoTargetDate"/);
@@ -63,7 +63,9 @@ test('后天预约仅对本人绑定的简易视频待办开放', () => {
     assert.match(serverSource, /SIMPLE_VIDEO_ASSIGNMENTS\[task\.photographer\] === user\.username/);
     assert.match(serverSource, /await isAuthorizedSimpleVideoBooking\(req\.user, simpleVideoTaskId, date, studio\)/);
     assert.match(appSource, /showAddBookingForm\(undefined, null, \{ taskId, targetDate \}\)/);
-    assert.match(appSource, /const minDate = simpleVideoBookingContext\?\.targetDate \|\| getBookableStartDate\(\);/);
+    // 简易视频待办把可选日期锁死在摄影次日那一天（min 和 max 都是它）
+    assert.match(appSource, /dateInput\.min = simpleVideoBookingContext\?\.targetDate \|\| getBookableStartDate\(\);/);
+    assert.match(appSource, /dateInput\.max = simpleVideoBookingContext\?\.targetDate \|\| getBookableEndDate\(studio\);/);
     assert.match(appSource, /simpleVideoTaskId: simpleVideoBookingContext\?\.taskId \|\| ''/);
 });
 
@@ -76,10 +78,11 @@ test('简易视频预约流程隐藏重复的简易视频开关', () => {
 });
 
 test('简易视频人员刷新后仍能查看、修改和取消后天预约', () => {
-    assert.match(appSource, /getChinaDate\(isSimpleVideoRecipient\(\) \? 2 : 1\)/);
-    // 明天和后天的预约可改，由共享模块的 isBookingEditable 统一判定
+    // 数据拉取范围要盖住简易视频的后天，也要盖住 6F 实景棚的 7 天窗口
+    assert.match(appSource, /Math\.max\(EXTENDED_BOOKING_WINDOW_DAYS - 1, isSimpleVideoRecipient\(\) \? 2 : 1\)/);
+    // 后天的简易视频预约仍然可改，由共享模块的 isBookingEditable 单独放行
     // （行为覆盖见 test/booking-rules.test.js）。
-    assert.match(sharedRulesSource, /day === getChinaDate\(1, now\) \|\| day === getChinaDate\(2, now\)/);
+    assert.match(sharedRulesSource, /isValidBookingDate\(day, booking\.studio, now\) \|\| day === getChinaDate\(2, now\)/);
     assert.match(serverSource, /booking\.date === getChinaDate\(2\) && date === getChinaDate\(2\)/);
 });
 

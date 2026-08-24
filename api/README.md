@@ -75,6 +75,9 @@ Content-Type: application/json
 
 服务端以登录账号作为摄影师身份，并校验棚位、日期、营业时段、15 分钟粒度、冻结状态和时间冲突。
 
+日期窗口按棚位区分：6F 实景棚（21 个 `6F·` 开头的景）可预约未来 7 天，其余棚位只能预约今天和明天。
+名单在 `booking-rules.js` 的 `EXTENDED_WINDOW_STUDIO_IDS`，由 `test/studio-config-consistency.test.js` 校验一致性。
+
 ## 测试
 
 ```powershell

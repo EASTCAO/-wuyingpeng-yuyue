@@ -106,12 +106,54 @@ test('日期偏移能正确跨月和跨年', () => {
     assert.equal(rules.getChinaDate(2, chinaTime(2026, 2, 27, 10)), '2026-03-01', '2026 不是闰年');
 });
 
-test('常规预约只开放今天和明天', () => {
-    assert.ok(rules.isValidBookingDate('2026-08-24', NOON), '今天');
-    assert.ok(rules.isValidBookingDate('2026-08-25', NOON), '明天');
-    assert.ok(!rules.isValidBookingDate('2026-08-23', NOON), '昨天');
-    assert.ok(!rules.isValidBookingDate('2026-08-26', NOON), '后天');
-    assert.ok(rules.isValidBookingDate('2026-08-24T00:00:00.000Z', NOON), 'ISO 格式也认');
+const SCENE_6F = '6F·书房景';        // 6F 实景棚，窗口 7 天
+const STUDIO_7F = '书房景';           // 7F 实景棚，窗口 2 天
+const CYCLORAMA_6F = '6F无影棚';      // 6F 无影棚，窗口 2 天
+
+test('常规棚位只开放今天和明天', () => {
+    assert.ok(rules.isValidBookingDate('2026-08-24', STUDIO_7F, NOON), '今天');
+    assert.ok(rules.isValidBookingDate('2026-08-25', STUDIO_7F, NOON), '明天');
+    assert.ok(!rules.isValidBookingDate('2026-08-23', STUDIO_7F, NOON), '昨天');
+    assert.ok(!rules.isValidBookingDate('2026-08-26', STUDIO_7F, NOON), '后天');
+    assert.ok(rules.isValidBookingDate('2026-08-24T00:00:00.000Z', STUDIO_7F, NOON), 'ISO 格式也认');
+    // 不传 studio 时按最严格的窗口处理
+    assert.ok(rules.isValidBookingDate('2026-08-25', undefined, NOON));
+    assert.ok(!rules.isValidBookingDate('2026-08-26', undefined, NOON));
+});
+
+test('只有 6F 实景棚的预约窗口是 7 天', () => {
+    assert.equal(rules.getBookingWindowDays(SCENE_6F), 7);
+    assert.equal(rules.getBookingWindowDays(STUDIO_7F), 2);
+    assert.equal(rules.getBookingWindowDays(CYCLORAMA_6F), 2, '6F 无影棚不在放宽名单里');
+    assert.equal(rules.getBookingWindowDays('大无影棚1（工位对面）'), 2);
+    assert.equal(rules.getBookingWindowDays(undefined), 2);
+    assert.equal(rules.EXTENDED_WINDOW_STUDIO_IDS.length, 21);
+});
+
+test('6F 实景棚今天起 7 天都能约，第 8 天不行', () => {
+    const dates = rules.getBookableDates(SCENE_6F, NOON);
+    assert.equal(dates.length, 7);
+    assert.deepEqual(dates, [
+        '2026-08-24', '2026-08-25', '2026-08-26', '2026-08-27',
+        '2026-08-28', '2026-08-29', '2026-08-30'
+    ]);
+    for (const date of dates) {
+        assert.ok(rules.isValidBookingDate(date, SCENE_6F, NOON), `${date} 应可约`);
+        // 同一天换成 7F 的棚就不行了
+        if (date > '2026-08-25') {
+            assert.ok(!rules.isValidBookingDate(date, STUDIO_7F, NOON), `${date} 对 7F 不该可约`);
+        }
+    }
+    assert.ok(!rules.isValidBookingDate('2026-08-31', SCENE_6F, NOON), '第 8 天超窗口');
+    assert.ok(!rules.isValidBookingDate('2026-08-23', SCENE_6F, NOON), '昨天不能约');
+});
+
+test('6F 实景棚的窗口能跨月', () => {
+    const dates = rules.getBookableDates(SCENE_6F, chinaTime(2026, 8, 28, 10));
+    assert.deepEqual(dates, [
+        '2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31',
+        '2026-09-01', '2026-09-02', '2026-09-03'
+    ]);
 });
 
 test('今天已经过去的开始时间不能再预约，明天不受限制', () => {
@@ -122,7 +164,7 @@ test('今天已经过去的开始时间不能再预约，明天不受限制', ()
 });
 
 test('今天未结束的预约和明天后天的预约都可以改，已结束的不行', () => {
-    const at = (date, startTime, endTime) => ({ date, startTime, endTime });
+    const at = (date, startTime, endTime) => ({ date, startTime, endTime, studio: STUDIO_7F });
     assert.ok(!rules.isBookingEditable(at('2026-08-24', '09:00', '11:00'), NOON), '今天已结束');
     assert.ok(!rules.isBookingEditable(at('2026-08-24', '11:00', '12:00'), NOON), '刚好结束');
     assert.ok(rules.isBookingEditable(at('2026-08-24', '11:00', '12:15'), NOON), '今天进行中');
@@ -276,4 +318,48 @@ test('shiftDate 是纯日期加减，能跨月跨年', () => {
     assert.equal(rules.shiftDate('2027-01-01', -1), '2026-12-31');
     assert.equal(rules.shiftDate('2026-02-28', 1), '2026-03-01', '2026 不是闰年');
     assert.equal(rules.shiftDate('2026-08-24', 0), '2026-08-24');
+});
+
+
+test('6F 实景棚窗口内的远期预约仍然可以修改和取消', () => {
+    const at = (date, studio) => ({ date, studio, startTime: '09:00', endTime: '10:00' });
+    // 第 5 天：6F 实景棚可改，同一天的 7F 棚位不可改
+    assert.ok(rules.isBookingEditable(at('2026-08-28', SCENE_6F), NOON));
+    assert.ok(!rules.isBookingEditable(at('2026-08-28', STUDIO_7F), NOON));
+    // 窗口最后一天可改，超出就不行
+    assert.ok(rules.isBookingEditable(at('2026-08-30', SCENE_6F), NOON));
+    assert.ok(!rules.isBookingEditable(at('2026-08-31', SCENE_6F), NOON));
+    // 昨天一律不可改
+    assert.ok(!rules.isBookingEditable(at('2026-08-23', SCENE_6F), NOON));
+    // 简易视频的后天预约仍然单独放行（棚位窗口只有 2 天）
+    assert.ok(rules.isBookingEditable(at('2026-08-26', '大无影棚1（工位对面）'), NOON));
+});
+
+test('放宽窗口后日期条能装下全部可选日期', () => {
+    const cases = [
+        ['周一 6F实景', chinaTime(2026, 8, 24, 12), false, 7],
+        ['周三 6F实景', chinaTime(2026, 8, 26, 12), false, 7],
+        ['周日 6F实景', chinaTime(2026, 8, 30, 12), false, 7],
+        ['周一 6F实景 管理员', chinaTime(2026, 8, 24, 12), true, 7],
+        ['周日 6F实景 管理员', chinaTime(2026, 8, 30, 12), true, 7],
+        ['其他视图', chinaTime(2026, 8, 26, 12), false, 2]
+    ];
+    for (const [name, now, isAdmin, windowDays] of cases) {
+        const strip = rules.getVisibleWeekDates({ isAdmin, windowDays, now });
+        assert.ok(strip.length >= 7, `${name}: 至少 7 格`);
+        for (let i = 1; i < strip.length; i += 1) {
+            assert.equal(strip[i], rules.shiftDate(strip[i - 1], 1), `${name}: 日期必须连续`);
+        }
+        for (const item of rules.getSelectableDates({ isAdmin, windowDays, now })) {
+            assert.ok(strip.includes(item.date), `${name}: ${item.date}(${item.label}) 必须在日期条里`);
+        }
+        assert.ok(strip.includes(rules.getChinaDate(0, now)), `${name}: 今天必须在日期条里`);
+    }
+});
+
+test('6F 实景棚日期条第三天起用星期几做标签', () => {
+    const dates = rules.getSelectableDates({ windowDays: 7, now: NOON });
+    assert.equal(dates.length, 7);
+    assert.deepEqual(dates.slice(0, 2).map(d => d.label), ['今天', '明天']);
+    assert.deepEqual(dates.slice(2).map(d => d.label), ['周三', '周四', '周五', '周六', '周日']);
 });

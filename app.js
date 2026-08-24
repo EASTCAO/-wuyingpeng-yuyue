@@ -1257,10 +1257,19 @@ function openSimpleVideoBooking(taskId, targetDate) {
 
 // 顶部日期条：展示整周 7 天，但只有真正能选的（今天/明天，管理员多一个昨天）可点。
 // 其余日期置灰——它们提供"今天是星期几、在一周里的哪个位置"这个参照。
+// 日期条的可选范围跟着当前视图走：6F 实景棚能提前一周约，其余仍是今天/明天。
+// currentStudioFloor / currentStudioCategory 由 studio-layout.js 维护。
+function getActiveBookingWindowDays() {
+    return currentStudioFloor === '6F' && currentStudioCategory === 'real-scene'
+        ? EXTENDED_BOOKING_WINDOW_DAYS
+        : DEFAULT_BOOKING_WINDOW_DAYS;
+}
+
 function getToolbarDates() {
     const isAdmin = currentUser === 'admin';
-    const selectable = new Map(getSelectableDates({ isAdmin }).map(item => [item.date, item.label]));
-    return getVisibleWeekDates({ isAdmin }).map(date => ({
+    const windowDays = getActiveBookingWindowDays();
+    const selectable = new Map(getSelectableDates({ isAdmin, windowDays }).map(item => [item.date, item.label]));
+    return getVisibleWeekDates({ isAdmin, windowDays }).map(date => ({
         date,
         label: selectable.get(date) || '',
         weekday: getWeekdayLabel(date),
@@ -1289,7 +1298,8 @@ function renderBookingDateSwitcher() {
 }
 
 function selectBookingDate(date) {
-    if (!isSelectableDate(date, { isAdmin: currentUser === 'admin' })) return;
+    const options = { isAdmin: currentUser === 'admin', windowDays: getActiveBookingWindowDays() };
+    if (!isSelectableDate(date, options)) return;
     selectedDate = date;
     currentDateRange = 'custom';
     renderBookingDateSwitcher();
@@ -1343,9 +1353,12 @@ async function loadBookings({ includeHistory = bookingHistoryLoaded } = {}) {
         const previousBookings = allBookings;
         try {
             // all=1 只有管理员能用，普通用户按需要的日期窗口取数。
+            // 拉取范围要覆盖最长的预约窗口（6F 实景棚 7 天），
+            // 否则那几天已有的预约在概览里看不到，会让人以为空着。
+            const lastDay = Math.max(EXTENDED_BOOKING_WINDOW_DAYS - 1, isSimpleVideoRecipient() ? 2 : 1);
             const bookingPath = includeHistory
                 ? '/api/bookings?all=1'
-                : `/api/bookings?from=${getChinaDate(-1)}&to=${getChinaDate(isSimpleVideoRecipient() ? 2 : 1)}`;
+                : `/api/bookings?from=${getChinaDate(-1)}&to=${getChinaDate(lastDay)}`;
             const response = await apiFetch(bookingPath);
             if (!response.ok) {
                 throw new Error(`加载失败: ${response.status}`);
@@ -1628,21 +1641,23 @@ function getBookableStartDate() {
     return getChinaDate();
 }
 
-function getBookableEndDate() {
-    return getChinaDate(1);
+// 预约窗口按棚位算：6F 实景棚 7 天，其余今天/明天。
+function getBookableEndDate(studio) {
+    const dates = getBookableDates(studio);
+    return dates[dates.length - 1];
 }
 
-function isBookableDate(date) {
-    return isValidBookingDate(date);
+function isBookableDate(date, studio) {
+    return isValidBookingDate(date, studio);
 }
 
-function getDefaultBookingDate() {
+function getDefaultBookingDate(studio) {
     const displayDate = getDisplayDates()[0];
-    return isBookableDate(displayDate) ? displayDate : getBookableStartDate();
+    return isBookableDate(displayDate, studio) ? displayDate : getBookableStartDate();
 }
 
 function hasAvailableBookingSlot(studioId, date) {
-    if (!isBookableDate(date)) return false;
+    if (!isBookableDate(date, studioId)) return false;
 
     const today = getBookableStartDate();
     const currentTime = getChinaCurrentTime();
@@ -1660,7 +1675,7 @@ function hasAvailableBookingSlot(studioId, date) {
 }
 
 function isStudioFullyBooked(studioId, dates) {
-    const bookableDates = dates.filter(isBookableDate);
+    const bookableDates = dates.filter(date => isBookableDate(date, studioId));
     if (bookableDates.length === 0) return false;
 
     return bookableDates.every(date => !hasAvailableBookingSlot(studioId, date));
@@ -2077,16 +2092,24 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask
         studioSelect.value = getDefaultStudioId();
     }
 
-    // 普通预约最多提前一天；简易视频待办只能预约摄影次日。
-    const minDate = simpleVideoBookingContext?.targetDate || getBookableStartDate();
-    const maxDate = simpleVideoBookingContext?.targetDate || getBookableEndDate();
+    // 可选日期范围跟着棚位走：6F 实景棚 7 天，其余今天/明天；
+    // 简易视频待办则锁定在摄影次日那一天。
+    const dateInput = document.getElementById('bookingDate');
     const defaultDate = bookingToEdit
         ? getDateOnly(bookingToEdit.date)
-        : simpleVideoBookingContext?.targetDate || getDefaultBookingDate();
-    const dateInput = document.getElementById('bookingDate');
-    dateInput.min = minDate;
-    dateInput.max = maxDate;
+        : simpleVideoBookingContext?.targetDate || getDefaultBookingDate(studioSelect.value);
+
+    const applyDateRange = () => {
+        const studio = studioSelect.value;
+        dateInput.min = simpleVideoBookingContext?.targetDate || getBookableStartDate();
+        dateInput.max = simpleVideoBookingContext?.targetDate || getBookableEndDate(studio);
+        // 换到窗口更短的棚位时，原来选的日期可能已经越界，收回到可选范围内
+        if (!simpleVideoBookingContext && dateInput.value && !isBookableDate(dateInput.value, studio)) {
+            dateInput.value = getBookableStartDate();
+        }
+    };
     dateInput.value = defaultDate;
+    applyDateRange();
     const simpleVideoOption = document.getElementById('simpleVideoBookingOption');
     const simpleVideoCheckbox = document.getElementById('needsSimpleVideo');
     const simpleVideoHint = document.getElementById('simpleVideoBookingHint');
@@ -2095,7 +2118,7 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask
         const eligible = !isSimpleVideoRecipient()
             && !simpleVideoBookingContext
             && isSimpleVideoEligibleStudio(studioSelect.value)
-            && isBookableDate(dateInput.value);
+            && isBookableDate(dateInput.value, studioSelect.value);
         simpleVideoOption?.classList.toggle('hidden', !eligible);
         if (simpleVideoCheckbox) {
             if (syncValue) simpleVideoCheckbox.checked = eligible && Boolean(bookingToEdit?.needsSimpleVideo);
@@ -2126,7 +2149,7 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask
     function updateStartTimeOptions() {
         const validDate = simpleVideoBookingContext
             ? dateInput.value === simpleVideoBookingContext.targetDate
-            : isBookableDate(dateInput.value);
+            : isBookableDate(dateInput.value, studioSelect.value);
         if (!validDate) {
             dateInput.value = defaultDate;
         }
@@ -2178,6 +2201,8 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask
         updateStartTimeOptions();
     };
     document.getElementById('studioSelect').onchange = () => {
+        // 换棚位可能改变可选日期范围（6F 实景棚 7 天 vs 其余今天/明天）
+        applyDateRange();
         updateSimpleVideoOption();
         updateStartTimeOptions();
     };
@@ -2254,9 +2279,10 @@ async function addBooking() {
 
     const validBookingDate = simpleVideoBookingContext
         ? date === simpleVideoBookingContext.targetDate
-        : isBookableDate(date);
+        : isBookableDate(date, studio);
     if (!validBookingDate) {
-        showToast('只能预约今天或明天的影棚', 'error');
+        const days = getBookingWindowDays(studio);
+        showToast(days > 2 ? `该影棚只能预约未来 ${days} 天内的日期` : '只能预约今天或明天的影棚', 'error');
         return;
     }
 
@@ -2575,7 +2601,7 @@ function editBooking() {
         return;
     }
     const bookingDate = getDateOnly(booking.date);
-    if (!(isBookableDate(bookingDate) || bookingDate === getChinaDate(2))
+    if (!(isBookableDate(bookingDate, booking.studio) || bookingDate === getChinaDate(2))
         || (bookingDate === getChinaDate() && booking.endTime <= getChinaCurrentTime())) {
         showToast('已过期预约不能修改', 'error');
         return;

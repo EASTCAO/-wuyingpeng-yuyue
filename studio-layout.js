@@ -157,6 +157,15 @@ function selectStudioView(floor, category) {
     currentStudioFloor = floor;
     currentStudioCategory = category;
     localStorage.setItem(getStudioViewStorageKey(), JSON.stringify({ floor, category }));
+    // 6F 实景棚能提前一周约，其余视图只有今天/明天。
+    // 从 6F 实景棚切走时，原来选的日期可能已经超出新视图的范围，收回到今天。
+    if (selectedDate && !isSelectableDate(selectedDate, {
+        isAdmin: currentUser === 'admin',
+        windowDays: getActiveBookingWindowDays()
+    })) {
+        selectedDate = getChinaDate();
+    }
+    renderBookingDateSwitcher();
     renderStudioToolbarControls();
     renderStudioSections();
     renderBookings();

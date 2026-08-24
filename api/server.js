@@ -11,6 +11,7 @@ const {
   isValidDateString,
   isValidBookingRange,
   isValidBookingDate,
+  getBookingWindowDays,
   isBookingStartAvailable,
   isBookingEditable
 } = require('./booking-rules');
@@ -223,6 +224,12 @@ async function isAuthorizedSimpleVideoBooking(user, taskId, date, studio) {
   return Boolean(task?.needsSimpleVideo)
     && task.date === getChinaDate(1)
     && SIMPLE_VIDEO_ASSIGNMENTS[task.photographer] === user.username;
+}
+
+// 错误文案要跟着棚位的实际窗口走，不能再一律写"只能预约今天或明天"。
+function describeBookingWindow(studio) {
+  const days = getBookingWindowDays(studio);
+  return days > 2 ? `该影棚只能预约未来 ${days} 天内的日期` : '只能预约今天或明天';
 }
 
 function isEditableBooking(booking) {
@@ -519,6 +526,8 @@ app.get('/api/bookings', requireAuth, async (req, res) => {
 app.post('/api/bookings', requireAuth, writeLimiter, async (req, res) => {
   try {
       const { id, studio, date, startTime, endTime, notes, simpleVideoTaskId } = req.body;
+    // 简易视频待办只围绕今天/明天运转，这里刻意不传 studio，
+    // 6F 实景棚放宽到 7 天不影响这个开关的判定窗口。
     const needsSimpleVideo = studio !== '6F无影棚' && isValidBookingDate(date) && req.body?.needsSimpleVideo === true;
 
     if (!id || !studio || !date || !startTime || !endTime) {
@@ -527,9 +536,11 @@ app.post('/api/bookings', requireAuth, writeLimiter, async (req, res) => {
 
     if (!STUDIO_IDS.includes(studio)) return res.status(400).json({ error: '影棚无效' });
     if (FROZEN_STUDIO_IDS.has(studio)) return res.status(400).json({ error: '该影棚暂时冻结，无法预约' });
-    const validBookingDate = isValidBookingDate(date)
+    const validBookingDate = isValidBookingDate(date, studio)
       || await isAuthorizedSimpleVideoBooking(req.user, simpleVideoTaskId, date, studio);
-    if (!validBookingDate) return res.status(400).json({ error: '只能预约今天或明天；简易视频人员可从待办预约对应日期' });
+    if (!validBookingDate) {
+      return res.status(400).json({ error: `${describeBookingWindow(studio)}；简易视频人员可从待办预约对应日期` });
+    }
     if (!isValidBookingRange(startTime, endTime)) return res.status(400).json({ error: '时间必须在营业时段内，且按15分钟预约' });
     if (!isBookingStartAvailable(date, startTime)) return res.status(400).json({ error: '今天的开始时间已过期，请选择当前时间之后的时段' });
 
@@ -586,6 +597,8 @@ app.put('/api/bookings/:id', requireAuth, writeLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const { studio, date, startTime, endTime, notes } = req.body || {};
+    // 简易视频待办只围绕今天/明天运转，这里刻意不传 studio，
+    // 6F 实景棚放宽到 7 天不影响这个开关的判定窗口。
     const needsSimpleVideo = studio !== '6F无影棚' && isValidBookingDate(date) && req.body?.needsSimpleVideo === true;
     if (!studio || !date || !startTime || !endTime) {
       return res.status(400).json({ error: '缺少必填字段' });
@@ -620,12 +633,12 @@ app.put('/api/bookings/:id', requireAuth, writeLimiter, async (req, res) => {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: '已过期预约不能修改' });
       }
-      const validBookingDate = isValidBookingDate(date)
+      const validBookingDate = isValidBookingDate(date, studio)
         || (booking.date === getChinaDate(2) && date === getChinaDate(2)
           && SIMPLE_VIDEO_STUDIO_IDS.includes(studio));
       if (!validBookingDate) {
         await client.query('ROLLBACK');
-        return res.status(400).json({ error: '只能预约今天或明天；简易视频预约只能修改原定后天日期' });
+        return res.status(400).json({ error: `${describeBookingWindow(studio)}；简易视频预约只能修改原定后天日期` });
       }
 
       const conflicts = await client.query(
