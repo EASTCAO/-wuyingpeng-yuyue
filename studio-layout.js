@@ -281,8 +281,9 @@ function getRealSceneState(studio, date) {
 }
 
 // 卡片上的时段条：上午 8 格 + 下午 9 格，每格 30 分钟，中间留出午休间隙。
-// 原来这里是一条聚合进度条 + "14/18"——它告诉你还剩几格，却不告诉你是哪几格，
-// 而且只有已预约的卡片才有。摄影师真正要判断的是"我下午 3 点能不能用"。
+// 只在这个棚当天有预约时才画——全空的卡片画一整排空格子既没信息量又占版面，
+// 空闲状态本身已经由卡片底色表达了。
+// 原来这里是一条聚合进度条 + "14/18"，它告诉你还剩几格，却不告诉你是哪几格。
 function renderSceneTimeline(studioId, state) {
     // 日期自己取，避免从 renderRealSceneOverview 一路透传两层参数
     const date = getStudioOverviewDate();
@@ -366,7 +367,7 @@ function renderRealSceneCard(studio, state, index, layout = null) {
             </div>
             ${state.type === 'ended' ? `
                 <span class="preview-scene-expired-label" role="status">已过期</span>
-            ` : renderSceneTimeline(studio.id, state)}
+            ` : state.bookings.length > 0 ? renderSceneTimeline(studio.id, state) : ''}
             ${reference ? `
                 <figure class="preview-scene-reference-popover" aria-hidden="true">
                     <img src="${escapeHtml(reference.src)}" alt="${escapeHtml(reference.alt)}" decoding="async">
