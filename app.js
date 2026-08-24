@@ -501,6 +501,7 @@ async function apiFetch(path, options = {}) {
         sessionStorage.removeItem('currentUser');
         currentUser = null;
         stopAutoRefresh();
+        stopStateRefresh();
         document.getElementById('loginPage')?.classList.remove('hidden');
         document.getElementById('mainPage')?.classList.add('hidden');
     }
@@ -538,6 +539,30 @@ function stopAutoRefresh() {
     if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
+    }
+}
+
+// 预约状态（未开始 / 进行中 / 已结束 / 已过期）是随时间自己翻转的，
+// 但重渲染原来只挂在 loadBookings 上——那是数据驱动的。后果：
+//   - 本地模式没有任何轮询，页面开着过了 18:15 也不会变成"已过期"
+//   - 云端模式下请求失败、或标签页在后台跳过轮询时，状态同样停在旧值
+// 所以状态刷新必须独立于网络。renderAllViews 内部有签名比对，
+// 时间桶（15 分钟）没跨过去时会整轮跳过，代价极低。
+let stateRefreshInterval = null;
+
+function startStateRefresh() {
+    if (stateRefreshInterval) return;
+    stateRefreshInterval = setInterval(() => {
+        if (!isPageVisible()) return;
+        if (bookingSaveInFlight || bookingDeleteInFlight) return;
+        renderAllViews();
+    }, 30000);
+}
+
+function stopStateRefresh() {
+    if (stateRefreshInterval) {
+        clearInterval(stateRefreshInterval);
+        stateRefreshInterval = null;
     }
 }
 
@@ -1120,7 +1145,8 @@ function logout() {
         localStorage.removeItem('authToken');
         sessionStorage.removeItem('currentUser');
         sessionStorage.removeItem('authToken');
-        stopAutoRefresh(); // 停止自动刷新
+        stopAutoRefresh();
+        stopStateRefresh();
         document.getElementById('loginPage').classList.remove('hidden');
         document.getElementById('mainPage').classList.add('hidden');
         document.getElementById('photographerName').value = '';
@@ -1160,6 +1186,8 @@ function showMainPage() {
 
     // 云端模式下启动自动刷新
     startAutoRefresh();
+    // 状态刷新与网络无关，本地和云端都要跑
+    startStateRefresh();
 }
 
 function isSimpleVideoEligibleStudio(studioId) {
