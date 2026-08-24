@@ -719,55 +719,64 @@
     overflow-wrap: anywhere;
 }
 
-.preview-scene-progress {
-    position: static;
-    width: 72%;
-    margin: 10px auto 0;
+
+
+
+
+
+/* 时段条：上午 8 格 + 下午 9 格，每格 30 分钟，两段之间的空隙就是午休。
+   替代原来那条聚合进度条——它只说"还剩几格"，不说是哪几格，
+   而且只有已预约的卡片才显示。 */
+.preview-scene-slots {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+    width: 84%;
+    margin: 9px auto 0;
     pointer-events: none;
 }
 
-.preview-scene-progress-track {
-    position: relative;
-    display: block;
-    width: 100%;
-    height: 6px;
+.preview-scene-slot-group {
+    display: flex;
+    flex: 1 1 auto;
+    gap: 1px;
     overflow: hidden;
-    border-radius: 3px;
-    background: #DCE2E8;
+    border-radius: 2px;
 }
 
-.preview-scene-progress-track i {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: #8EA4B8;
-    transition: width 220ms ease;
+.preview-scene-slot {
+    flex: 1 1 0;
+    height: 7px;
+    min-width: 2px;
 }
 
-.preview-scene-progress small {
-    display: block;
-    margin-top: 4px;
-    color: #65717D;
-    font-size: 8px;
-    font-weight: 500;
-    line-height: 1;
-    text-align: center;
+.preview-scene-slot.is-free {
+    background: #CBD5E1;
 }
 
-.preview-scene-full-label {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1;
-    padding: 3px 7px;
-    border: 1px solid rgba(181, 68, 22, 0.16);
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.9);
-    color: #A53D14;
-    font-size: 10px;
-    font-weight: 500;
-    line-height: 1.2;
-    white-space: nowrap;
+.preview-scene-slot.is-booked {
+    background: #F28C4B;
+}
+
+/* 今天已经过去的时段：比空闲更淡，明确表示"不是空着，是来不及了" */
+.preview-scene-slot.is-past {
+    background: #E7EBF0;
+}
+
+/* 已约满 / 部分预约的卡片本身是橙底，格子要换配色才分得出来 */
+.preview-scene-card.partial .preview-scene-slot.is-free,
+.preview-scene-card.full .preview-scene-slot.is-free {
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.preview-scene-card.partial .preview-scene-slot.is-booked,
+.preview-scene-card.full .preview-scene-slot.is-booked {
+    background: #B4520F;
+}
+
+.preview-scene-card.partial .preview-scene-slot.is-past,
+.preview-scene-card.full .preview-scene-slot.is-past {
+    background: rgba(255, 255, 255, 0.45);
 }
 
 .preview-scene-expired-label {
@@ -786,31 +795,11 @@
     white-space: nowrap;
 }
 
-.preview-scene-card.partial .preview-scene-progress-track,
-.preview-scene-card.full .preview-scene-progress-track {
-    background: rgba(207, 105, 48, 0.2);
-}
 
-.preview-scene-card.partial .preview-scene-progress-track i,
-.preview-scene-card.full .preview-scene-progress-track i {
-    background: #FFFFFF;
-}
 
-.preview-scene-card.partial .preview-scene-progress small {
-    color: #9A512A;
-}
 
-.preview-scene-card.full .preview-scene-progress small {
-    color: rgba(255, 255, 255, 0.96);
-}
 
-.preview-scene-card.ended .preview-scene-progress-track {
-    background: #D2D6DB;
-}
 
-.preview-scene-card.ended .preview-scene-progress-track i {
-    background: #AAB0B7;
-}
 
 .preview-scene-card.full h4 {
     color: #5C2A12;

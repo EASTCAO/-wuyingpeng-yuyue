@@ -180,6 +180,46 @@
         ];
     }
 
+    // 一天的时段占用条：按营业时段分组，每段切成固定粒度的格子。
+    // 用来在实景棚卡片上一眼看出"哪几段空着"——原来只有一个聚合百分比，
+    // 它告诉你还剩几格，但不告诉你是哪几格。
+    //
+    // 注意：只要预约和格子有任何重叠就整格算已占（例如 09:00-09:15 会占掉
+    // 09:00-09:30 这一格）。这是概览视图，宁可显示得保守一点。
+    function getDayTimeline(bookings, date, { now = Date.now(), slotMinutes = 30 } = {}) {
+        const day = getDateOnly(date);
+        const today = getChinaDate(0, now);
+        const currentTime = getChinaCurrentTime(now);
+        const dayBookings = bookings.filter(booking => getDateOnly(booking.date) === day);
+
+        return BOOKABLE_PERIODS.map(period => {
+            const cells = [];
+            const periodEnd = timeToMinutes(period.end);
+            for (let minutes = timeToMinutes(period.start); minutes + slotMinutes <= periodEnd; minutes += slotMinutes) {
+                const start = minutesToTime(minutes);
+                const end = minutesToTime(minutes + slotMinutes);
+                const booked = dayBookings.some(booking =>
+                    hasTimeOverlap(start, end, booking.startTime, booking.endTime));
+                const past = day < today || (day === today && end <= currentTime);
+                cells.push({ start, end, state: booked ? 'booked' : past ? 'past' : 'free' });
+            }
+            return { start: period.start, end: period.end, cells };
+        });
+    }
+
+    // 把时段条压成一句给读屏用的话，例如 "上午已约满，下午 14:00-18:30 可约"。
+    function describeDayTimeline(timeline) {
+        const parts = timeline.map((period, index) => {
+            const name = index === 0 ? '上午' : '下午';
+            const free = period.cells.filter(cell => cell.state === 'free');
+            if (free.length === 0) return `${name}无可约时段`;
+            if (free.length === period.cells.length) return `${name}全天可约`;
+            // 不用"X 起共 N 个"的说法：空闲格可能被预约切成好几段，那样会误导。
+            return `${name}剩 ${free.length} 个时段可约，最早 ${free[0].start}`;
+        });
+        return parts.join('，');
+    }
+
     return {
         BOOKING_INTERVAL_MINUTES,
         BOOKING_START_TIME,
@@ -203,6 +243,8 @@
         getBookedSlotPercentage,
         getSelectableDates,
         isSelectableDate,
-        getWeekdayLabel
+        getWeekdayLabel,
+        getDayTimeline,
+        describeDayTimeline
     };
 });

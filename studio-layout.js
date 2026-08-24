@@ -13,6 +13,9 @@ const SIXTH_FLOOR_LAYOUT_VERSION = 4;
 const SIXTH_FLOOR_CANVAS_SIZE = { width: 1800, height: 1040 };
 const SIXTH_FLOOR_FRAME_INSETS = { top: 76, right: 20, bottom: 20, left: 20 };
 const SIXTH_FLOOR_DEFAULT_SCALE = 0.75;
+// 缩放下限。原来是 0.55，此时 16px 的景名会被缩到 8.8px，基本不可读；
+// 0.7 对应 11.2px，窗口再小宁可出现滚动条拖着看，也不把字缩没。
+const SIXTH_FLOOR_MIN_SCALE = 0.7;
 const SIXTH_FLOOR_DRAG_THRESHOLD = 10;
 const SIXTH_FLOOR_DEFAULT_LAYOUT = {
     'sixth-corridor': { x: 40, y: 40, width: 320, height: 120 },
@@ -277,6 +280,31 @@ function getRealSceneState(studio, date) {
     return { type: 'available', label: '可预约', bookings, availableRanges, remainingSegments, occupiedSegments, occupiedPercentage, totalSegments: STUDIO_OVERVIEW_SEGMENTS };
 }
 
+// 卡片上的时段条：上午 8 格 + 下午 9 格，每格 30 分钟，中间留出午休间隙。
+// 原来这里是一条聚合进度条 + "14/18"——它告诉你还剩几格，却不告诉你是哪几格，
+// 而且只有已预约的卡片才有。摄影师真正要判断的是"我下午 3 点能不能用"。
+function renderSceneTimeline(studioId, state) {
+    // 日期自己取，避免从 renderRealSceneOverview 一路透传两层参数
+    const date = getStudioOverviewDate();
+    const bookings = getStudioBookingsForDates(studioId, [date]);
+    const timeline = getDayTimeline(bookings, date);
+    const label = `${state.label}。${describeDayTimeline(timeline)}`;
+
+    const groups = timeline.map(period => `
+        <span class="preview-scene-slot-group">
+            ${period.cells.map(cell =>
+                `<i class="preview-scene-slot is-${cell.state}"></i>`
+            ).join('')}
+        </span>
+    `).join('');
+
+    return `
+        <div class="preview-scene-slots" role="img" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">
+            ${groups}
+        </div>
+    `;
+}
+
 function renderRealSceneOverview() {
     const content = document.getElementById('studioPreviewContent');
     if (!content) return;
@@ -338,22 +366,7 @@ function renderRealSceneCard(studio, state, index, layout = null) {
             </div>
             ${state.type === 'ended' ? `
                 <span class="preview-scene-expired-label" role="status">已过期</span>
-            ` : state.bookings.length > 0 && state.type === 'full' ? `
-                <span class="preview-scene-full-label" role="status" aria-label="当前日期已约满">已约满</span>
-            ` : state.bookings.length > 0 ? `
-                <div
-                    class="preview-scene-progress"
-                    role="progressbar"
-                    aria-label="当前日期已预约时段"
-                    aria-valuemin="0"
-                    aria-valuemax="${state.totalSegments}"
-                    aria-valuenow="${state.occupiedSegments}"
-                    title="已预约 ${state.occupiedSegments} 个时段，剩余 ${state.remainingSegments} 个"
-                >
-                    <span class="preview-scene-progress-track"><i style="width:${state.occupiedPercentage}%"></i></span>
-                    <small>${state.remainingSegments}/${state.totalSegments}</small>
-                </div>
-            ` : ''}
+            ` : renderSceneTimeline(studio.id, state)}
             ${reference ? `
                 <figure class="preview-scene-reference-popover" aria-hidden="true">
                     <img src="${escapeHtml(reference.src)}" alt="${escapeHtml(reference.alt)}" decoding="async">
@@ -398,7 +411,7 @@ function fitSixthFloorCanvasToViewport(layout) {
     const widthScale = availableWidth / bounds.width;
     const heightScale = availableHeight / bounds.height;
     const fittedScale = Math.min(SIXTH_FLOOR_DEFAULT_SCALE, widthScale, heightScale);
-    sixthFloorViewport = { ...sixthFloorViewport, scale: Number(Math.max(0.55, fittedScale).toFixed(2)) };
+    sixthFloorViewport = { ...sixthFloorViewport, scale: Number(Math.max(SIXTH_FLOOR_MIN_SCALE, fittedScale).toFixed(2)) };
     applySixthFloorViewport();
 }
 
@@ -412,13 +425,13 @@ function bindSixthFloorCanvas() {
     viewport.addEventListener('wheel', event => {
         event.preventDefault();
         const delta = event.deltaY < 0 ? 0.1 : -0.1;
-        sixthFloorViewport.scale = Math.min(1.5, Math.max(0.55, Number((sixthFloorViewport.scale + delta).toFixed(2))));
+        sixthFloorViewport.scale = Math.min(1.5, Math.max(SIXTH_FLOOR_MIN_SCALE, Number((sixthFloorViewport.scale + delta).toFixed(2))));
         applySixthFloorViewport();
     }, { passive: false });
     viewport.querySelectorAll('[data-canvas-action]').forEach(button => button.addEventListener('click', () => {
         const action = button.dataset.canvasAction;
         if (action === 'reset') return resetSixthFloorLayout();
-        sixthFloorViewport.scale = Math.min(1.5, Math.max(0.55, Number((sixthFloorViewport.scale + (action === 'zoom-in' ? 0.1 : -0.1)).toFixed(2))));
+        sixthFloorViewport.scale = Math.min(1.5, Math.max(SIXTH_FLOOR_MIN_SCALE, Number((sixthFloorViewport.scale + (action === 'zoom-in' ? 0.1 : -0.1)).toFixed(2))));
         applySixthFloorViewport();
     }));
     canvas.addEventListener('pointerdown', event => {
