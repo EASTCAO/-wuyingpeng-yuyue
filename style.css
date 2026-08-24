@@ -24,8 +24,28 @@
     --danger: #EF4444;          /* 危险色文字 / 图形 */
     --danger-solid: #DC2626;    /* 承载白字的危险按钮（4.83:1；#EF4444 只有 3.76） */
 
-    --ink: #262626;             /* 正文；不使用纯黑 */
-    --ink-muted: #616B79;       /* 次要文字（白底 5.40:1、选中底 4.76:1 均达 AA） */
+    /* 文字取 Cal.com 的 charcoal：比纯黑温和，对白 15.52:1 */
+    --ink: #242424;
+    /* Cal.com 的次要灰 #898989 对白只有 3.50:1，达不到 AA，这里取同为中性
+       但达标的 #6B6B6B（白底 5.33、选中底 4.69） */
+    --ink-muted: #6B6B6B;
+
+    /* Cal.com 的多层阴影：ring 边框 + 弥散阴影 + 接触阴影三层叠加。
+       ring（0 0 0 1px）代替 CSS border 做发丝级围合，不占布局空间，
+       所以用了 --shadow-card 的元素要同时去掉 border。 */
+    --shadow-ring: 0 0 0 1px rgba(34, 42, 53, 0.08);
+    --shadow-card:
+        0 1px 5px -4px rgba(19, 19, 22, 0.7),
+        0 0 0 1px rgba(34, 42, 53, 0.08),
+        0 4px 8px 0 rgba(34, 42, 53, 0.05);
+    --shadow-raised:
+        0 1px 5px -4px rgba(36, 36, 36, 0.7),
+        0 0 0 1px rgba(34, 42, 53, 0.08),
+        0 12px 24px -6px rgba(34, 42, 53, 0.1);
+    --shadow-overlay:
+        0 0 0 1px rgba(34, 42, 53, 0.08),
+        0 24px 48px -12px rgba(19, 19, 22, 0.24);
+    --shadow-soft: 0 4px 8px 0 rgba(34, 42, 53, 0.05);
 }
 
 * {
@@ -326,10 +346,9 @@ textarea:focus-visible,
     flex-direction: column;
     min-width: 170px;
     padding: 6px;
-    border: 1px solid #E5E7EB;
     border-radius: var(--radius-lg);
     background: #FFFFFF;
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+    box-shadow: var(--shadow-overlay);
 }
 
 .user-menu-item {
@@ -405,9 +424,8 @@ textarea:focus-visible,
 .login-card {
     background: white;
     padding: 30px;
-    border: 1px solid #E5E7EB;
     border-radius: var(--radius-lg);
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--shadow-raised);
     text-align: left;
 }
 
@@ -925,13 +943,12 @@ textarea:focus-visible,
 
 .modal-content {
     background: white;
-    border: 1px solid #F0F0F0;
     border-radius: var(--radius-2xl);
     max-width: 500px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-overlay);
 }
 
 .modal-header {
@@ -2304,10 +2321,9 @@ textarea:focus-visible,
     background: white;
     padding: 16px 20px;
     border-radius: var(--radius-lg);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-overlay);
     z-index: 2000;
     animation: slideIn 0.3s ease-out;
-    border: 1px solid rgba(0, 0, 0, 0.08);
     font-size: 14px;
     font-weight: 500;
 }
