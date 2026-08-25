@@ -629,10 +629,10 @@
 }
 
 .preview-scene-card.full {
-    --card-edge: #CF5F24;
-    --card-border: #EC7D3D;
-    --card-shadow: rgba(171, 66, 18, 0.2);
-    background: linear-gradient(138deg, #FFC79F 0%, #FF995E 56%, #F47B3E 100%);
+    --card-edge: #E4935B;
+    --card-border: #EFA278;
+    --card-shadow: rgba(190, 96, 38, 0.16);
+    background: linear-gradient(138deg, #FFF4EC 0%, #FAE1D0 58%, #F6D3BC 100%);
 }
 
 .preview-scene-card.ended {
@@ -826,8 +826,17 @@
     color: #9A512A;
 }
 
+.preview-scene-card.full .preview-scene-progress-track {
+    background: rgba(196, 108, 54, 0.22);
+}
+
+/* full 卡底已改为浅桃色，进度条数字从白字改成深棕，否则在浅底上会看不清 */
+.preview-scene-card.full .preview-scene-progress-track i {
+    background: #D27B44;
+}
+
 .preview-scene-card.full .preview-scene-progress small {
-    color: rgba(255, 255, 255, 0.96);
+    color: #8A4A22;
 }
 
 .preview-scene-card.ended .preview-scene-progress-track {

@@ -9,7 +9,7 @@ const STUDIO_SCENE_REFERENCES = {
     }
 };
 
-const SIXTH_FLOOR_LAYOUT_VERSION = 4;
+const SIXTH_FLOOR_LAYOUT_VERSION = 5;
 const SIXTH_FLOOR_CANVAS_SIZE = { width: 1800, height: 1040 };
 const SIXTH_FLOOR_FRAME_INSETS = { top: 76, right: 20, bottom: 20, left: 20 };
 const SIXTH_FLOOR_DEFAULT_SCALE = 0.75;
@@ -17,28 +17,31 @@ const SIXTH_FLOOR_DEFAULT_SCALE = 0.75;
 // 0.7 对应 11.2px，窗口再小宁可出现滚动条拖着看，也不把字缩没。
 const SIXTH_FLOOR_MIN_SCALE = 0.7;
 const SIXTH_FLOOR_DRAG_THRESHOLD = 10;
+// 默认户型图坐标。全图垫在 40px 的统一间距上，外沿落在 x40..x1760 / y40..y1000，
+// 两侧用两列通高房间（绿植房景、复古餐厅景）收边，右下不再留大块空角。
+// 改过坐标就升 SIXTH_FLOOR_LAYOUT_VERSION，让残留的旧版个人布局作废。
 const SIXTH_FLOOR_DEFAULT_LAYOUT = {
-    'sixth-corridor': { x: 40, y: 40, width: 320, height: 120 },
-    'sixth-wood-wall': { x: 400, y: 40, width: 320, height: 120 },
-    'sixth-greenery-wall': { x: 760, y: 40, width: 320, height: 120 },
-    'sixth-ocean-wall': { x: 1120, y: 40, width: 320, height: 120 },
-    'sixth-street': { x: 1480, y: 40, width: 280, height: 120 },
+    'sixth-corridor': { x: 40, y: 40, width: 312, height: 120 },
+    'sixth-wood-wall': { x: 392, y: 40, width: 312, height: 120 },
+    'sixth-greenery-wall': { x: 744, y: 40, width: 312, height: 120 },
+    'sixth-ocean-wall': { x: 1096, y: 40, width: 312, height: 120 },
+    'sixth-street': { x: 1448, y: 40, width: 312, height: 120 },
     'sixth-greenery': { x: 40, y: 200, width: 200, height: 620 },
     'sixth-kids': { x: 280, y: 200, width: 220, height: 160 },
     'sixth-classroom': { x: 540, y: 200, width: 260, height: 160 },
     'sixth-clinic': { x: 280, y: 400, width: 520, height: 160 },
     'sixth-study': { x: 840, y: 200, width: 260, height: 360 },
     'sixth-vintage-living': { x: 1140, y: 200, width: 260, height: 360 },
-    'sixth-vintage-dining': { x: 1440, y: 200, width: 320, height: 360 },
-    'sixth-modern-living': { x: 280, y: 600, width: 260, height: 180 },
-    'sixth-modern-dining': { x: 580, y: 600, width: 260, height: 180 },
-    'sixth-outdoor-cafe': { x: 880, y: 600, width: 260, height: 180 },
-    'sixth-bedroom': { x: 1180, y: 600, width: 320, height: 180 },
-    'sixth-bathroom': { x: 40, y: 860, width: 200, height: 140 },
-    'sixth-bar': { x: 280, y: 860, width: 220, height: 140 },
-    'sixth-chinese': { x: 540, y: 860, width: 220, height: 140 },
-    'sixth-workshop': { x: 800, y: 860, width: 220, height: 140 },
-    'sixth-modern-kitchen': { x: 1060, y: 860, width: 320, height: 140 }
+    'sixth-vintage-dining': { x: 1440, y: 200, width: 320, height: 620 },
+    'sixth-modern-living': { x: 280, y: 600, width: 260, height: 220 },
+    'sixth-modern-dining': { x: 580, y: 600, width: 260, height: 220 },
+    'sixth-outdoor-cafe': { x: 880, y: 600, width: 260, height: 220 },
+    'sixth-bedroom': { x: 1180, y: 600, width: 220, height: 220 },
+    'sixth-bathroom': { x: 40, y: 860, width: 312, height: 140 },
+    'sixth-bar': { x: 392, y: 860, width: 312, height: 140 },
+    'sixth-chinese': { x: 744, y: 860, width: 312, height: 140 },
+    'sixth-workshop': { x: 1096, y: 860, width: 312, height: 140 },
+    'sixth-modern-kitchen': { x: 1448, y: 860, width: 312, height: 140 }
 };
 
 let sixthFloorViewport = { x: 0, y: 0, scale: 1 };
