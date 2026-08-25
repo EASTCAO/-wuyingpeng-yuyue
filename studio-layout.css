@@ -330,8 +330,8 @@
 }
 
 .preview-legend-swatch.full {
-    border-color: #EC7D3D;
-    background: #F58A4E;
+    border-color: #C86028;
+    background: #F49F68;
 }
 
 .preview-floor-map {
@@ -628,11 +628,13 @@
     background: linear-gradient(145deg, #FFECDD 0%, #FFDEC5 100%);
 }
 
+/* 已约满：必须和 partial 的浅橙拉开一档明度，否则两个状态看着一样。
+   底色亮度 0.45 对 partial 底(0.775) 是 1.65:1，边框对画布 3.49:1（过非文字 3:1）。 */
 .preview-scene-card.full {
-    --card-edge: #E4935B;
-    --card-border: #EFA278;
-    --card-shadow: rgba(190, 96, 38, 0.16);
-    background: linear-gradient(138deg, #FFF4EC 0%, #FAE1D0 58%, #F6D3BC 100%);
+    --card-edge: #C86028;
+    --card-border: #C86028;
+    --card-shadow: rgba(171, 66, 18, 0.2);
+    background: linear-gradient(138deg, #FBBC8E 0%, #F49F68 56%, #EC8B4C 100%);
 }
 
 .preview-scene-card.ended {
@@ -827,16 +829,16 @@
 }
 
 .preview-scene-card.full .preview-scene-progress-track {
-    background: rgba(196, 108, 54, 0.22);
+    background: rgba(140, 62, 22, 0.26);
 }
 
-/* full 卡底已改为浅桃色，进度条数字从白字改成深棕，否则在浅底上会看不清 */
+/* full 底色为中橙，白字只有 2.1:1，改用深棕 4.79:1 */
 .preview-scene-card.full .preview-scene-progress-track i {
-    background: #D27B44;
+    background: #FFF6EF;
 }
 
 .preview-scene-card.full .preview-scene-progress small {
-    color: #8A4A22;
+    color: #6B3212;
 }
 
 .preview-scene-card.ended .preview-scene-progress-track {
