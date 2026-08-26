@@ -6,6 +6,14 @@ const STUDIO_SCENE_REFERENCES = {
     '洗衣房景别': {
         src: 'assets/real-studio/laundry.webp?v=20260804-laundry-reference',
         alt: '洗衣房景别场景示意图'
+    },
+    // 6F 画布上的实拍封面试点。真实照片比抽象渐变更能说明"这是哪个景"，
+    // 而且照片不会和橙色的预约状态争语义。这里先只接一个景验证观感，
+    // 剩下 20 个景等素材齐了照这个模式补 cover 字段即可。
+    '6F·洗浴室景': {
+        src: 'assets/real-studio/laundry.webp?v=20260804-laundry-reference',
+        alt: '洗浴室景场景示意图',
+        cover: 'assets/real-studio/bathroom.webp?v=20260826-bathroom-cover'
     }
 };
 
@@ -344,7 +352,7 @@ function renderRealSceneCard(studio, state, index, layout = null) {
     const editable = Boolean(position && canEditSixthFloorLayout());
     return `
         <article
-            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference ? ' has-scene-reference' : ''}${position ? ' sixth-floor-layout-card' : ''}"
+            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference ? ' has-scene-reference' : ''}${reference?.cover && position ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}"
             data-map-area="${escapeHtml(studio.mapArea)}"
             data-studio-id="${escapeHtml(studio.id)}"
             ${position ? `style="--preview-index:${index};--card-x:${position.x}px;--card-y:${position.y}px;--card-width:${position.width}px;--card-height:${position.height}px"` : ''}
@@ -355,6 +363,16 @@ function renderRealSceneCard(studio, state, index, layout = null) {
             role="button"
             tabindex="0"
         >
+            ${reference?.cover && position ? `
+                <img
+                    class="preview-scene-cover"
+                    src="${escapeHtml(reference.cover)}"
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
+                >
+            ` : ''}
             <div class="preview-scene-card-top">
                 <h4>${escapeHtml(studio.title)}</h4>
             </div>
