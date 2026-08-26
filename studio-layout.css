@@ -1047,26 +1047,26 @@
     overflow: visible;
 }
 
-/* 部分预约 + 有照片：卡面仍然是浅橙纯色，但让照片以很低的不透明度透出来，
-   隐约能认出是哪个景，又不会被误当成"没人约"的照片卡。
-   保留 .partial 的浅橙底（不再 background: none），照片压在它上面当底纹。 */
+/* 部分预约 + 有照片：照片保持本色铺满，上面盖一层半透明浅橙。
+   不要用 mix-blend-mode: luminosity——它会把照片的颜色全抽掉只剩明度，
+   照片糊成一层褐色雾，橙色也跟着发脏。直接叠色反而干净：
+   照片该是什么颜色还是什么颜色，只是被浅橙统一罩住。 */
 .preview-scene-card.partial.has-scene-cover {
     --cover-border: #EFA069;
 }
 
-/* 照片降到 0.24 并去掉一半饱和：橙底透上来占主导，照片只剩轮廓。
-   同时撤掉给纯照片卡调的提亮，否则会把橙色冲淡。 */
+/* 照片全不透明、不混色，保持清晰；只轻微降饱和让橙罩层好统一。 */
 .preview-scene-card.partial.has-scene-cover .preview-scene-cover {
-    opacity: 0.24;
-    filter: saturate(0.5) contrast(1.02);
-    /* 混色让照片和橙底融在一起，而不是像贴了张半透明图片 */
-    mix-blend-mode: luminosity;
+    opacity: 1;
+    filter: saturate(0.72) brightness(1.06);
+    mix-blend-mode: normal;
 }
 
-/* 卡面回到浅橙，所以文字也回到深棕——白字在浅橙上读不了。
-   撤掉压暗遮罩：底色已经是纯色，不需要再垫暗块。 */
+/* 浅橙罩层。0.82 的 #FFD5B5：照片能透出形状和色彩，
+   深棕字最坏仍有 4.95:1 过 AA（按照片暗部取样）。
+   ::before 原本是压暗遮罩，这里整个换成橙罩。 */
 .preview-scene-card.partial.has-scene-cover::before {
-    background: none;
+    background: rgba(255, 213, 181, 0.82);
 }
 
 .preview-scene-card.partial.has-scene-cover h4 {
@@ -1080,7 +1080,7 @@
 }
 
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress-track {
-    background: rgba(154, 81, 42, 0.24);
+    background: rgba(154, 81, 42, 0.28);
     box-shadow: none;
 }
 

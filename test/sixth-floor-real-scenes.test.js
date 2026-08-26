@@ -255,39 +255,51 @@ test('还能约的景保留照片，约不了的换成纯色卡', () => {
         );
     }
 
-    // 部分预约是"纯色卡但照片隐约可见"：保留 .partial 的浅橙底，
-    // 照片降到很低的不透明度当底纹透上来，既能认出是哪个景，
-    // 又不会被误当成"没人约"的照片卡。
-    const partialCover = layoutStyles.match(
-        /\.preview-scene-card\.partial\.has-scene-cover\s*\{([\s\S]*?)\n\}/
-    );
-    assert.ok(partialCover, '没有找到 .partial.has-scene-cover 规则');
-    assert.doesNotMatch(partialCover[1], /background:\s*none/,
-        '部分预约应保留浅橙底，照片只当底纹，不能撤掉底色');
-
+    // 部分预约是"照片清晰可见 + 一层浅橙罩住"：照片保持本色不混色，
+    // 罩层统一色调。不能用 mix-blend-mode: luminosity——它会抽掉照片颜色
+    // 只剩明度，画面糊成褐色雾，橙色也跟着发脏。
     const partialPhoto = layoutStyles.match(
         /\.preview-scene-card\.partial\.has-scene-cover \.preview-scene-cover\s*\{([\s\S]*?)\n\}/
     );
-    assert.ok(partialPhoto, '没有找到部分预约的照片弱化规则');
+    assert.ok(partialPhoto, '没有找到部分预约的照片规则');
+    assert.doesNotMatch(partialPhoto[1], /mix-blend-mode:\s*luminosity/,
+        'luminosity 会抽掉照片颜色，画面发糊');
     const opacity = partialPhoto[1].match(/opacity:\s*([\d.]+)/);
-    assert.ok(opacity, '部分预约的照片必须降低不透明度');
-    assert.ok(Number(opacity[1]) <= 0.35,
-        `照片不透明度 ${opacity[1]} 偏高，会和未预约的照片卡太像`);
-    assert.ok(Number(opacity[1]) >= 0.12,
-        `照片不透明度 ${opacity[1]} 太低，等于看不见，失去"能认出是哪个景"的意义`);
+    assert.ok(opacity && Number(opacity[1]) >= 0.9,
+        '照片本身应保持不透明，弱化交给上面的橙罩层');
 
-    // 底色是浅橙纯色，就不该再叠压暗遮罩、也不该用白字。
-    assert.match(
-        layoutStyles,
-        /\.preview-scene-card\.partial\.has-scene-cover::before\s*\{\s*background:\s*none;/,
-        '浅橙底上不需要压暗遮罩'
+    // 橙罩层。太淡会和未预约的照片卡混淆，太浓照片就看不见了。
+    const scrim = layoutStyles.match(
+        /\.preview-scene-card\.partial\.has-scene-cover::before\s*\{([\s\S]*?)\n\}/
     );
+    assert.ok(scrim, '没有找到部分预约的橙色罩层');
+    const overlay = scrim[1].match(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/);
+    assert.ok(overlay, '罩层应为半透明色');
+    const alpha = Number(overlay[4]);
+    assert.ok(alpha >= 0.7 && alpha <= 0.9,
+        `罩层不透明度 ${alpha} 越界：低于 0.7 会和未预约卡混淆，高于 0.9 照片就看不见了`);
+
+    // 罩层是浅橙，所以景名必须是深色——白字在浅橙上读不了。
+    const relative = channel => {
+        const value = channel / 255;
+        return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+    };
+    const luminance = rgb => 0.2126 * relative(rgb[0]) + 0.7152 * relative(rgb[1]) + 0.0722 * relative(rgb[2]);
     const partialTitle = layoutStyles.match(
         /\.preview-scene-card\.partial\.has-scene-cover h4\s*\{([\s\S]*?)\n\}/
     );
     assert.ok(partialTitle, '没有找到部分预约的景名颜色规则');
-    assert.doesNotMatch(partialTitle[1], /color:\s*#FFFFFF/i,
-        '浅橙底上白字读不了，景名应为深色');
+    const ink = partialTitle[1].match(/color:\s*#([0-9A-Fa-f]{6})/);
+    assert.ok(ink, '部分预约的景名应指定颜色');
+    const inkRgb = [0, 2, 4].map(i => parseInt(ink[1].slice(i, i + 2), 16));
+
+    // 最坏情况：照片暗部(70,70,70)透过罩层后的合成色。
+    const overlayRgb = [1, 2, 3].map(i => Number(overlay[i]));
+    const blended = overlayRgb.map((channel, i) => 70 * (1 - alpha) + channel * alpha);
+    const ratio = (Math.max(luminance(inkRgb), luminance(blended)) + 0.05)
+        / (Math.min(luminance(inkRgb), luminance(blended)) + 0.05);
+    assert.ok(ratio >= 4.5,
+        `景名在照片暗部+罩层上只有 ${ratio.toFixed(2)}:1，不足 AA`);
 
     // 这条覆写必须写在通用封面白字规则之后才盖得住。
     const coverTitle = layoutStyles.search(/\.preview-scene-card\.has-scene-cover h4\s*\{/);
