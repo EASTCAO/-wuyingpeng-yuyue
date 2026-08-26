@@ -124,7 +124,56 @@ test('6F 卡片拖动时不会选中文字', () => {
 });
 
 test('6F 实景卡片使用圆润圆角', () => {
-    assert.match(layoutStyles, /\.preview-floor-map-sixth-floor \.preview-scene-card\s*\{[\s\S]*?border-radius:\s*var\(--radius-lg\);/);
+    // 画布整体缩到 70%，圆角会跟着被压掉三成，所以这里只要求"不小于 lg"，
+    // 不写死某个 token——换成更圆的 xl 是改进，不该让测试变红。
+    const rule = layoutStyles.match(/\.preview-floor-map-sixth-floor \.preview-scene-card\s*\{([\s\S]*?)\}/);
+    assert.ok(rule, '没有找到 6F 实景卡片规则');
+    const radius = rule[1].match(/border-radius:\s*var\((--radius-(?:lg|xl))\)/);
+    assert.ok(radius, `圆角应至少为 --radius-lg，实际规则：${rule[1].trim()}`);
+});
+
+test('6F 每个景都有身份色，且暖色景不会被误读成预约状态', () => {
+    const tints = [...layoutStyles.matchAll(
+        /\[data-map-area="(sixth-[\w-]+)"\]\s*\{\s*--scene-tint:\s*(#[0-9A-Fa-f]{6})/g
+    )].map(match => ({ area: match[1], hex: match[2] }));
+
+    // 21 个景每个都要有自己的身份色，漏一个就会退回默认灰。
+    assert.equal(tints.length, 21, `应有 21 个景的身份色，实际 ${tints.length}`);
+    assert.equal(new Set(tints.map(item => item.area)).size, 21, '有景的身份色重复声明');
+
+    const saturation = hex => {
+        const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+        const max = Math.max(r, g, b);
+        return max ? (max - Math.min(r, g, b)) / max : 0;
+    };
+    const hue = hex => {
+        const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+        const max = Math.max(r, g, b);
+        const delta = max - Math.min(r, g, b);
+        if (!delta) return 0;
+        let value = max === r ? 60 * (((g - b) / delta) % 6)
+            : max === g ? 60 * ((b - r) / delta + 2)
+                : 60 * ((r - g) / delta + 4);
+        return value < 0 ? value + 360 : value;
+    };
+
+    // 卡面填充归"预约状态"，身份色只是右下角柔光。落在橙色相区间的暖色景必须
+    // 把饱和度压到 partial 状态（23%）以下，否则"复古餐厅景"看着就像已约满。
+    for (const { area, hex } of tints) {
+        const isWarm = hue(hex) >= 0 && hue(hex) <= 45;
+        if (isWarm) {
+            assert.ok(
+                saturation(hex) < 0.23,
+                `${area} 落在橙色相区且饱和度 ${(saturation(hex) * 100).toFixed(0)}% 不低于 partial 状态，会和预约状态混淆`
+            );
+        }
+    }
+
+    // 状态卡必须撤掉身份柔光，否则橙底叠色斑会糊成脏色。
+    assert.match(
+        layoutStyles,
+        /\.preview-scene-card\.partial::after,[\s\S]{0,200}?\.preview-scene-card\.full::after,[\s\S]{0,200}?::after\s*\{\s*background:\s*none;/
+    );
 });
 
 test('7F 无影棚区域不显示最外层线框', () => {

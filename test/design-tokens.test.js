@@ -17,7 +17,7 @@ const pageStyles = styles[0];
 const SCOPED_VARIABLES = new Set([
     '--card-border', '--card-edge', '--card-shadow', '--card-depth',
     '--card-hover-depth', '--card-shadow-y', '--card-shadow-blur',
-    '--scene-base', '--state-wash', '--preview-index',
+    '--scene-base', '--scene-tint', '--state-wash', '--preview-index',
     '--card-x', '--card-y', '--card-width', '--card-height', '--scene-index'
 ]);
 

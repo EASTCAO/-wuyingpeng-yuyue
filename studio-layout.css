@@ -468,8 +468,67 @@
     /* 跟着 --card-border 走，不要写死颜色：写死会让 6F 画布上的
        "部分预约 / 已约满" 卡片丢掉自己的橙色边框。 */
     border-color: var(--card-border);
-    border-radius: var(--radius-lg);
+    /* --radius-lg(12px) 会被 70% 缩放压到 8.4px，在这么大的卡上显得生硬。
+       用 xl(16px) 换取参考图那种圆润感，实际呈现约 11px。
+       测试断言的是"圆角不小于 radius-lg"，不是写死某个 token。 */
+    border-radius: var(--radius-xl);
     background: #FFFFFF;
+}
+
+/* 每个景的身份色。卡面本身留白，色只作为右下角的一团柔光（见 ::after），
+   原因是卡面填充已经被"预约状态"占用了——满约是橙、部分预约是浅橙。
+   身份和状态各占一层，才不会让"国风景"这类暖色景看着像已约满。
+   为此暖色景的饱和度统一压到 <=16%，明确低于 partial 状态的 23%。
+   所有色对景名 #252B33 的对比度都在 8:1 以上，远超 AA。 */
+.preview-floor-map-sixth-floor .preview-scene-card {
+    --scene-tint: #D2D8DE;
+}
+
+/* 背景墙与通道：冷调、低饱和，属于"平面背景"而非房间 */
+.preview-floor-map-sixth-floor [data-map-area="sixth-corridor"] { --scene-tint: #C9D4E2; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-wood-wall"] { --scene-tint: #D9CBB6; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-greenery-wall"] { --scene-tint: #BFD8C2; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-ocean-wall"] { --scene-tint: #B8D4E3; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-street"] { --scene-tint: #C6C9D1; }
+
+/* 生活与功能房间：跟着该景实际的主色走 */
+.preview-floor-map-sixth-floor [data-map-area="sixth-greenery"] { --scene-tint: #C3DAC6; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-kids"] { --scene-tint: #F2D2D8; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-classroom"] { --scene-tint: #CBD9EC; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-clinic"] { --scene-tint: #CFE3E8; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-study"] { --scene-tint: #D3C6B0; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-vintage-living"] { --scene-tint: #DECBBB; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-vintage-dining"] { --scene-tint: #DAC8B8; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-modern-living"] { --scene-tint: #D2D8DE; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-modern-dining"] { --scene-tint: #DCD4C8; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-outdoor-cafe"] { --scene-tint: #D6CDBE; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-bedroom"] { --scene-tint: #DAD0DC; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-bathroom"] { --scene-tint: #C8DBE0; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-bar"] { --scene-tint: #C9C4CE; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-chinese"] { --scene-tint: #E0C4BE; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-workshop"] { --scene-tint: #CDD2D6; }
+.preview-floor-map-sixth-floor [data-map-area="sixth-modern-kitchen"] { --scene-tint: #D4DADD; }
+
+/* 身份色柔光：一团糊开的色斑压在卡片右下角，参考图里的渐变块就是这个做法。
+   放右下是因为景名在左上偏中，两者不抢位置。
+   ::after 在基类里已用于玻璃内缘高光，这里叠加而不是覆盖。 */
+.preview-floor-map-sixth-floor .preview-scene-card::after {
+    background:
+        radial-gradient(
+            128% 140% at 100% 100%,
+            var(--scene-tint) 0%,
+            color-mix(in srgb, var(--scene-tint), transparent 34%) 30%,
+            color-mix(in srgb, var(--scene-tint), transparent 74%) 58%,
+            transparent 84%
+        );
+}
+
+/* 满约/部分预约的卡面已经是橙色系，再叠身份色会糊成脏色，这里撤掉柔光，
+   只保留基类的玻璃高光。状态永远优先于身份。 */
+.preview-floor-map-sixth-floor .preview-scene-card.partial::after,
+.preview-floor-map-sixth-floor .preview-scene-card.full::after,
+.preview-floor-map-sixth-floor .preview-scene-card.ended::after {
+    background: none;
 }
 
 .preview-floor-map-sixth-floor .preview-scene-card h4 {
