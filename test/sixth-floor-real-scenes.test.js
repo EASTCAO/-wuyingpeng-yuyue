@@ -183,12 +183,14 @@ test('实拍封面只在景名背后压暗，画面其余部分保持明亮', ()
     assert.ok(scrim, '没有找到实拍封面的压暗遮罩规则');
 
     // 压暗必须是径向的：横贯整卡的带子会在浅色照片上露出硬边，像一条灰雾。
-    const radial = scrim[1].match(/radial-gradient\(([\s\S]*?)\)\s*,/);
+    const radial = scrim[1].match(/radial-gradient\(([\s\S]*?)\n\s*\),/);
     assert.ok(radial, '景名压暗应使用 radial-gradient，避免横带在浅底照片上露边界');
 
-    const stops = [...radial[1].matchAll(/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*([\d.]+)\s*\)\s+([\d.]+)%/g)]
-        .map(match => ({ alpha: Number(match[1]), position: Number(match[2]) }));
-    assert.ok(stops.length >= 3, '径向遮罩应是多段渐变');
+    // 强度走 --cover-scrim，各状态覆写，所以这里断言变量而不是字面量。
+    assert.match(radial[1], /rgba\(10,\s*14,\s*20,\s*var\(--cover-scrim\)\)\s*0%/,
+        '径向中心应由 --cover-scrim 驱动');
+    assert.match(radial[1], /rgba\(10,\s*14,\s*20,\s*0\)\s*100%/,
+        '径向外沿必须完全透明，否则整片压暗、照片白放');
 
     const relative = channel => {
         const value = channel / 255;
@@ -202,19 +204,24 @@ test('实拍封面只在景名背后压暗，画面其余部分保持明亮', ()
         return 1.05 / (luminance + 0.05);
     };
 
-    // 景名就在椭圆中心，那里必须撑住 AA（按"照片纯白"最坏情况算）。
-    const center = stops.find(stop => stop.position === 0);
-    assert.ok(center, '径向遮罩应有 0% 的中心色标');
-    const centerRatio = whiteTextContrast(center.alpha);
-    assert.ok(
-        centerRatio >= 4.5,
-        `中心仅 ${center.alpha}，照片偏亮时白字只有 ${centerRatio.toFixed(2)}:1，不足 AA`
-    );
+    const scrimOf = selector => {
+        const rule = layoutStyles.match(
+            new RegExp(`${selector.replace(/[.]/g, '\\.')}\\s*\\{([\\s\\S]*?)\\n\\}`)
+        );
+        assert.ok(rule, `没有找到 ${selector}`);
+        const value = rule[1].match(/--cover-scrim:\s*([\d.]+)/);
+        assert.ok(value, `${selector} 没有声明 --cover-scrim`);
+        return Number(value[1]);
+    };
 
-    // 必须完全化开到透明，否则整张照片都被蒙住，等于白放。
-    const edge = stops[stops.length - 1];
-    assert.equal(edge.position, 100, '径向遮罩应以 100% 收尾');
-    assert.equal(edge.alpha, 0, `外沿应完全透明，实际 ${edge.alpha}，画面会被整片压暗`);
+    // 每一档的白字都要过 AA（按"照片纯白"最坏情况算）。
+    const base = scrimOf('.preview-scene-card.has-scene-cover');
+    const partial = scrimOf('.preview-scene-card.has-scene-cover.partial');
+    const full = scrimOf('.preview-scene-card.has-scene-cover.full');
+    for (const [name, alpha] of [['可预约', base], ['部分预约', partial], ['已约满', full]]) {
+        const ratio = whiteTextContrast(alpha);
+        assert.ok(ratio >= 4.5, `${name} 档遮罩 ${alpha}，白字只有 ${ratio.toFixed(2)}:1，不足 AA`);
+    }
 
     // 素材本身偏暗，封面要提亮才立得起来。
     assert.match(layoutStyles, /\.preview-scene-cover\s*\{[\s\S]*?filter:[^;]*brightness\(1\.[0-9]+\)/);
@@ -224,6 +231,46 @@ test('实拍封面只在景名背后压暗，画面其余部分保持明亮', ()
         layoutStyles,
         /\.preview-scene-card\.has-scene-cover::after\s*\{\s*background:\s*none;/
     );
+});
+
+test('封面卡用暗度分出预约状态，照片盖住橙色填充后仍能一眼分辨', () => {
+    const readVar = (selector, name) => {
+        const rule = layoutStyles.match(
+            new RegExp(`${selector.replace(/[.]/g, '\\.')}\\s*\\{([\\s\\S]*?)\\n\\}`)
+        );
+        assert.ok(rule, `没有找到 ${selector}`);
+        const value = rule[1].match(new RegExp(`${name}:\\s*([\\d.]+)`));
+        assert.ok(value, `${selector} 没有声明 ${name}`);
+        return Number(value[1]);
+    };
+
+    const base = '.preview-scene-card.has-scene-cover';
+    const states = ['', '.partial', '.full'].map(state => ({
+        selector: base + state,
+        scrim: readVar(base + state, '--cover-scrim'),
+        veil: readVar(base + state, '--cover-veil'),
+        fade: readVar(base + state, '--cover-fade')
+    }));
+
+    // 三档必须单调递增/递减，否则"越满越沉"的直觉就断了。
+    for (let i = 1; i < states.length; i += 1) {
+        assert.ok(states[i].scrim > states[i - 1].scrim,
+            `${states[i].selector} 的暗块应比上一档更厚`);
+        assert.ok(states[i].veil > states[i - 1].veil,
+            `${states[i].selector} 的整卡蒙版应比上一档更重`);
+        assert.ok(states[i].fade < states[i - 1].fade,
+            `${states[i].selector} 应比上一档更去饱和`);
+    }
+
+    // 可预约档不能被压暗，否则"能约"的卡也灰扑扑的。
+    assert.equal(states[0].veil, 0, '可预约的封面卡不应有整卡蒙版');
+    assert.equal(states[0].fade, 1, '可预约的封面卡不应去饱和');
+
+    // 暗度之外还要有颜色这一重冗余编码，不能只靠明暗。
+    assert.match(layoutStyles, /\.has-scene-cover\.full\s*\{[\s\S]*?--cover-border:/);
+    // 边框色必须走变量：立体感规则也设 border-color，写死会被它盖掉。
+    assert.match(layoutStyles,
+        /\.preview-scene-card\.has-scene-cover\s*\{[\s\S]*?border-color:\s*var\(--cover-border\)/);
 });
 
 test('实拍封面样式不绑定楼层，6F 和 7F 共用同一套观感', () => {

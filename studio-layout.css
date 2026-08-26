@@ -537,7 +537,22 @@
 
 /* 压暗只跟着景名走，用椭圆径向渐变糊在文字背后，而不是横贯整张卡的带子。
    横带在浅色照片上会露出明显的边界，看着像一条灰雾；径向的没有硬边，
-   四周自然化开，照片其余部分保持原亮度。 */
+   四周自然化开，照片其余部分保持原亮度。
+
+   强度由 --cover-scrim / --cover-veil 两个变量驱动，各状态覆写：
+   照片盖住了橙色状态填充，封面卡的状态只能靠"暗"来表达——
+   越接近约满，景名背后的暗块越厚、整张卡越沉，一眼就能扫出哪些还能约。 */
+.preview-scene-card.has-scene-cover {
+    /* 景名背后的暗块强度。0.62 是过 AA 的下限档（照片纯白时白字 5.46:1）。 */
+    --cover-scrim: 0.62;
+    /* 整卡蒙版，表达"越来越不可用"。可预约时为 0，完全不压。 */
+    --cover-veil: 0;
+    /* 去饱和程度，约满时让画面发灰。 */
+    --cover-fade: 1;
+    /* 边框色。默认半透明白，把卡片从深色照片里切出来；状态卡覆写成橙色系。 */
+    --cover-border: rgba(255, 255, 255, 0.5);
+}
+
 .preview-scene-card.has-scene-cover::before {
     content: "";
     position: absolute;
@@ -545,16 +560,20 @@
     z-index: 1;
     height: auto;
     border-radius: inherit;
-    /* 椭圆罩住景名，峰值 0.62：照片该处若接近纯白，白字仍有 5.46:1 过 AA。
-       62% 之外完全透明，所以画面整体亮度不受影响。
-       另叠一层很淡的底部渐变，给卡片下沿一点重量、不至于飘着。 */
+    /* 椭圆罩住景名；外沿收到完全透明，画面整体亮度不受影响。
+       第二层是整卡蒙版（可预约时 alpha 为 0，等于不存在）。
+       第三层很淡的上下渐变，给卡片收边、不至于飘着。 */
     background:
         radial-gradient(
             62% 46% at 50% 50%,
-            rgba(10, 14, 20, 0.62) 0%,
-            rgba(10, 14, 20, 0.5) 38%,
-            rgba(10, 14, 20, 0.22) 66%,
+            rgba(10, 14, 20, var(--cover-scrim)) 0%,
+            rgba(10, 14, 20, calc(var(--cover-scrim) * 0.8)) 38%,
+            rgba(10, 14, 20, calc(var(--cover-scrim) * 0.35)) 66%,
             rgba(10, 14, 20, 0) 100%
+        ),
+        linear-gradient(
+            rgba(10, 14, 20, var(--cover-veil)),
+            rgba(10, 14, 20, var(--cover-veil))
         ),
         linear-gradient(
             180deg,
@@ -566,21 +585,77 @@
     pointer-events: none;
 }
 
-/* 景名与状态角标要浮在照片和遮罩之上 */
+    pointer-events: none;
+}
+
+/* 封面卡的状态分档。照片把橙色填充盖住了，所以状态改用"暗度"表达：
+   可预约最亮 → 部分预约压一档 → 已约满最沉且去饱和。
+   三档的白字最坏对比度分别是 5.46 / 7.91 / 11.54，都过 AA。
+   照片中灰处的亮度衰减 0% / 22% / 47%，扫一眼就能分出哪些还能约。 */
+.preview-scene-card.has-scene-cover.partial {
+    --cover-scrim: 0.72;
+    --cover-veil: 0.12;
+    --cover-fade: 0.82;
+}
+
+.preview-scene-card.has-scene-cover.full {
+    --cover-scrim: 0.82;
+    --cover-veil: 0.28;
+    --cover-fade: 0.55;
+}
+
+/* 已过期比约满更"退场"：压得最沉、几乎抽干颜色。 */
+.preview-scene-card.has-scene-cover.ended {
+    --cover-scrim: 0.82;
+    --cover-veil: 0.34;
+    --cover-fade: 0.3;
+}
+
+/* 去饱和作用在照片本身，和整卡蒙版叠加出"发灰变沉"的效果。
+   约满的卡不该再抢注意力，所以连提亮也一并收回一点。 */
+.preview-scene-card.has-scene-cover.partial .preview-scene-cover {
+    filter: brightness(1.1) contrast(1.05) saturate(calc(1.08 * var(--cover-fade)));
+}
+
+.preview-scene-card.has-scene-cover.full .preview-scene-cover,
+.preview-scene-card.has-scene-cover.ended .preview-scene-cover {
+    filter: brightness(0.98) contrast(1.02) saturate(calc(1.08 * var(--cover-fade)));
+}
+
+/* 状态也保留一条彩色边：暗度负责"扫一眼分轻重"，颜色负责"确认是哪一档"。
+   纯靠暗度会丢掉冗余编码，这条边是第二重信号。
+   走变量而不是直接写 border-color——下面那条立体感规则也要设边框色，
+   同等特指度下后写的赢，直接写会被它盖掉。 */
+.preview-scene-card.has-scene-cover.partial {
+    --cover-border: rgba(248, 185, 135, 0.9);
+}
+
+.preview-scene-card.has-scene-cover.full {
+    --cover-border: rgba(236, 125, 61, 0.92);
+}
+
+/* 景名和进度条要浮在照片和遮罩之上。
+   注意只给这两个加 position: relative——角标本身是 absolute 定位在右上角，
+   改成 relative 会让它脱不了流、被拉成整行宽，横贯整张卡。 */
 .preview-scene-card.has-scene-cover .preview-scene-card-top,
-.preview-scene-card.has-scene-cover .preview-scene-progress,
-.preview-scene-card.has-scene-cover .preview-scene-full-label,
-.preview-scene-card.has-scene-cover .preview-scene-expired-label {
+.preview-scene-card.has-scene-cover .preview-scene-progress {
     position: relative;
     z-index: 2;
 }
+
+/* 角标保持 absolute，只抬层级 */
+.preview-scene-card.has-scene-cover .preview-scene-full-label,
+.preview-scene-card.has-scene-cover .preview-scene-expired-label {
+    z-index: 2;
+}
+
 
 /* 立体感。基类那套阴影是给白色玻璃卡调的（靠 inset 高光撑边缘），
    盖上照片后 inset 全被遮住，卡片就摊平了。这里换成一套外投影：
    近距离小投影贴住卡片、远距离大投影拉开与画布的距离，
    再用一圈半透明白描边把卡片从深色照片里"切"出来。 */
 .preview-scene-card.has-scene-cover {
-    border-color: rgba(255, 255, 255, 0.5);
+    border-color: var(--cover-border);
     box-shadow:
         0 1px 2px rgba(16, 24, 34, 0.16),
         0 4px 8px rgba(16, 24, 34, 0.14),
@@ -593,7 +668,9 @@
     /* 悬停时抬起来：投影同步加深拉长，位移才有"浮起"而不是"变大"的感觉 */
     .preview-scene-card.has-scene-cover:hover,
     .preview-scene-card.has-scene-cover:focus-visible {
-        border-color: rgba(255, 255, 255, 0.72);
+        /* 提亮边框但不改色相：状态卡悬停时仍保留自己的橙色边，
+           直接写死白色会把状态信号抹掉。 */
+        border-color: color-mix(in srgb, var(--cover-border), #FFFFFF 45%);
         box-shadow:
             0 2px 4px rgba(16, 24, 34, 0.18),
             0 8px 16px rgba(16, 24, 34, 0.18),
@@ -1026,6 +1103,26 @@
     text-shadow:
         0 1px 2px rgba(8, 12, 18, 0.72),
         0 2px 10px rgba(8, 12, 18, 0.55);
+}
+
+/* 封面上的进度条。原来的浅灰轨 + 白色填充是给白卡调的，压在照片上会变成
+   一条扎眼的白杠。这里改成半透明深色轨 + 白填充，并收窄一点。 */
+.preview-scene-card.has-scene-cover .preview-scene-progress {
+    width: 58%;
+}
+
+.preview-scene-card.has-scene-cover .preview-scene-progress-track {
+    background: rgba(8, 12, 18, 0.45);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.preview-scene-card.has-scene-cover .preview-scene-progress-track i {
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.preview-scene-card.has-scene-cover .preview-scene-progress small {
+    color: #FFFFFF;
+    text-shadow: 0 1px 3px rgba(8, 12, 18, 0.7);
 }
 
 .preview-scene-card.has-scene-reference {
