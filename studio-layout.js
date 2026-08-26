@@ -6,7 +6,7 @@ const STUDIO_OVERVIEW_SEGMENTS = 18;
 // cover 字段驱动卡面封面，6F 画布和 7F 网格共用同一套渲染。
 // 素材来自 assets/real-studio/source/，统一压成 900px 宽的 webp。
 // src 是 hover 弹层用的大图（历史字段，只有洗衣房景别有）。
-const SCENE_COVER_VERSION = '20260826-brighter';
+const SCENE_COVER_VERSION = '20260826-cover-available';
 const STUDIO_SCENE_REFERENCES = {
     // 7F 实景棚：11 个景全部有实拍素材
     '小木屋景': { cover: 'small-cabin.webp', alt: '小木屋景场景示意图' },
@@ -374,9 +374,14 @@ function renderRealSceneCard(studio, state, index, layout = null) {
     const reference = getSceneReference(studio.id);
     const position = layout?.[studio.mapArea];
     const editable = Boolean(position && canEditSixthFloorLayout());
+    // 只有完全没被预约的景才铺实拍照片。一旦有人约了，就换回纯色状态卡
+    // （浅橙=部分预约 / 中橙=已约满 / 灰=已过期）。
+    // 照片和纯色是两种截然不同的东西，扫一眼就能分出哪些还能约，
+    // 比让用户去比较"哪张照片更暗"可靠得多。
+    const showCover = Boolean(reference?.coverSrc) && state.type === 'available';
     return `
         <article
-            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference?.src ? ' has-scene-reference' : ''}${reference?.coverSrc ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}"
+            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference?.src ? ' has-scene-reference' : ''}${showCover ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}"
             data-map-area="${escapeHtml(studio.mapArea)}"
             data-studio-id="${escapeHtml(studio.id)}"
             ${position ? `style="--preview-index:${index};--card-x:${position.x}px;--card-y:${position.y}px;--card-width:${position.width}px;--card-height:${position.height}px"` : ''}
@@ -387,7 +392,7 @@ function renderRealSceneCard(studio, state, index, layout = null) {
             role="button"
             tabindex="0"
         >
-            ${reference?.coverSrc ? `
+            ${showCover ? `
                 <img
                     class="preview-scene-cover"
                     src="${escapeHtml(reference.coverSrc)}"

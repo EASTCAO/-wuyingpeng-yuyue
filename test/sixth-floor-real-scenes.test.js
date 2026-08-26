@@ -214,14 +214,10 @@ test('实拍封面只在景名背后压暗，画面其余部分保持明亮', ()
         return Number(value[1]);
     };
 
-    // 每一档的白字都要过 AA（按"照片纯白"最坏情况算）。
+    // 封面只出现在可预约的卡上，所以只有一档。白字要按"照片纯白"最坏情况过 AA。
     const base = scrimOf('.preview-scene-card.has-scene-cover');
-    const partial = scrimOf('.preview-scene-card.has-scene-cover.partial');
-    const full = scrimOf('.preview-scene-card.has-scene-cover.full');
-    for (const [name, alpha] of [['可预约', base], ['部分预约', partial], ['已约满', full]]) {
-        const ratio = whiteTextContrast(alpha);
-        assert.ok(ratio >= 4.5, `${name} 档遮罩 ${alpha}，白字只有 ${ratio.toFixed(2)}:1，不足 AA`);
-    }
+    const ratio = whiteTextContrast(base);
+    assert.ok(ratio >= 4.5, `遮罩 ${base}，白字只有 ${ratio.toFixed(2)}:1，不足 AA`);
 
     // 素材本身偏暗，封面要提亮才立得起来。
     assert.match(layoutStyles, /\.preview-scene-cover\s*\{[\s\S]*?filter:[^;]*brightness\(1\.[0-9]+\)/);
@@ -233,44 +229,36 @@ test('实拍封面只在景名背后压暗，画面其余部分保持明亮', ()
     );
 });
 
-test('封面卡用暗度分出预约状态，照片盖住橙色填充后仍能一眼分辨', () => {
-    const readVar = (selector, name) => {
-        const rule = layoutStyles.match(
-            new RegExp(`${selector.replace(/[.]/g, '\\.')}\\s*\\{([\\s\\S]*?)\\n\\}`)
+test('只有完全没被预约的景才铺照片，一旦有人约了就换回纯色状态卡', () => {
+    const render = layoutSource.slice(
+        layoutSource.indexOf('function renderRealSceneCard'),
+        layoutSource.indexOf('function handleSixthFloorCardClick')
+    );
+
+    // 判定必须挂在 state.type === 'available' 上：照片和纯色是两种截然不同的
+    // 东西，扫一眼就能分出哪些还能约，比让用户比较"哪张照片更暗"可靠得多。
+    assert.match(render, /const showCover\s*=\s*Boolean\(reference\?\.coverSrc\)\s*&&\s*state\.type === 'available'/);
+
+    // has-scene-cover 和 <img> 都要跟着 showCover 走，漏一个就会出现
+    // "纯色卡底下压着一张照片"或"照片上盖着橙色"的半吊子状态。
+    assert.match(render, /\$\{showCover \? ' has-scene-cover' : ''\}/);
+    assert.match(render, /\$\{showCover \? `[\s\S]*?class="preview-scene-cover"/);
+
+    // 纯色状态样式必须还在——这是"预约后保留之前样式"的落点。
+    for (const state of ['partial', 'full', 'ended']) {
+        assert.match(
+            layoutStyles,
+            new RegExp(`(^|\\n)\\.preview-scene-card\\.${state}\\s*\\{[\\s\\S]*?background:`),
+            `.${state} 的纯色卡片样式丢了`
         );
-        assert.ok(rule, `没有找到 ${selector}`);
-        const value = rule[1].match(new RegExp(`${name}:\\s*([\\d.]+)`));
-        assert.ok(value, `${selector} 没有声明 ${name}`);
-        return Number(value[1]);
-    };
-
-    const base = '.preview-scene-card.has-scene-cover';
-    const states = ['', '.partial', '.full'].map(state => ({
-        selector: base + state,
-        scrim: readVar(base + state, '--cover-scrim'),
-        veil: readVar(base + state, '--cover-veil'),
-        fade: readVar(base + state, '--cover-fade')
-    }));
-
-    // 三档必须单调递增/递减，否则"越满越沉"的直觉就断了。
-    for (let i = 1; i < states.length; i += 1) {
-        assert.ok(states[i].scrim > states[i - 1].scrim,
-            `${states[i].selector} 的暗块应比上一档更厚`);
-        assert.ok(states[i].veil > states[i - 1].veil,
-            `${states[i].selector} 的整卡蒙版应比上一档更重`);
-        assert.ok(states[i].fade < states[i - 1].fade,
-            `${states[i].selector} 应比上一档更去饱和`);
     }
 
-    // 可预约档不能被压暗，否则"能约"的卡也灰扑扑的。
-    assert.equal(states[0].veil, 0, '可预约的封面卡不应有整卡蒙版');
-    assert.equal(states[0].fade, 1, '可预约的封面卡不应去饱和');
-
-    // 暗度之外还要有颜色这一重冗余编码，不能只靠明暗。
-    assert.match(layoutStyles, /\.has-scene-cover\.full\s*\{[\s\S]*?--cover-border:/);
-    // 边框色必须走变量：立体感规则也设 border-color，写死会被它盖掉。
-    assert.match(layoutStyles,
-        /\.preview-scene-card\.has-scene-cover\s*\{[\s\S]*?border-color:\s*var\(--cover-border\)/);
+    // 封面卡永远是 available，所以不该再为状态卡写封面覆写规则（死代码）。
+    assert.doesNotMatch(
+        layoutStyles,
+        /\.has-scene-cover\.(partial|full|ended)\s*\{/,
+        '封面不会出现在状态卡上，这些覆写永远命中不了'
+    );
 });
 
 test('实拍封面样式不绑定楼层，6F 和 7F 共用同一套观感', () => {
@@ -321,8 +309,8 @@ test('封面卡的白色景名不会被状态文字色覆盖', () => {
         );
     }
 
-    // 状态组合也要显式覆盖，避免将来有人给状态规则加特指度。
-    assert.match(layoutStyles, /\.preview-scene-card\.has-scene-cover\.full h4/);
+    // 现在封面只出现在可预约的卡上，所以不再需要列 .has-scene-cover.full 之类的
+    // 状态组合。但上面那条顺序约束要保留：将来若放开条件，顺序写反会立刻踩回旧坑。
 });
 
 test('7F 无影棚区域不显示最外层线框', () => {
