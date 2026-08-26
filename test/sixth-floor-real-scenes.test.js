@@ -176,37 +176,48 @@ test('6F 每个景都有身份色，且暖色景不会被误读成预约状态',
     );
 });
 
-test('6F 实拍封面的压暗遮罩足够深，白色景名在任何照片上都可读', () => {
+test('实拍封面只在景名背后压暗，画面其余部分保持明亮', () => {
     const scrim = layoutStyles.match(
         /\.preview-scene-card\.has-scene-cover::before\s*\{([\s\S]*?)\n\}/
     );
     assert.ok(scrim, '没有找到实拍封面的压暗遮罩规则');
 
-    const stops = [...scrim[1].matchAll(/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*([\d.]+)\s*\)\s+([\d.]+)%/g)]
-        .map(match => ({ alpha: Number(match[1]), position: Number(match[2]) }));
-    assert.ok(stops.length >= 3, '遮罩应是多段渐变');
+    // 压暗必须是径向的：横贯整卡的带子会在浅色照片上露出硬边，像一条灰雾。
+    const radial = scrim[1].match(/radial-gradient\(([\s\S]*?)\)\s*,/);
+    assert.ok(radial, '景名压暗应使用 radial-gradient，避免横带在浅底照片上露边界');
 
-    // 白字压在合成色上的对比度。合成最坏情况按"照片该处接近纯白"算。
+    const stops = [...radial[1].matchAll(/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*([\d.]+)\s*\)\s+([\d.]+)%/g)]
+        .map(match => ({ alpha: Number(match[1]), position: Number(match[2]) }));
+    assert.ok(stops.length >= 3, '径向遮罩应是多段渐变');
+
     const relative = channel => {
         const value = channel / 255;
         return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
     };
     const whiteTextContrast = alpha => {
-        const blended = [12, 18, 26].map(scrimChannel => 255 * (1 - alpha) + scrimChannel * alpha);
+        const blended = [10, 14, 20].map(scrimChannel => 255 * (1 - alpha) + scrimChannel * alpha);
         const luminance = 0.2126 * relative(blended[0])
             + 0.7152 * relative(blended[1])
             + 0.0722 * relative(blended[2]);
         return 1.05 / (luminance + 0.05);
     };
 
-    // 景名垂直居中偏下，落在 >=50% 的位置。那一带必须撑住 AA。
-    for (const stop of stops.filter(item => item.position >= 50)) {
-        const ratio = whiteTextContrast(stop.alpha);
-        assert.ok(
-            ratio >= 4.5,
-            `遮罩在 ${stop.position}% 处仅 ${stop.alpha}，照片偏亮时白字只有 ${ratio.toFixed(2)}:1，不足 AA`
-        );
-    }
+    // 景名就在椭圆中心，那里必须撑住 AA（按"照片纯白"最坏情况算）。
+    const center = stops.find(stop => stop.position === 0);
+    assert.ok(center, '径向遮罩应有 0% 的中心色标');
+    const centerRatio = whiteTextContrast(center.alpha);
+    assert.ok(
+        centerRatio >= 4.5,
+        `中心仅 ${center.alpha}，照片偏亮时白字只有 ${centerRatio.toFixed(2)}:1，不足 AA`
+    );
+
+    // 必须完全化开到透明，否则整张照片都被蒙住，等于白放。
+    const edge = stops[stops.length - 1];
+    assert.equal(edge.position, 100, '径向遮罩应以 100% 收尾');
+    assert.equal(edge.alpha, 0, `外沿应完全透明，实际 ${edge.alpha}，画面会被整片压暗`);
+
+    // 素材本身偏暗，封面要提亮才立得起来。
+    assert.match(layoutStyles, /\.preview-scene-cover\s*\{[\s\S]*?filter:[^;]*brightness\(1\.[0-9]+\)/);
 
     // 有照片时必须撤掉身份色柔光，否则照片上叠色斑会脏。
     assert.match(

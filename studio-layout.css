@@ -525,6 +525,8 @@
     /* 卡片是横向的、素材多为竖构图，只能裁切填满；center 保证主体居中不被切掉 */
     object-fit: cover;
     object-position: center;
+    /* 素材本身偏灰暗，提亮 + 加一点对比和饱和，画面才立得起来 */
+    filter: brightness(1.16) contrast(1.06) saturate(1.08);
     pointer-events: none;
 }
 
@@ -533,7 +535,9 @@
     background: none;
 }
 
-/* 压暗遮罩：从底部往上渐隐，托住景名。不用整片压暗，否则照片就白放了。 */
+/* 压暗只跟着景名走，用椭圆径向渐变糊在文字背后，而不是横贯整张卡的带子。
+   横带在浅色照片上会露出明显的边界，看着像一条灰雾；径向的没有硬边，
+   四周自然化开，照片其余部分保持原亮度。 */
 .preview-scene-card.has-scene-cover::before {
     content: "";
     position: absolute;
@@ -541,16 +545,24 @@
     z-index: 1;
     height: auto;
     border-radius: inherit;
-    /* 景名落在卡片垂直居中偏下，那一带的遮罩不透明度必须 >=0.66：
-       照片在该处如果接近纯白，0.55 只有 4.16:1 不达 AA，0.66 能到 6.09:1。
-       素材是不可控的，所以按"照片最亮"的最坏情况定这个值。 */
-    background: linear-gradient(
-        168deg,
-        rgba(12, 18, 26, 0.10) 0%,
-        rgba(12, 18, 26, 0.50) 34%,
-        rgba(12, 18, 26, 0.70) 58%,
-        rgba(12, 18, 26, 0.82) 100%
-    );
+    /* 椭圆罩住景名，峰值 0.62：照片该处若接近纯白，白字仍有 5.46:1 过 AA。
+       62% 之外完全透明，所以画面整体亮度不受影响。
+       另叠一层很淡的底部渐变，给卡片下沿一点重量、不至于飘着。 */
+    background:
+        radial-gradient(
+            62% 46% at 50% 50%,
+            rgba(10, 14, 20, 0.62) 0%,
+            rgba(10, 14, 20, 0.5) 38%,
+            rgba(10, 14, 20, 0.22) 66%,
+            rgba(10, 14, 20, 0) 100%
+        ),
+        linear-gradient(
+            180deg,
+            rgba(10, 14, 20, 0.16) 0%,
+            rgba(10, 14, 20, 0) 26%,
+            rgba(10, 14, 20, 0) 70%,
+            rgba(10, 14, 20, 0.26) 100%
+        );
     pointer-events: none;
 }
 
@@ -561,6 +573,35 @@
 .preview-scene-card.has-scene-cover .preview-scene-expired-label {
     position: relative;
     z-index: 2;
+}
+
+/* 立体感。基类那套阴影是给白色玻璃卡调的（靠 inset 高光撑边缘），
+   盖上照片后 inset 全被遮住，卡片就摊平了。这里换成一套外投影：
+   近距离小投影贴住卡片、远距离大投影拉开与画布的距离，
+   再用一圈半透明白描边把卡片从深色照片里"切"出来。 */
+.preview-scene-card.has-scene-cover {
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow:
+        0 1px 2px rgba(16, 24, 34, 0.16),
+        0 4px 8px rgba(16, 24, 34, 0.14),
+        0 12px 22px rgba(16, 24, 34, 0.16),
+        0 22px 40px rgba(16, 24, 34, 0.12),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    /* 悬停时抬起来：投影同步加深拉长，位移才有"浮起"而不是"变大"的感觉 */
+    .preview-scene-card.has-scene-cover:hover,
+    .preview-scene-card.has-scene-cover:focus-visible {
+        border-color: rgba(255, 255, 255, 0.72);
+        box-shadow:
+            0 2px 4px rgba(16, 24, 34, 0.18),
+            0 8px 16px rgba(16, 24, 34, 0.18),
+            0 20px 34px rgba(16, 24, 34, 0.2),
+            0 34px 58px rgba(16, 24, 34, 0.16),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+        transform: translateY(-4px) scale(1.012);
+    }
 }
 
 /* 景名白字统一在文件末尾声明（要排在 .full h4 / .ended h4 之后才生效）。 */
@@ -980,7 +1021,11 @@
 .preview-scene-card.has-scene-cover.partial h4,
 .preview-scene-card.has-scene-cover.ended h4 {
     color: #FFFFFF;
-    text-shadow: 0 1px 3px rgba(8, 12, 18, 0.6);
+    /* 两层投影：贴身的一层给字勾边，扩散的一层在字周围垫一小片暗，
+       这样即使照片局部很亮、径向遮罩又刻意做得淡，白字依然咬得住。 */
+    text-shadow:
+        0 1px 2px rgba(8, 12, 18, 0.72),
+        0 2px 10px rgba(8, 12, 18, 0.55);
 }
 
 .preview-scene-card.has-scene-reference {
