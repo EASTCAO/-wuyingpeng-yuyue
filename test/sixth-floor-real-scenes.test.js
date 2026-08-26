@@ -229,23 +229,25 @@ test('实拍封面只在景名背后压暗，画面其余部分保持明亮', ()
     );
 });
 
-test('只有完全没被预约的景才铺照片，一旦有人约了就换回纯色状态卡', () => {
+test('还能约的景保留照片，约不了的换成纯色卡', () => {
     const render = layoutSource.slice(
         layoutSource.indexOf('function renderRealSceneCard'),
         layoutSource.indexOf('function handleSixthFloorCardClick')
     );
 
-    // 判定必须挂在 state.type === 'available' 上：照片和纯色是两种截然不同的
-    // 东西，扫一眼就能分出哪些还能约，比让用户比较"哪张照片更暗"可靠得多。
-    assert.match(render, /const showCover\s*=\s*Boolean\(reference\?\.coverSrc\)\s*&&\s*state\.type === 'available'/);
+    // 分界是"还能不能约"，不是"约没约过"：部分预约仍然可约，应该让人
+    // 看得见场景再决定；已约满/已过期才从选择里排除掉。
+    assert.match(render, /state\.type === 'available'\s*\|\|\s*state\.type === 'partial'/);
+    assert.doesNotMatch(render, /showCover[\s\S]{0,120}?state\.type === 'full'/);
+    assert.doesNotMatch(render, /showCover[\s\S]{0,120}?state\.type === 'ended'/);
 
     // has-scene-cover 和 <img> 都要跟着 showCover 走，漏一个就会出现
     // "纯色卡底下压着一张照片"或"照片上盖着橙色"的半吊子状态。
     assert.match(render, /\$\{showCover \? ' has-scene-cover' : ''\}/);
     assert.match(render, /\$\{showCover \? `[\s\S]*?class="preview-scene-cover"/);
 
-    // 纯色状态样式必须还在——这是"预约后保留之前样式"的落点。
-    for (const state of ['partial', 'full', 'ended']) {
+    // 约不了的两种状态必须还有纯色样式，这是"排除掉"的落点。
+    for (const state of ['full', 'ended']) {
         assert.match(
             layoutStyles,
             new RegExp(`(^|\\n)\\.preview-scene-card\\.${state}\\s*\\{[\\s\\S]*?background:`),
@@ -253,11 +255,24 @@ test('只有完全没被预约的景才铺照片，一旦有人约了就换回�
         );
     }
 
-    // 封面卡永远是 available，所以不该再为状态卡写封面覆写规则（死代码）。
+    // 部分预约铺照片时必须撤掉浅橙底，否则橙色蒙在照片上会发脏。
+    const partialCover = layoutStyles.match(
+        /\.preview-scene-card\.partial\.has-scene-cover\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(partialCover, '没有找到 .partial.has-scene-cover 规则');
+    assert.match(partialCover[1], /background:\s*none/, '部分预约的照片卡应撤掉浅橙底');
+
+    // 这条覆写必须写在 .partial 之后才盖得住它的 background。
+    const partialBase = layoutStyles.search(/(^|\n)\.preview-scene-card\.partial\s*\{/);
+    const partialOverride = layoutStyles.search(/\.preview-scene-card\.partial\.has-scene-cover\s*\{/);
+    assert.ok(partialOverride > partialBase,
+        '.partial.has-scene-cover 必须写在 .partial 之后，否则浅橙底盖不掉');
+
+    // 约满和过期不该再有封面覆写规则——它们永远不会有照片。
     assert.doesNotMatch(
         layoutStyles,
-        /\.has-scene-cover\.(partial|full|ended)\s*\{/,
-        '封面不会出现在状态卡上，这些覆写永远命中不了'
+        /\.has-scene-cover\.(full|ended)\s*\{/,
+        '约满/过期的卡不会有照片，这些覆写永远命中不了'
     );
 });
 

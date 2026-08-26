@@ -378,7 +378,13 @@ function renderRealSceneCard(studio, state, index, layout = null) {
     // （浅橙=部分预约 / 中橙=已约满 / 灰=已过期）。
     // 照片和纯色是两种截然不同的东西，扫一眼就能分出哪些还能约，
     // 比让用户去比较"哪张照片更暗"可靠得多。
-    const showCover = Boolean(reference?.coverSrc) && state.type === 'available';
+    // 照片按"还能不能约"划线，而不是"约没约过"：
+    // 可预约 + 部分预约都还能约 → 保留实拍照片，让人看得见场景再决定；
+    // 已约满 + 已过期约不了了 → 换成纯色卡，直接从选择里排除掉。
+    // 部分预约的橙色不铺满卡面，只留在边框和进度条上——橙色蒙在照片上会发脏，
+    // 暖色场景（酒吧、小木屋、木纹厨房）尤其容易糊成一片。
+    const showCover = Boolean(reference?.coverSrc)
+        && (state.type === 'available' || state.type === 'partial');
     return `
         <article
             class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference?.src ? ' has-scene-reference' : ''}${showCover ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}"

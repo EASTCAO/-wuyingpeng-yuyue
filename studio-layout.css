@@ -1047,6 +1047,36 @@
     overflow: visible;
 }
 
+/* 部分预约 + 有照片：撤掉铺满卡面的浅橙底，让照片露出来。
+   橙色降级成边框和进度条——蒙在照片上会发脏，暖色场景尤其容易糊成一片。
+   必须放在 .preview-scene-card.partial 之后才盖得住它的 background。 */
+.preview-scene-card.partial.has-scene-cover {
+    background: none;
+    --cover-border: #EC8B4C;
+    /* 比可预约卡多一行进度数字，压暗略加强一档：0.68 对应白字 6.81:1。 */
+    --cover-scrim: 0.68;
+}
+
+/* 进度条压在照片上：原来那套（浅橙轨 + 白填充）是给浅橙卡调的，
+   放到照片上轨道会看不见。改成半透明深色轨 + 白填充，自带一圈描边。 */
+.preview-scene-card.partial.has-scene-cover .preview-scene-progress {
+    width: 62%;
+}
+
+.preview-scene-card.partial.has-scene-cover .preview-scene-progress-track {
+    background: rgba(8, 12, 18, 0.5);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.preview-scene-card.partial.has-scene-cover .preview-scene-progress-track i {
+    background: #FFFFFF;
+}
+
+.preview-scene-card.partial.has-scene-cover .preview-scene-progress small {
+    color: #FFFFFF;
+    text-shadow: 0 1px 3px rgba(8, 12, 18, 0.75);
+}
+
 .preview-scene-reference-popover {
     position: absolute;
     top: 0;
