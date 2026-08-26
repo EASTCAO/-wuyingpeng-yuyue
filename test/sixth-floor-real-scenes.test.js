@@ -248,6 +248,25 @@ test('实拍封面样式不绑定楼层，6F 和 7F 共用同一套观感', () =
     assert.match(layoutSource, /assets\/real-studio\/\$\{reference\.cover\}\?v=\$\{SCENE_COVER_VERSION\}/);
 });
 
+test('封面卡的白色景名不会被状态文字色覆盖', () => {
+    // .full h4 / .ended h4 和 .has-scene-cover h4 特指度相同，后写的赢。
+    // 顺序写反的话，满约卡的深棕字会压在照片上，几乎看不清。
+    const coverTitle = layoutStyles.search(/\.preview-scene-card\.has-scene-cover h4[\s\S]{0,200}?color:\s*#FFFFFF/);
+    assert.notEqual(coverTitle, -1, '没有找到封面卡的白色景名规则');
+
+    for (const state of ['full', 'ended']) {
+        const stateTitle = layoutStyles.search(new RegExp(`\\.preview-scene-card\\.${state} h4\\s*\\{`));
+        assert.notEqual(stateTitle, -1, `没有找到 .${state} h4 规则`);
+        assert.ok(
+            coverTitle > stateTitle,
+            `.has-scene-cover h4 必须写在 .${state} h4 之后，否则封面上的景名会被状态色盖掉`
+        );
+    }
+
+    // 状态组合也要显式覆盖，避免将来有人给状态规则加特指度。
+    assert.match(layoutStyles, /\.preview-scene-card\.has-scene-cover\.full h4/);
+});
+
 test('7F 无影棚区域不显示最外层线框', () => {
     assert.match(layoutStyles, /\.preview-single-floor-map \.studio-map-zone-seventh-floor\s*\{[\s\S]*?border:\s*0;/);
 });

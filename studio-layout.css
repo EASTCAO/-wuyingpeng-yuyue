@@ -563,12 +563,7 @@
     z-index: 2;
 }
 
-/* 遮罩最深处 rgba(12,18,26,0.76) 压在照片上，白字对比度稳定在 7:1 以上；
-   再加一道文字投影，防止照片局部过亮时糊掉。 */
-.preview-scene-card.has-scene-cover h4 {
-    color: #FFFFFF;
-    text-shadow: 0 1px 3px rgba(8, 12, 18, 0.6);
-}
+/* 景名白字统一在文件末尾声明（要排在 .full h4 / .ended h4 之后才生效）。 */
 
 /* 身份色柔光：一团糊开的色斑压在卡片右下角，参考图里的渐变块就是这个做法。
    放右下是因为景名在左上偏中，两者不抢位置。
@@ -975,6 +970,17 @@
 
 .preview-scene-card.ended h4 {
     color: #595F67;
+}
+
+/* 有封面时景名一律白字。必须放在 .full h4 / .ended h4 之后：
+   同等特指度下后写的赢，否则满约卡的深棕字会压到照片上，几乎看不清。
+   状态仍由卡片边框和右上角角标表达，不靠景名颜色。 */
+.preview-scene-card.has-scene-cover h4,
+.preview-scene-card.has-scene-cover.full h4,
+.preview-scene-card.has-scene-cover.partial h4,
+.preview-scene-card.has-scene-cover.ended h4 {
+    color: #FFFFFF;
+    text-shadow: 0 1px 3px rgba(8, 12, 18, 0.6);
 }
 
 .preview-scene-card.has-scene-reference {

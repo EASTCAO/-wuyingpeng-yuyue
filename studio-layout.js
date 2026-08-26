@@ -6,7 +6,7 @@ const STUDIO_OVERVIEW_SEGMENTS = 18;
 // cover 字段驱动卡面封面，6F 画布和 7F 网格共用同一套渲染。
 // 素材来自 assets/real-studio/source/，统一压成 900px 宽的 webp。
 // src 是 hover 弹层用的大图（历史字段，只有洗衣房景别有）。
-const SCENE_COVER_VERSION = '20260826-covers';
+const SCENE_COVER_VERSION = '20260826-laundry-fix';
 const STUDIO_SCENE_REFERENCES = {
     // 7F 实景棚：11 个景全部有实拍素材
     '小木屋景': { cover: 'small-cabin.webp', alt: '小木屋景场景示意图' },
