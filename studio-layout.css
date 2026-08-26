@@ -1047,25 +1047,41 @@
     overflow: visible;
 }
 
-/* 部分预约 + 有照片：撤掉铺满卡面的浅橙底，让照片露出来。
-   橙色降级成边框和进度条——蒙在照片上会发脏，暖色场景尤其容易糊成一片。
-   必须放在 .preview-scene-card.partial 之后才盖得住它的 background。 */
+/* 部分预约 + 有照片：卡面仍然是浅橙纯色，但让照片以很低的不透明度透出来，
+   隐约能认出是哪个景，又不会被误当成"没人约"的照片卡。
+   保留 .partial 的浅橙底（不再 background: none），照片压在它上面当底纹。 */
 .preview-scene-card.partial.has-scene-cover {
-    background: none;
-    --cover-border: #EC8B4C;
-    /* 比可预约卡多一行进度数字，压暗略加强一档：0.68 对应白字 6.81:1。 */
-    --cover-scrim: 0.68;
+    --cover-border: #EFA069;
 }
 
-/* 进度条压在照片上：原来那套（浅橙轨 + 白填充）是给浅橙卡调的，
-   放到照片上轨道会看不见。改成半透明深色轨 + 白填充，自带一圈描边。 */
+/* 照片降到 0.24 并去掉一半饱和：橙底透上来占主导，照片只剩轮廓。
+   同时撤掉给纯照片卡调的提亮，否则会把橙色冲淡。 */
+.preview-scene-card.partial.has-scene-cover .preview-scene-cover {
+    opacity: 0.24;
+    filter: saturate(0.5) contrast(1.02);
+    /* 混色让照片和橙底融在一起，而不是像贴了张半透明图片 */
+    mix-blend-mode: luminosity;
+}
+
+/* 卡面回到浅橙，所以文字也回到深棕——白字在浅橙上读不了。
+   撤掉压暗遮罩：底色已经是纯色，不需要再垫暗块。 */
+.preview-scene-card.partial.has-scene-cover::before {
+    background: none;
+}
+
+.preview-scene-card.partial.has-scene-cover h4 {
+    color: #7A3A16;
+    text-shadow: none;
+}
+
+/* 进度条回到浅橙卡那套配色 */
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress {
-    width: 62%;
+    width: 72%;
 }
 
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress-track {
-    background: rgba(8, 12, 18, 0.5);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+    background: rgba(154, 81, 42, 0.24);
+    box-shadow: none;
 }
 
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress-track i {
@@ -1073,8 +1089,8 @@
 }
 
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress small {
-    color: #FFFFFF;
-    text-shadow: 0 1px 3px rgba(8, 12, 18, 0.75);
+    color: #8A4A22;
+    text-shadow: none;
 }
 
 .preview-scene-reference-popover {

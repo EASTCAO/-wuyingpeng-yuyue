@@ -255,18 +255,45 @@ test('还能约的景保留照片，约不了的换成纯色卡', () => {
         );
     }
 
-    // 部分预约铺照片时必须撤掉浅橙底，否则橙色蒙在照片上会发脏。
+    // 部分预约是"纯色卡但照片隐约可见"：保留 .partial 的浅橙底，
+    // 照片降到很低的不透明度当底纹透上来，既能认出是哪个景，
+    // 又不会被误当成"没人约"的照片卡。
     const partialCover = layoutStyles.match(
         /\.preview-scene-card\.partial\.has-scene-cover\s*\{([\s\S]*?)\n\}/
     );
     assert.ok(partialCover, '没有找到 .partial.has-scene-cover 规则');
-    assert.match(partialCover[1], /background:\s*none/, '部分预约的照片卡应撤掉浅橙底');
+    assert.doesNotMatch(partialCover[1], /background:\s*none/,
+        '部分预约应保留浅橙底，照片只当底纹，不能撤掉底色');
 
-    // 这条覆写必须写在 .partial 之后才盖得住它的 background。
-    const partialBase = layoutStyles.search(/(^|\n)\.preview-scene-card\.partial\s*\{/);
-    const partialOverride = layoutStyles.search(/\.preview-scene-card\.partial\.has-scene-cover\s*\{/);
-    assert.ok(partialOverride > partialBase,
-        '.partial.has-scene-cover 必须写在 .partial 之后，否则浅橙底盖不掉');
+    const partialPhoto = layoutStyles.match(
+        /\.preview-scene-card\.partial\.has-scene-cover \.preview-scene-cover\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(partialPhoto, '没有找到部分预约的照片弱化规则');
+    const opacity = partialPhoto[1].match(/opacity:\s*([\d.]+)/);
+    assert.ok(opacity, '部分预约的照片必须降低不透明度');
+    assert.ok(Number(opacity[1]) <= 0.35,
+        `照片不透明度 ${opacity[1]} 偏高，会和未预约的照片卡太像`);
+    assert.ok(Number(opacity[1]) >= 0.12,
+        `照片不透明度 ${opacity[1]} 太低，等于看不见，失去"能认出是哪个景"的意义`);
+
+    // 底色是浅橙纯色，就不该再叠压暗遮罩、也不该用白字。
+    assert.match(
+        layoutStyles,
+        /\.preview-scene-card\.partial\.has-scene-cover::before\s*\{\s*background:\s*none;/,
+        '浅橙底上不需要压暗遮罩'
+    );
+    const partialTitle = layoutStyles.match(
+        /\.preview-scene-card\.partial\.has-scene-cover h4\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(partialTitle, '没有找到部分预约的景名颜色规则');
+    assert.doesNotMatch(partialTitle[1], /color:\s*#FFFFFF/i,
+        '浅橙底上白字读不了，景名应为深色');
+
+    // 这条覆写必须写在通用封面白字规则之后才盖得住。
+    const coverTitle = layoutStyles.search(/\.preview-scene-card\.has-scene-cover h4\s*\{/);
+    const partialTitlePos = layoutStyles.search(/\.preview-scene-card\.partial\.has-scene-cover h4\s*\{/);
+    assert.ok(partialTitlePos > coverTitle,
+        '.partial.has-scene-cover h4 必须写在 .has-scene-cover h4 之后');
 
     // 约满和过期不该再有封面覆写规则——它们永远不会有照片。
     assert.doesNotMatch(
