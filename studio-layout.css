@@ -325,13 +325,13 @@
 }
 
 .preview-legend-swatch.partial {
-    border-color: #F8B987;
-    background: linear-gradient(145deg, #FFECDD 0%, #FFDEC5 100%);
+    border-color: #FFBE95;
+    background: linear-gradient(145deg, #FFF1E6 0%, #FFD2B4 100%);
 }
 
 .preview-legend-swatch.full {
-    border-color: #C86028;
-    background: #F49F68;
+    border-color: #E87B4A;
+    background: linear-gradient(138deg, #FFC49A 0%, #F4804F 100%);
 }
 
 .preview-floor-map {
@@ -794,21 +794,24 @@
     --scene-base: #F4F6F8;
 }
 
+/* 状态色走蜜桃/珊瑚调，不用原来那种偏土黄的橙——后者和应用主色（蓝）
+   不是一个调性，放在一起显脏。这套暖粉橙同样有警示感，但更干净。 */
 .preview-scene-card.partial {
     --state-wash: rgba(255, 255, 255, 0);
-    --card-edge: #EFA069;
-    --card-border: #F8B987;
-    --card-shadow: rgba(203, 94, 30, 0.15);
-    background: linear-gradient(145deg, #FFECDD 0%, #FFDEC5 100%);
+    --card-edge: #F5A97C;
+    --card-border: #FFBE95;
+    --card-shadow: rgba(214, 105, 58, 0.16);
+    background: linear-gradient(145deg, #FFF1E6 0%, #FFE2CC 52%, #FFD2B4 100%);
 }
 
 /* 已约满：必须和 partial 的浅橙拉开一档明度，否则两个状态看着一样。
-   底色亮度 0.45 对 partial 底(0.775) 是 1.65:1，边框对画布 3.49:1（过非文字 3:1）。 */
+   三段渐变而不是纯色，卡面才有层次不至于发平。
+   深棕字 #4A1F0C 在最亮那段上 5.39:1 过 AA。 */
 .preview-scene-card.full {
-    --card-edge: #C86028;
-    --card-border: #C86028;
-    --card-shadow: rgba(171, 66, 18, 0.2);
-    background: linear-gradient(138deg, #FBBC8E 0%, #F49F68 56%, #EC8B4C 100%);
+    --card-edge: #D9713F;
+    --card-border: #E87B4A;
+    --card-shadow: rgba(198, 84, 44, 0.22);
+    background: linear-gradient(138deg, #FFC49A 0%, #FF9E6E 56%, #F4804F 100%);
 }
 
 .preview-scene-card.ended {
@@ -1024,7 +1027,9 @@
 }
 
 .preview-scene-card.full h4 {
-    color: #5C2A12;
+    /* 蜜桃渐变最亮那段是 #FFC49A，原来的 #5C2A12 只有 4.48:1 差一点，
+       加深到 #4A1F0C 后 5.39:1 过 AA。 */
+    color: #4A1F0C;
 }
 
 .preview-scene-card.ended h4 {
@@ -1052,7 +1057,7 @@
    照片糊成一层褐色雾，橙色也跟着发脏。直接叠色反而干净：
    照片该是什么颜色还是什么颜色，只是被浅橙统一罩住。 */
 .preview-scene-card.partial.has-scene-cover {
-    --cover-border: #EFA069;
+    --cover-border: #F5A97C;
 }
 
 /* 照片全不透明、不混色，保持清晰；只轻微降饱和让橙罩层好统一。 */
@@ -1062,11 +1067,16 @@
     mix-blend-mode: normal;
 }
 
-/* 浅橙罩层。0.82 的 #FFD5B5：照片能透出形状和色彩，
-   深棕字最坏仍有 4.95:1 过 AA（按照片暗部取样）。
-   ::before 原本是压暗遮罩，这里整个换成橙罩。 */
+/* 浅蜜桃罩层，做成对角渐变而不是平涂：左上淡、右下浓，
+   照片在淡的那头透得更多，卡片自己就有了纵深。
+   合成后深棕字最坏 4.73:1 过 AA（按照片暗部 + 最浓那端算）。 */
 .preview-scene-card.partial.has-scene-cover::before {
-    background: rgba(255, 213, 181, 0.82);
+    background: linear-gradient(
+        142deg,
+        rgba(255, 235, 219, 0.74) 0%,
+        rgba(255, 226, 204, 0.82) 46%,
+        rgba(255, 210, 180, 0.88) 100%
+    );
 }
 
 .preview-scene-card.partial.has-scene-cover h4 {
@@ -1089,7 +1099,8 @@
 }
 
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress small {
-    color: #8A4A22;
+    /* 罩层最浓那端合成后 #8A4A22 只有 4.11:1，加深到 #7A3A16 得 5.18:1 */
+    color: #7A3A16;
     text-shadow: none;
 }
 
