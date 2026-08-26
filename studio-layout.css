@@ -511,8 +511,11 @@
 
 /* 实拍封面。照片比抽象渐变更能说明"这是哪个景"，而且不会和橙色状态争语义。
    照片内容不可控（明暗、构图都不确定），所以景名的可读性不能指望照片本身，
-   一律靠下面那层压暗遮罩兜底，见 .has-scene-cover .preview-scene-card-top。 */
-.preview-floor-map-sixth-floor .preview-scene-cover {
+   一律靠下面那层压暗遮罩兜底，见 .has-scene-cover .preview-scene-card-top。
+
+   不限定楼层：6F 是绝对定位画布、7F 是 CSS grid，但两边共用
+   renderRealSceneCard，封面样式也共用一套，两个楼层观感才一致。 */
+.preview-scene-cover {
     position: absolute;
     inset: 0;
     z-index: 0;
@@ -526,12 +529,12 @@
 }
 
 /* 有封面时撤掉身份色柔光——照片已经把身份说清楚了，再叠色斑只会脏。 */
-.preview-floor-map-sixth-floor .preview-scene-card.has-scene-cover::after {
+.preview-scene-card.has-scene-cover::after {
     background: none;
 }
 
 /* 压暗遮罩：从底部往上渐隐，托住景名。不用整片压暗，否则照片就白放了。 */
-.preview-floor-map-sixth-floor .preview-scene-card.has-scene-cover::before {
+.preview-scene-card.has-scene-cover::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -552,17 +555,17 @@
 }
 
 /* 景名与状态角标要浮在照片和遮罩之上 */
-.preview-floor-map-sixth-floor .preview-scene-card.has-scene-cover .preview-scene-card-top,
-.preview-floor-map-sixth-floor .preview-scene-card.has-scene-cover .preview-scene-progress,
-.preview-floor-map-sixth-floor .preview-scene-card.has-scene-cover .preview-scene-full-label,
-.preview-floor-map-sixth-floor .preview-scene-card.has-scene-cover .preview-scene-expired-label {
+.preview-scene-card.has-scene-cover .preview-scene-card-top,
+.preview-scene-card.has-scene-cover .preview-scene-progress,
+.preview-scene-card.has-scene-cover .preview-scene-full-label,
+.preview-scene-card.has-scene-cover .preview-scene-expired-label {
     position: relative;
     z-index: 2;
 }
 
 /* 遮罩最深处 rgba(12,18,26,0.76) 压在照片上，白字对比度稳定在 7:1 以上；
    再加一道文字投影，防止照片局部过亮时糊掉。 */
-.preview-floor-map-sixth-floor .preview-scene-card.has-scene-cover h4 {
+.preview-scene-card.has-scene-cover h4 {
     color: #FFFFFF;
     text-shadow: 0 1px 3px rgba(8, 12, 18, 0.6);
 }

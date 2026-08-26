@@ -215,6 +215,39 @@ test('6F 实拍封面的压暗遮罩足够深，白色景名在任何照片上�
     );
 });
 
+test('实拍封面样式不绑定楼层，6F 和 7F 共用同一套观感', () => {
+    // 6F 是绝对定位画布、7F 是 CSS grid，但封面样式必须共用，否则两个楼层
+    // 会长成两个样子。这里断言选择器没有被限定回 6F 画布。
+    for (const selector of [
+        '.preview-scene-cover',
+        '.preview-scene-card.has-scene-cover::before',
+        '.preview-scene-card.has-scene-cover::after'
+    ]) {
+        const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        assert.match(layoutStyles, new RegExp(`(^|\\n)${escaped}`),
+            `${selector} 应是不限楼层的全局规则`);
+        assert.doesNotMatch(layoutStyles, new RegExp(`preview-floor-map-sixth-floor ${escaped}`),
+            `${selector} 被限定到了 6F，7F 会拿不到封面样式`);
+    }
+
+    // 7F 的 11 个景都要有封面，缺一个就会在网格里露出白卡。
+    const seventhFloorScenes = [
+        '小木屋景', '卧室景', '酒吧景', '书房景', '客厅景', '工具台景',
+        '木纹台面-厨房景', '儿童房景/户外下午茶景', '洗衣房景别', '浴室景', '黑色台面-厨房景'
+    ];
+    // 景名里有 / 和 -，正则转义容易写歪，这里改成按字面量定位再取 cover。
+    for (const scene of seventhFloorScenes) {
+        const start = layoutSource.indexOf(`'${scene}':`);
+        assert.notEqual(start, -1, `${scene} 不在 STUDIO_SCENE_REFERENCES 里`);
+        const entry = layoutSource.slice(start, layoutSource.indexOf('}', start));
+        assert.match(entry, /cover:\s*'[\w-]+\.webp'/, `${scene} 没有配实拍封面`);
+    }
+
+    // 封面路径统一由 getSceneReference 拼版本号，避免散落的 ?v= 漏改。
+    assert.match(layoutSource, /SCENE_COVER_VERSION/);
+    assert.match(layoutSource, /assets\/real-studio\/\$\{reference\.cover\}\?v=\$\{SCENE_COVER_VERSION\}/);
+});
+
 test('7F 无影棚区域不显示最外层线框', () => {
     assert.match(layoutStyles, /\.preview-single-floor-map \.studio-map-zone-seventh-floor\s*\{[\s\S]*?border:\s*0;/);
 });

@@ -1,6 +1,6 @@
 // Service Worker：用于缓存资源，让应用即使在断网情况下也能打开（PWA 必须组件）
 // 提升版本号可强制客户端更新缓存（例如修改 API 域名后）
-const CACHE_NAME = 'studio-booking-v192-scene-cover';
+const CACHE_NAME = 'studio-booking-v193-7f-covers';
 const urlsToCache = [
   './',
   './index.html',
@@ -12,7 +12,17 @@ const urlsToCache = [
   './manifest.json',
   './favicon.svg',
   './assets/real-studio/laundry.webp',
-  './assets/real-studio/bathroom.webp'
+  './assets/real-studio/bathroom.webp',
+  './assets/real-studio/laundry-cover.webp',
+  './assets/real-studio/small-cabin.webp',
+  './assets/real-studio/bedroom.webp',
+  './assets/real-studio/bar.webp',
+  './assets/real-studio/study.webp',
+  './assets/real-studio/living-room.webp',
+  './assets/real-studio/workbench.webp',
+  './assets/real-studio/wood-kitchen.webp',
+  './assets/real-studio/kids-tea.webp',
+  './assets/real-studio/black-kitchen.webp'
 ];
 
 // 带 ?v= 版本号的同源静态资源可以安全地走 cache-first：

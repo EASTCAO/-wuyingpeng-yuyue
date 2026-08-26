@@ -2,20 +2,44 @@ const baseRenderStudioSections = renderStudioSections;
 const baseRenderBookings = renderBookings;
 const baseInitStudioUI = initStudioUI;
 const STUDIO_OVERVIEW_SEGMENTS = 18;
+// 实拍封面。照片比抽象渐变更能说明"这是哪个景"，而且不会和橙色的预约状态争语义。
+// cover 字段驱动卡面封面，6F 画布和 7F 网格共用同一套渲染。
+// 素材来自 assets/real-studio/source/，统一压成 900px 宽的 webp。
+// src 是 hover 弹层用的大图（历史字段，只有洗衣房景别有）。
+const SCENE_COVER_VERSION = '20260826-covers';
 const STUDIO_SCENE_REFERENCES = {
+    // 7F 实景棚：11 个景全部有实拍素材
+    '小木屋景': { cover: 'small-cabin.webp', alt: '小木屋景场景示意图' },
+    '卧室景': { cover: 'bedroom.webp', alt: '卧室景场景示意图' },
+    '酒吧景': { cover: 'bar.webp', alt: '酒吧景场景示意图' },
+    '书房景': { cover: 'study.webp', alt: '书房景场景示意图' },
+    '客厅景': { cover: 'living-room.webp', alt: '客厅景场景示意图' },
+    '工具台景': { cover: 'workbench.webp', alt: '工具台景场景示意图' },
+    '木纹台面-厨房景': { cover: 'wood-kitchen.webp', alt: '木纹台面厨房景场景示意图' },
+    '儿童房景/户外下午茶景': { cover: 'kids-tea.webp', alt: '儿童房景与户外下午茶景场景示意图' },
     '洗衣房景别': {
         src: 'assets/real-studio/laundry.webp?v=20260804-laundry-reference',
+        cover: 'laundry-cover.webp',
         alt: '洗衣房景别场景示意图'
     },
-    // 6F 画布上的实拍封面试点。真实照片比抽象渐变更能说明"这是哪个景"，
-    // 而且照片不会和橙色的预约状态争语义。这里先只接一个景验证观感，
-    // 剩下 20 个景等素材齐了照这个模式补 cover 字段即可。
-    '6F·洗浴室景': {
-        src: 'assets/real-studio/laundry.webp?v=20260804-laundry-reference',
-        alt: '洗浴室景场景示意图',
-        cover: 'assets/real-studio/bathroom.webp?v=20260826-bathroom-cover'
-    }
+    '浴室景': { cover: 'bathroom.webp', alt: '浴室景场景示意图' },
+    '黑色台面-厨房景': { cover: 'black-kitchen.webp', alt: '黑色台面厨房景场景示意图' },
+
+    // 6F 实景棚：洗浴室景复用 7F 浴室的同一张素材（同类场景）。
+    // 其余 20 个景暂无素材，继续用身份色柔光，两种风格可以共存。
+    '6F·洗浴室景': { cover: 'bathroom.webp', alt: '洗浴室景场景示意图' }
 };
+
+function getSceneReference(studioId) {
+    const reference = STUDIO_SCENE_REFERENCES[studioId];
+    if (!reference) return null;
+    return {
+        ...reference,
+        coverSrc: reference.cover
+            ? `assets/real-studio/${reference.cover}?v=${SCENE_COVER_VERSION}`
+            : null
+    };
+}
 
 const SIXTH_FLOOR_LAYOUT_VERSION = 6;
 const SIXTH_FLOOR_CANVAS_SIZE = { width: 1800, height: 1040 };
@@ -347,12 +371,12 @@ function renderRealSceneMap(scenes) {
 }
 
 function renderRealSceneCard(studio, state, index, layout = null) {
-    const reference = STUDIO_SCENE_REFERENCES[studio.id];
+    const reference = getSceneReference(studio.id);
     const position = layout?.[studio.mapArea];
     const editable = Boolean(position && canEditSixthFloorLayout());
     return `
         <article
-            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference ? ' has-scene-reference' : ''}${reference?.cover && position ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}"
+            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference?.src ? ' has-scene-reference' : ''}${reference?.coverSrc ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}"
             data-map-area="${escapeHtml(studio.mapArea)}"
             data-studio-id="${escapeHtml(studio.id)}"
             ${position ? `style="--preview-index:${index};--card-x:${position.x}px;--card-y:${position.y}px;--card-width:${position.width}px;--card-height:${position.height}px"` : ''}
@@ -363,10 +387,10 @@ function renderRealSceneCard(studio, state, index, layout = null) {
             role="button"
             tabindex="0"
         >
-            ${reference?.cover && position ? `
+            ${reference?.coverSrc ? `
                 <img
                     class="preview-scene-cover"
-                    src="${escapeHtml(reference.cover)}"
+                    src="${escapeHtml(reference.coverSrc)}"
                     alt=""
                     aria-hidden="true"
                     loading="lazy"
@@ -394,7 +418,7 @@ function renderRealSceneCard(studio, state, index, layout = null) {
                     <small>${state.remainingSegments}/${state.totalSegments}</small>
                 </div>
             ` : ''}
-            ${reference ? `
+            ${reference?.src ? `
                 <figure class="preview-scene-reference-popover" aria-hidden="true">
                     <img src="${escapeHtml(reference.src)}" alt="${escapeHtml(reference.alt)}" decoding="async">
                 </figure>
