@@ -95,6 +95,25 @@ test('样式表里不再有裸露的强调色和纯黑', () => {
     }
 });
 
+test('样式表花括号必须配平', () => {
+    // 多一个 } 会让它之后的所有规则静默失效——浏览器不报错，
+    // 表现是"某条样式莫名其妙不生效"，极难排查。这里变成硬失败。
+    for (const [index, css] of styles.entries()) {
+        const source = css.replace(/\/\*[\s\S]*?\*\//g, '');
+        let depth = 0;
+        let line = 1;
+        for (let i = 0; i < source.length; i += 1) {
+            if (source[i] === '\n') line += 1;
+            else if (source[i] === '{') depth += 1;
+            else if (source[i] === '}') {
+                depth -= 1;
+                assert.ok(depth >= 0, `${styleFiles[index]}:${line} 有多余的 }，它之后的规则会全部失效`);
+            }
+        }
+        assert.equal(depth, 0, `${styleFiles[index]} 有 ${depth} 个未闭合的 {`);
+    }
+});
+
 test('圆角全部走 token，不留裸 px', () => {
     for (const [index, css] of styles.entries()) {
         const bare = [...css.matchAll(/border-radius:\s*(\d+px)/g)].map(m => m[1]);

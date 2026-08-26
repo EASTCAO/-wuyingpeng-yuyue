@@ -575,9 +575,6 @@
     pointer-events: none;
 }
 
-    pointer-events: none;
-}
-
 /* 景名和进度条要浮在照片和遮罩之上。
    注意只给这两个加 position: relative——角标本身是 absolute 定位在右上角，
    改成 relative 会让它脱不了流、被拉成整行宽，横贯整张卡。 */
