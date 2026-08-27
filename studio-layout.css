@@ -526,11 +526,12 @@
 .preview-scene-cover {
     position: relative;
     z-index: 0;
-    flex: 1 1 auto;
     width: 100%;
-    min-height: 0;
+    height: 100%;
+    /* 横排后照片窗口自己是竖高的一块，给个下限免得在矮卡里被压成一条 */
+    min-height: 46px;
     border-radius: var(--radius-lg);
-    /* 卡片是横向的、素材多为竖构图，只能裁切填满；center 保证主体居中不被切掉 */
+    /* 窗口比例和素材构图不一定吻合，只能裁切填满；center 保证主体居中不被切掉 */
     object-fit: cover;
     object-position: center;
     /* 弱化：照片是"这是哪个景"的说明，不是主角，所以降饱和 + 提亮往后退。
@@ -550,15 +551,49 @@
     background: none;
 }
 
-/* 有照片的卡：照片在上（卡内的一块窗口，四周留 gutter），
-   景名紧跟在下面，进度条再紧跟景名。所有卡都是这一种结构——
-   上一版做过"矮卡横排"的分支，同一屏里出现两种排版反而更乱，
-   现在统一成一种，卡的大小差异不再影响排版。 */
+/* 有照片的卡：照片在左（卡内的一块窗口），景名在右，进度条紧跟景名下面。
+   所有卡都是这一种结构，不按卡高分支——同一屏里出现两种排版反而更乱。
+
+   用 grid 而不是 flex：照片要跨两行占满左列高度，景名和进度条堆在右列，
+   flex 做不到这种"一列跨行、另一列内部再分行"的关系。
+
+   grid-template-rows 的 auto + 1fr 让景名按内容取高、贴着照片顶部对齐，
+   进度条落在它正下方；剩余空间归第二行，卡变高时进度条不会被推到底。 */
 .preview-scene-card.has-scene-cover {
-    justify-content: flex-start;
-    gap: 7px;
+    display: grid;
+    grid-template-columns: minmax(0, 38%) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    justify-content: initial;
+    align-items: start;
+    gap: 4px 9px;
     padding: 9px;
 }
+
+/* 照片占左列、跨满两行 */
+.preview-scene-card.has-scene-cover .preview-scene-cover {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+}
+
+/* 景名和进度条依次落在右列，都左对齐——横排时右列是一个左对齐的文字块，
+   继续沿用竖排那套居中会让景名和进度条各自找中线，两者对不齐。 */
+.preview-scene-card.has-scene-cover .preview-scene-card-top,
+.preview-scene-card.has-scene-cover.has-progress .preview-scene-card-top {
+    grid-column: 2;
+    grid-row: 1;
+    justify-content: flex-start;
+}
+
+.preview-scene-card.has-scene-cover .preview-scene-progress {
+    grid-column: 2;
+    grid-row: 2;
+    /* 覆盖基类的 72% + auto 居中：右列本来就窄，进度条撑满才够长 */
+    width: 100%;
+    margin: 0;
+}
+
 
 /* 照片回到卡内窗口后，不再需要盖住整卡的白罩层——它会把卡面渐变一起冲白。
    基类的 ::before 是卡片顶沿那道白色高光线，在有色卡面上会显脏，一并撤掉。 */
@@ -1087,6 +1122,8 @@
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.01em;
+    /* 横排时右列是一个左对齐的文字块，景名和进度条共用同一条左边线 */
+    text-align: left;
     text-shadow:
         0 -1px 0 rgba(255, 255, 255, 0.9),
         0 1px 0 rgba(86, 104, 126, 0.3),
@@ -1105,7 +1142,8 @@
    凸条，和景名的立体感是同一套语言。 */
 .preview-scene-card.has-scene-cover .preview-scene-progress {
     align-items: center;
-    width: auto;
+    /* 不写 width：横排的宽度由上面那条 grid 规则给（撑满右列）。
+       这里再写 auto 会把它压回内容宽，右列窄的时候进度条就只剩一小截。 */
     max-width: 100%;
     /* 和景名共用一块发光底板的视觉语言，两者才像同一套系统里的东西 */
     padding: 4px 10px 3px;
@@ -1118,8 +1156,10 @@
     backdrop-filter: blur(3px);
 }
 
+/* 轨道跟着底板走满，不用固定像素宽——右列的宽度取决于卡宽，
+   写死 108px 会在窄卡里溢出底板。 */
 .preview-scene-card.has-scene-cover .preview-scene-progress-track {
-    width: 108px;
+    width: 100%;
     background: rgba(96, 116, 140, 0.26);
     box-shadow:
         inset 0 1px 2px rgba(48, 64, 84, 0.3),
@@ -1134,6 +1174,7 @@
 .preview-scene-card.has-scene-cover .preview-scene-progress small {
     color: #2B3948;
     font-weight: 600;
+    text-align: left;
     text-shadow:
         0 1px 0 rgba(255, 255, 255, 0.9),
         0 0 10px rgba(255, 255, 255, 0.85);

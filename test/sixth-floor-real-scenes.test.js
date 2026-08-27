@@ -316,23 +316,61 @@ test('照片内嵌窗口不会被基类的 height: 100% 压成 0 高', () => {
 });
 
 test('所有封面卡结构统一，不再按卡高分出横排分支', () => {
-    // 曾经给矮卡做过"照片在左、文字在右"的容器查询分支，同一屏里出现
-    // 两种排版反而更乱。现在统一成一种：照片在上（卡内窗口）、景名在下、
-    // 进度条紧跟景名，卡的大小差异不再影响排版。
+    // 曾经给矮卡做过容器查询分支，同一屏里出现两种排版反而更乱。现在
+    // 统一成一种：照片在左（卡内窗口）、景名在右上、进度条紧跟景名在右下，
+    // 卡的大小差异不再影响排版。
     assert.doesNotMatch(layoutStyles, /@container scene-card/,
-        '横排分支应已删除，所有封面卡结构统一');
+        '容器查询分支应已删除，所有封面卡结构统一');
     assert.doesNotMatch(layoutStyles, /container-type:\s*size/,
-        'container-type 只为横排服务，横排删掉后不该留残留');
+        'container-type 只为那条分支服务，删掉后不该留残留');
     assert.doesNotMatch(layoutStyles, /100cqh/,
-        'cqh 只在横排里用过，应随横排一起删掉');
+        'cqh 只在那条分支里用过，应随它一起删掉');
 
-    // 卡片竖排，照片自己撑开剩余高度。
     const card = layoutStyles.match(
         /\n\.preview-scene-card\.has-scene-cover\s*\{([\s\S]*?)\n\}/
     );
     assert.ok(card, '没有找到封面卡规则');
-    assert.match(card[1], /justify-content:\s*flex-start/,
-        '照片在上、文字在下，需要 flex-start；center 会让两者一起挤到中间');
+
+    // 左照片 / 右文字 = 两列；景名 / 进度条 = 两行。
+    assert.match(card[1], /display:\s*grid/,
+        '照片在左、文字在右，需要 grid 两列；flex 竖排做不到');
+    assert.match(card[1], /grid-template-columns:\s*minmax\([^)]*\)\s+minmax\([^)]*\)/,
+        '两列都应用 minmax 定宽，否则长景名会把照片列挤没');
+    assert.match(card[1], /align-items:\s*start/,
+        '右列内容从顶部开始排，景名才和照片上沿齐平');
+});
+
+test('封面卡三块内容各就各位：照片跨两行占左列，景名和进度条叠在右列', () => {
+    // 这三条 grid 定位是"照片在左、景名在右、进度条在景名下面"的全部实现。
+    // 少任何一条，元素就退回自动流：进度条会跑到照片下面另起一行。
+    // 选择器可能出现在一条逗号分隔的选择器组里（例如同时压掉 .has-progress
+    // 的基类样式），所以允许它后面先跟别的选择器再到 {。取所有命中的规则体，
+    // 挑出真正声明了 grid 定位的那条。
+    const placement = selector => {
+        const bodies = [...layoutStyles.matchAll(new RegExp(
+            `\\.preview-scene-card\\.has-scene-cover ${selector}[^{]*\\{([\\s\\S]*?)\\n\\}`,
+            'g'
+        ))].map(entry => entry[1]);
+        assert.ok(bodies.length > 0, `没有找到 ${selector} 的规则`);
+        const placed = bodies.find(body => /grid-(?:column|row):/.test(body));
+        assert.ok(placed, `${selector} 没有任何 grid 定位声明`);
+        return placed;
+    };
+
+    const cover = placement('\\.preview-scene-cover');
+    assert.match(cover, /grid-column:\s*1/, '照片应占左列');
+    assert.match(cover, /grid-row:\s*1\s*\/\s*span 2/,
+        '照片要跨满两行，否则右列进度条那行会在照片下方留出空档');
+
+    // 景名裹在 .preview-scene-card-top 里，进网格的是这个容器而不是 h4 本身。
+    const top = placement('\\.preview-scene-card-top');
+    assert.match(top, /grid-column:\s*2/, '景名应在右列');
+    assert.match(top, /grid-row:\s*1/, '景名在右列第一行');
+
+    const progress = placement('\\.preview-scene-progress');
+    assert.match(progress, /grid-column:\s*2/,
+        '进度条应和景名同在右列，才是"在景名下面"而不是"在照片下面"');
+    assert.match(progress, /grid-row:\s*2/, '进度条在右列第二行，紧跟景名');
 });
 
 test('进度条紧跟景名，和景名同为突出信息', () => {
