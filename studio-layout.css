@@ -325,13 +325,13 @@
 }
 
 .preview-legend-swatch.partial {
-    border-color: #FFBE95;
-    background: linear-gradient(145deg, #FFF1E6 0%, #FFD2B4 100%);
+    border-color: #A6CDEA;
+    background: linear-gradient(145deg, #F4FAFE 0%, #D2E7F6 100%);
 }
 
 .preview-legend-swatch.full {
-    border-color: #E87B4A;
-    background: linear-gradient(138deg, #FFC49A 0%, #F4804F 100%);
+    border-color: #3F84BB;
+    background: linear-gradient(138deg, #BEDDF5 0%, #6FAEDC 100%);
 }
 
 .preview-floor-map {
@@ -466,7 +466,7 @@
     min-height: 0;
     padding: 12px;
     /* 跟着 --card-border 走，不要写死颜色：写死会让 6F 画布上的
-       "部分预约 / 已约满" 卡片丢掉自己的橙色边框。 */
+       "部分预约 / 已约满" 卡片丢掉自己的天青边框。 */
     border-color: var(--card-border);
     /* --radius-lg(12px) 会被 70% 缩放压到 8.4px，在这么大的卡上显得生硬。
        用 xl(16px) 换取参考图那种圆润感，实际呈现约 11px。
@@ -476,7 +476,7 @@
 }
 
 /* 每个景的身份色。卡面本身留白，色只作为右下角的一团柔光（见 ::after），
-   原因是卡面填充已经被"预约状态"占用了——满约是橙、部分预约是浅橙。
+   原因是卡面填充已经被"预约状态"占用了——满约是中蓝、部分预约是浅蓝。
    身份和状态各占一层，才不会让"国风景"这类暖色景看着像已约满。
    为此暖色景的饱和度统一压到 <=16%，明确低于 partial 状态的 23%。
    所有色对景名 #252B33 的对比度都在 8:1 以上，远超 AA。 */
@@ -509,7 +509,7 @@
 .preview-floor-map-sixth-floor [data-map-area="sixth-workshop"] { --scene-tint: #CDD2D6; }
 .preview-floor-map-sixth-floor [data-map-area="sixth-modern-kitchen"] { --scene-tint: #D4DADD; }
 
-/* 实拍封面。照片比抽象渐变更能说明"这是哪个景"，而且不会和橙色状态争语义。
+/* 实拍封面。照片比抽象渐变更能说明"这是哪个景"，而且不会和状态色争语义。
    照片内容不可控（明暗、构图都不确定），所以景名的可读性不能指望照片本身，
    一律靠下面那层压暗遮罩兜底，见 .has-scene-cover .preview-scene-card-top。
 
@@ -609,7 +609,7 @@
     /* 悬停时抬起来：投影同步加深拉长，位移才有"浮起"而不是"变大"的感觉 */
     .preview-scene-card.has-scene-cover:hover,
     .preview-scene-card.has-scene-cover:focus-visible {
-        /* 提亮边框但不改色相：状态卡悬停时仍保留自己的橙色边，
+        /* 提亮边框但不改色相：状态卡悬停时仍保留自己的天青边，
            直接写死白色会把状态信号抹掉。 */
         border-color: color-mix(in srgb, var(--cover-border), #FFFFFF 45%);
         box-shadow:
@@ -638,7 +638,7 @@
         );
 }
 
-/* 满约/部分预约的卡面已经是橙色系，再叠身份色会糊成脏色，这里撤掉柔光，
+/* 满约/部分预约的卡面已经是天青蓝，再叠身份色会糊成脏色，这里撤掉柔光，
    只保留基类的玻璃高光。状态永远优先于身份。 */
 .preview-floor-map-sixth-floor .preview-scene-card.partial::after,
 .preview-floor-map-sixth-floor .preview-scene-card.full::after,
@@ -794,24 +794,27 @@
     --scene-base: #F4F6F8;
 }
 
-/* 状态色走蜜桃/珊瑚调，不用原来那种偏土黄的橙——后者和应用主色（蓝）
-   不是一个调性，放在一起显脏。这套暖粉橙同样有警示感，但更干净。 */
+/* 状态色走天青蓝。橙色系的饱和区就落在偏黄浊的地带，怎么调都难通透；
+   蓝在高明度下天然干净，而且和应用主色同族，整页更统一。
+   "蓝=可用"的直觉风险由角标和进度条兜住——纯色卡本身就是"约不了"的信号，
+   不依赖颜色的冷暖去表达。 */
 .preview-scene-card.partial {
     --state-wash: rgba(255, 255, 255, 0);
-    --card-edge: #F5A97C;
-    --card-border: #FFBE95;
-    --card-shadow: rgba(214, 105, 58, 0.16);
-    background: linear-gradient(145deg, #FFF1E6 0%, #FFE2CC 52%, #FFD2B4 100%);
+    --card-edge: #7FB4DE;
+    --card-border: #A6CDEA;
+    --card-shadow: rgba(58, 112, 158, 0.16);
+    background: linear-gradient(145deg, #F4FAFE 0%, #E4F1FA 52%, #D2E7F6 100%);
 }
 
-/* 已约满：必须和 partial 的浅橙拉开一档明度，否则两个状态看着一样。
+/* 已约满：必须和 partial 的浅蓝拉开一档明度，否则两个状态看着一样。
    三段渐变而不是纯色，卡面才有层次不至于发平。
-   深棕字 #4A1F0C 在最亮那段上 5.39:1 过 AA。 */
+   深蓝字 #0E3352 在最亮那段上 5.43:1 过 AA；
+   边框 #3F84BB 对画布 3.44:1，过非文字 UI 的 3:1。 */
 .preview-scene-card.full {
-    --card-edge: #D9713F;
-    --card-border: #E87B4A;
-    --card-shadow: rgba(198, 84, 44, 0.22);
-    background: linear-gradient(138deg, #FFC49A 0%, #FF9E6E 56%, #F4804F 100%);
+    --card-edge: #3F84BB;
+    --card-border: #3F84BB;
+    --card-shadow: rgba(38, 92, 138, 0.22);
+    background: linear-gradient(138deg, #BEDDF5 0%, #93C5E8 56%, #6FAEDC 100%);
 }
 
 .preview-scene-card.ended {
@@ -965,10 +968,10 @@
     right: 10px;
     z-index: 1;
     padding: 3px 7px;
-    border: 1px solid rgba(181, 68, 22, 0.16);
+    border: 1px solid rgba(22, 74, 118, 0.18);
     border-radius: var(--radius-xs);
     background: rgba(255, 255, 255, 0.9);
-    color: #A53D14;
+    color: #10527F;
     font-size: 10px;
     font-weight: 500;
     line-height: 1.2;
@@ -993,7 +996,7 @@
 
 .preview-scene-card.partial .preview-scene-progress-track,
 .preview-scene-card.full .preview-scene-progress-track {
-    background: rgba(207, 105, 48, 0.2);
+    background: rgba(20, 73, 111, 0.2);
 }
 
 .preview-scene-card.partial .preview-scene-progress-track i,
@@ -1002,20 +1005,22 @@
 }
 
 .preview-scene-card.partial .preview-scene-progress small {
-    color: #9A512A;
+    color: #14496F;
 }
 
 .preview-scene-card.full .preview-scene-progress-track {
-    background: rgba(140, 62, 22, 0.26);
+    background: rgba(20, 73, 111, 0.26);
 }
 
-/* full 底色为中橙，白字只有 2.1:1，改用深棕 4.79:1 */
+/* full 底色是中蓝，白色进度条只有 2.4:1 分不出来，改用近白的冷调 #F2F8FD */
 .preview-scene-card.full .preview-scene-progress-track i {
-    background: #FFF6EF;
+    background: #F2F8FD;
 }
 
 .preview-scene-card.full .preview-scene-progress small {
-    color: #6B3212;
+    /* 进度文字压在渐变最深那段 #6FAEDC 上，深蓝 #0E3352 得 5.43:1 过 AA。
+       原来那个深棕 #6B3212 是配旧橙底的，落在蓝底上只有 4.19:1，还发脏。 */
+    color: #0E3352;
 }
 
 .preview-scene-card.ended .preview-scene-progress-track {
@@ -1027,9 +1032,8 @@
 }
 
 .preview-scene-card.full h4 {
-    /* 蜜桃渐变最亮那段是 #FFC49A，原来的 #5C2A12 只有 4.48:1 差一点，
-       加深到 #4A1F0C 后 5.39:1 过 AA。 */
-    color: #4A1F0C;
+    /* 天青蓝渐变最亮那段是 #BEDDF5，深蓝字 5.43:1 过 AA */
+    color: #0E3352;
 }
 
 .preview-scene-card.ended h4 {
@@ -1052,45 +1056,45 @@
     overflow: visible;
 }
 
-/* 部分预约 + 有照片：照片保持本色铺满，上面盖一层半透明浅橙。
+/* 部分预约 + 有照片：照片保持本色铺满，上面盖一层半透明浅蓝。
    不要用 mix-blend-mode: luminosity——它会把照片的颜色全抽掉只剩明度，
-   照片糊成一层褐色雾，橙色也跟着发脏。直接叠色反而干净：
-   照片该是什么颜色还是什么颜色，只是被浅橙统一罩住。 */
+   照片糊成一层褐色雾，罩层也跟着发脏。直接叠色反而干净：
+   照片该是什么颜色还是什么颜色，只是被浅蓝统一罩住。 */
 .preview-scene-card.partial.has-scene-cover {
-    --cover-border: #F5A97C;
+    --cover-border: #7FB4DE;
 }
 
-/* 照片全不透明、不混色，保持清晰；只轻微降饱和让橙罩层好统一。 */
+/* 照片全不透明、不混色，保持清晰；只轻微降饱和让蓝罩层好统一。 */
 .preview-scene-card.partial.has-scene-cover .preview-scene-cover {
     opacity: 1;
     filter: saturate(0.72) brightness(1.06);
     mix-blend-mode: normal;
 }
 
-/* 浅蜜桃罩层，做成对角渐变而不是平涂：左上淡、右下浓，
+/* 浅天青罩层，做成对角渐变而不是平涂：左上淡、右下浓，
    照片在淡的那头透得更多，卡片自己就有了纵深。
-   合成后深棕字最坏 4.73:1 过 AA（按照片暗部 + 最浓那端算）。 */
+   合成后深蓝字最坏 7.03:1 过 AA（按照片暗部 + 最浓那端算）。 */
 .preview-scene-card.partial.has-scene-cover::before {
     background: linear-gradient(
         142deg,
-        rgba(255, 235, 219, 0.74) 0%,
-        rgba(255, 226, 204, 0.82) 46%,
-        rgba(255, 210, 180, 0.88) 100%
+        rgba(239, 247, 253, 0.74) 0%,
+        rgba(221, 237, 248, 0.82) 46%,
+        rgba(201, 225, 243, 0.88) 100%
     );
 }
 
 .preview-scene-card.partial.has-scene-cover h4 {
-    color: #7A3A16;
+    color: #0E3352;
     text-shadow: none;
 }
 
-/* 进度条回到浅橙卡那套配色 */
+/* 进度条回到浅蓝卡那套配色 */
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress {
     width: 72%;
 }
 
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress-track {
-    background: rgba(154, 81, 42, 0.28);
+    background: rgba(20, 73, 111, 0.28);
     box-shadow: none;
 }
 
@@ -1099,8 +1103,8 @@
 }
 
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress small {
-    /* 罩层最浓那端合成后 #8A4A22 只有 4.11:1，加深到 #7A3A16 得 5.18:1 */
-    color: #7A3A16;
+    /* 罩层最浓那端合成后仍需过 AA，深蓝 #14496F 得 5.9:1 */
+    color: #14496F;
     text-shadow: none;
 }
 

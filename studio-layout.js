@@ -2,7 +2,7 @@ const baseRenderStudioSections = renderStudioSections;
 const baseRenderBookings = renderBookings;
 const baseInitStudioUI = initStudioUI;
 const STUDIO_OVERVIEW_SEGMENTS = 18;
-// 实拍封面。照片比抽象渐变更能说明"这是哪个景"，而且不会和橙色的预约状态争语义。
+// 实拍封面。照片比抽象渐变更能说明"这是哪个景"，而且不会和预约状态的色块争语义。
 // cover 字段驱动卡面封面，6F 画布和 7F 网格共用同一套渲染。
 // 素材来自 assets/real-studio/source/，统一压成 900px 宽的 webp。
 // src 是 hover 弹层用的大图（历史字段，只有洗衣房景别有）。
@@ -375,13 +375,13 @@ function renderRealSceneCard(studio, state, index, layout = null) {
     const position = layout?.[studio.mapArea];
     const editable = Boolean(position && canEditSixthFloorLayout());
     // 只有完全没被预约的景才铺实拍照片。一旦有人约了，就换回纯色状态卡
-    // （浅橙=部分预约 / 中橙=已约满 / 灰=已过期）。
+    // （浅蓝=部分预约 / 中蓝=已约满 / 灰=已过期）。
     // 照片和纯色是两种截然不同的东西，扫一眼就能分出哪些还能约，
     // 比让用户去比较"哪张照片更暗"可靠得多。
     // 照片按"还能不能约"划线，而不是"约没约过"：
     // 可预约 + 部分预约都还能约 → 保留实拍照片，让人看得见场景再决定；
     // 已约满 + 已过期约不了了 → 换成纯色卡，直接从选择里排除掉。
-    // 部分预约的橙色不铺满卡面，只留在边框和进度条上——橙色蒙在照片上会发脏，
+    // 部分预约的状态色不铺满卡面，只留在边框和进度条上——色层蒙在照片上会发脏，
     // 暖色场景（酒吧、小木屋、木纹厨房）尤其容易糊成一片。
     const showCover = Boolean(reference?.coverSrc)
         && (state.type === 'available' || state.type === 'partial');
