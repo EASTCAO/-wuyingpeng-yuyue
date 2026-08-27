@@ -207,13 +207,27 @@ test('实拍封面是内嵌窗口，景名落在面板上而不是压着照片',
     // 压暗遮罩和白字描边都不该再存在。
     assert.doesNotMatch(layoutStyles, /--cover-scrim/,
         '文字已移出照片，压暗遮罩变量不该再有残留');
+    assert.doesNotMatch(layoutStyles, /--cover-wash/,
+        '照片在卡内窗口里，不该有盖住整卡的罩层变量');
+
+    // 照片要被弱化，让景名成为第一落点。
+    const sat = cover[1].match(/saturate\(([\d.]+)\)/);
+    assert.ok(sat && Number(sat[1]) <= 0.75,
+        `照片应降饱和到 <=0.75 才不抢视觉，实际 saturate(${sat && sat[1]})`);
+    const op = cover[1].match(/opacity:\s*([\d.]+)/);
+    assert.ok(op && Number(op[1]) < 1 && Number(op[1]) >= 0.7,
+        `照片透明度应在 [0.7, 1) 之间弱化，实际 ${op && op[1]}`);
 
     const coverTitle = layoutStyles.match(
         /\.preview-scene-card\.has-scene-cover h4\s*\{([\s\S]*?)\n\}/
     );
     assert.ok(coverTitle, '没有找到封面卡的景名规则');
-    assert.match(coverTitle[1], /text-shadow:\s*none/,
-        '文字在面板上，不该再留描边投影');
+    // 景名做成"立体墙"：字有上高光 / 下暗边，底板有发光。
+    assert.match(coverTitle[1], /text-shadow:/,
+        '景名应有 text-shadow 撑出字的厚度');
+    const size = coverTitle[1].match(/font-size:\s*(\d+)px/);
+    assert.ok(size && Number(size[1]) >= 15,
+        `景名字号应 >=15px 才够突出，实际 ${size && size[1]}`);
 
     const relative = channel => {
         const value = channel / 255;
@@ -245,13 +259,38 @@ test('实拍封面是内嵌窗口，景名落在面板上而不是压着照片',
     )].map(match => match[2]);
     assert.ok(tints.length >= 21, '身份色数量不足，无法覆盖最坏情况');
 
+    // 文字并不直接压在卡面上，中间还有一块近白底板。合成链是
+    // 卡面 → 底板 → 文字，底板必须算进去，否则会低估实际对比度。
+    // 底板不能太透：在浅色卡面上看不出边界，立体墙和发光都会塌。
+    const plate = coverTitle[1].match(
+        /background:\s*rgba\(\s*255,\s*255,\s*255,\s*([\d.]+)\s*\)/
+    );
+    assert.ok(plate, '景名应坐在近白底板上，否则立体墙和发光无从依附');
+    const plateAlpha = Number(plate[1]);
+    assert.ok(plateAlpha >= 0.85,
+        `底板 ${plateAlpha} 太透，在浅色卡面上看不出边界，景名浮不起来`);
+
     for (const tint of tints) {
         // color-mix(tint, #FFFFFF N%) = 往白里调 N%，即 tint 占 (1-N)
         const panel = mix(tint, '#FFFFFF', whiteRatio);
-        const ratio = contrast(toRgb(ink[1]), panel);
+        const underText = panel.map(channel => 255 * plateAlpha + channel * (1 - plateAlpha));
+        const ratio = contrast(toRgb(ink[1]), underText);
         assert.ok(ratio >= 4.5,
-            `景名 ${ink[1]} 在 ${tint} 的面板上只有 ${ratio.toFixed(2)}:1，不足 AA`);
+            `景名 ${ink[1]} 在 ${tint} 的卡面 + 底板上只有 ${ratio.toFixed(2)}:1，不足 AA`);
     }
+
+    // 底板的发光和内高光是"立体墙"的来源，缺了字就贴在平面上。
+    const box = coverTitle[1].match(/box-shadow:([\s\S]*?);/);
+    assert.ok(box, '景名底板应有 box-shadow');
+    const boxLayers = box[1].split(',').map(entry => entry.trim());
+    const glowIndex = boxLayers.findIndex(entry => /^0\s+0\s+\d{2}px/.test(entry));
+    assert.ok(glowIndex !== -1, '底板缺少发光层（0 0 <大半径>）');
+    assert.ok(boxLayers.some(entry => /^inset\s+0\s+1px\s+0/.test(entry)),
+        '底板缺少内上沿高光（inset 0 1px 0），托不出"凸起的墙"');
+    const dropIndex = boxLayers.findIndex(entry => /^0\s+1px\s+\dpx/.test(entry));
+    assert.ok(dropIndex !== -1, '底板缺少落地投影（0 1px <小半径>）');
+    assert.ok(glowIndex > dropIndex,
+        '辉光必须写在落地投影之后，否则会被它盖掉');
 
     // 素材本身偏暗，封面要提亮才立得起来。
     assert.match(layoutStyles, /\.preview-scene-cover\s*\{[\s\S]*?filter:[^;]*brightness\(1\.[0-9]+\)/);
@@ -276,40 +315,58 @@ test('照片内嵌窗口不会被基类的 height: 100% 压成 0 高', () => {
         '必须覆盖基类的 height: 100%，否则照片被挤成 0 高');
 });
 
-test('矮卡横排只作用于后代，不靠改容器自身的 flex-direction', () => {
-    // @container 只作用于容器的后代，容器查询不到自己。给
-    // .preview-scene-card.has-scene-cover 自己写 flex-direction: row 是静默失效的：
-    // 不报错、样式表里看着也对，但渲染出来照片仍是竖排，还会把文字挤出卡外。
-    const query = layoutStyles.match(
-        /@container scene-card \(max-height: (\d+)px\)\s*\{([\s\S]*?)\n {4}\}/
+test('所有封面卡结构统一，不再按卡高分出横排分支', () => {
+    // 曾经给矮卡做过"照片在左、文字在右"的容器查询分支，同一屏里出现
+    // 两种排版反而更乱。现在统一成一种：照片在上（卡内窗口）、景名在下、
+    // 进度条紧跟景名，卡的大小差异不再影响排版。
+    assert.doesNotMatch(layoutStyles, /@container scene-card/,
+        '横排分支应已删除，所有封面卡结构统一');
+    assert.doesNotMatch(layoutStyles, /container-type:\s*size/,
+        'container-type 只为横排服务，横排删掉后不该留残留');
+    assert.doesNotMatch(layoutStyles, /100cqh/,
+        'cqh 只在横排里用过，应随横排一起删掉');
+
+    // 卡片竖排，照片自己撑开剩余高度。
+    const card = layoutStyles.match(
+        /\n\.preview-scene-card\.has-scene-cover\s*\{([\s\S]*?)\n\}/
     );
-    assert.ok(query, '没有找到矮卡横排的容器查询');
-
-    assert.doesNotMatch(
-        query[2],
-        /\.preview-scene-card\.has-scene-cover\s*\{[^}]*flex-direction/,
-        '@container 作用不到容器自身，改它的 flex-direction 是静默失效的'
-    );
-
-    // 照片靠绝对定位挪到左侧，宽高都跟着 cqh 走才能保持正方形。
-    assert.match(query[2], /position:\s*absolute/, '横排下照片应绝对定位到左侧');
-    assert.match(query[2], /width:\s*100cqh/, '照片宽度应跟着卡高走');
-    assert.match(query[2], /height:\s*100cqh/,
-        'img 是替换元素，只给 top/bottom 不会被拉伸，必须写死 height');
-
-    // 阈值要低于 146px：那一档卡（卧室、现代客厅等）竖排放得下照片，
-    // 误判成横排会让照片缩成左侧一小块，白白浪费卡面。
-    assert.ok(Number(query[1]) < 146,
-        `横排阈值 ${query[1]}px 太高，会把放得下竖排照片的卡也改成横排`);
+    assert.ok(card, '没有找到封面卡规则');
+    assert.match(card[1], /justify-content:\s*flex-start/,
+        '照片在上、文字在下，需要 flex-start；center 会让两者一起挤到中间');
 });
 
-test('容器查询只在桌面端启用，移动端不会把卡压成 0 高', () => {
-    // container-type: size 要求容器高度是确定的。移动端卡片高度是 auto，
-    // 加上它会让卡塌成 0 高，整屏空白。
-    const desktop = layoutStyles.match(
-        /@media \(min-width: 769px\)\s*\{([\s\S]*?container-type:\s*size[\s\S]*?)\n\}/
+test('进度条紧跟景名，和景名同为突出信息', () => {
+    // 进度条不该缩在角落——它和景名一样是要突出的信息，所以共用
+    // 同一块"发光底板"的视觉语言。
+    // 同一个选择器有两条规则：一条共用的（position/z-index），一条带底板的。
+    // 用 matchAll 全取，再挑出声明了底板的那条——只取第一个匹配会拿到
+    // 共用那条，看起来像"底板丢了"。
+    const progRules = [...layoutStyles.matchAll(
+        /\.preview-scene-card\.has-scene-cover \.preview-scene-progress \{([\s\S]*?)\n\}/g
+    )].map(entry => entry[1]);
+    assert.ok(progRules.length > 0, '没有找到封面卡的进度条规则');
+    const prog = progRules.find(body => /border-radius/.test(body));
+    assert.ok(prog, '进度条应有自己的底板规则（带 border-radius）');
+    assert.match(prog, /border-radius:\s*var\(--radius-pill\)/,
+        '进度条应和景名一样是胶囊底板');
+    assert.match(prog, /box-shadow:/,
+        '进度条底板应有阴影/发光，才和景名是同一套语言');
+
+    const track = layoutStyles.match(
+        /\.preview-scene-card\.has-scene-cover \.preview-scene-progress-track\s*\{([\s\S]*?)\n\}/
     );
-    assert.ok(desktop, 'container-type: size 必须包在 min-width: 769px 里');
+    assert.ok(track, '没有找到封面卡的进度条轨道规则');
+    assert.match(track[1], /inset\s+0\s+1px/,
+        '轨道应有内阴影做出凹槽，和景名的立体感呼应');
+
+    const small = layoutStyles.match(
+        /\.preview-scene-card\.has-scene-cover \.preview-scene-progress small\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(small, '没有找到封面卡的进度数字规则');
+    assert.match(small[1], /font-weight:\s*[6-9]00/,
+        '进度数字应加粗，它和景名一样要突出');
+    assert.match(small[1], /text-shadow/,
+        '进度数字应有辉光，和景名保持一致');
 });
 
 test('还能约的景保留照片，约不了的换成纯色卡', () => {
@@ -351,13 +408,17 @@ test('还能约的景保留照片，约不了的换成纯色卡', () => {
     assert.ok(opacity && Number(opacity[1]) >= 0.9,
         '照片本身应保持不透明');
 
-    // 状态色必须落在照片窗口的描边上，否则部分预约和可预约的卡看不出区别。
+    // 部分预约必须和可预约看得出区别。现在状态色落在整张卡上（描边 +
+    // 渐变底），而不是照片窗口的描边——照片窗口在所有状态下保持中性，
+    // 才不会和景名的立体墙抢视觉。
     const partialCard = layoutStyles.match(
-        /\.preview-scene-card\.partial\.has-scene-cover\s*\{([\s\S]*?)\n\}/
+        /\n\.preview-scene-card\.partial \{([\s\S]*?)\n\}/
     );
-    assert.ok(partialCard, '没有找到部分预约的封面卡规则');
-    assert.match(partialCard[1], /--cover-border:\s*#[0-9A-Fa-f]{6}/,
-        '部分预约应改写照片窗口的描边色');
+    assert.ok(partialCard, '没有找到部分预约的卡片规则');
+    assert.match(partialCard[1], /--card-edge:\s*#[0-9A-Fa-f]{6}/,
+        '部分预约应改写卡片描边色，才和可预约拉开区别');
+    assert.match(partialCard[1], /background:\s*linear-gradient/,
+        '部分预约应有自己的渐变底，纯靠描边区分太弱');
 
     const relative = channel => {
         const value = channel / 255;

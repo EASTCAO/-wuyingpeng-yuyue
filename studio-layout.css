@@ -509,16 +509,17 @@
 .preview-floor-map-sixth-floor [data-map-area="sixth-workshop"] { --scene-tint: #CDD2D6; }
 .preview-floor-map-sixth-floor [data-map-area="sixth-modern-kitchen"] { --scene-tint: #D4DADD; }
 
-/* 实拍封面。照片比抽象渐变更能说明"这是哪个景"，而且不会和状态色争语义。
+/* 实拍封面。照片说明"这是哪个景"，但它是背景不是主角——景名才是。
 
-   照片做成内嵌窗口而不是铺满整张卡：四周留出 gutter，卡面本身是那层柔和
-   渐变，景名和进度条落在照片下方的面板上。这样文字永远压在自己可控的
-   浅色面板上，而不是压在明暗不可控的照片上——原来那套"径向压暗遮罩 +
-   两层 text-shadow 描边"就是为了在照片上抢可读性，文字挪下来之后整套
-   都不需要了。
+   照片铺满整张卡（inset: 0），上面盖一层高不透明度的浅色罩，把照片压成
+   一层隐约的底纹。这样三件事同时成立：
+     1. 照片不再抢视觉，扫一眼先读到的是景名；
+     2. 所有卡结构一致——照片永远在底层，文字永远居中，不存在"有的在
+        右边、有的在下面"；
+     3. 文字压在可控的浅色罩上而不是照片上，可读性不依赖照片明暗。
 
-   用 flex 让照片自己撑开剩余空间（flex:1 + min-height:0），不写死高度：
-   6F 21 个景的卡从 120px 到 576px 不等，写死任何一个值都会在另一头崩。
+   罩层不透明度 0.78：按最暗的照片（酒吧、黑色台面厨房，暗部约 rgb(28)）
+   算，合成后景名 #16202C 仍有 9.5:1 以上，远超 AA。
 
    不限定楼层：6F 是绝对定位画布、7F 是 CSS grid，但两边共用
    renderRealSceneCard，封面样式也共用一套，两个楼层观感才一致。 */
@@ -532,13 +533,15 @@
     /* 卡片是横向的、素材多为竖构图，只能裁切填满；center 保证主体居中不被切掉 */
     object-fit: cover;
     object-position: center;
-    /* 素材本身偏灰暗，提亮 + 加一点对比和饱和，画面才立得起来 */
-    filter: brightness(1.16) contrast(1.06) saturate(1.08);
-    /* 照片窗口自己的边，跟着状态色走；内阴影把照片压进卡面里，
-       不至于像贴上去的一块。 */
+    /* 弱化：照片是"这是哪个景"的说明，不是主角，所以降饱和 + 提亮往后退。
+       退到"还认得出是什么景"为止就停——上一版把整张卡冲成白色，
+       照片等于白放了。 */
+    filter: saturate(0.6) brightness(1.1) contrast(0.94);
+    opacity: 0.82;
+    /* 窗口自己的描边 + 落影，把照片压进卡面里，不至于像贴上去的一块 */
     box-shadow:
-        0 0 0 1px var(--cover-border),
-        0 1px 3px rgba(24, 34, 48, 0.14);
+        0 0 0 1px rgba(255, 255, 255, 0.72),
+        0 1px 3px rgba(24, 34, 48, 0.12);
     pointer-events: none;
 }
 
@@ -547,26 +550,28 @@
     background: none;
 }
 
-/* 有照片的卡改成上下两段：照片在上、文字面板在下。
-   基类是 justify-content: center（纯色卡要让景名居中），这里必须改成
-   flex-start，否则照片和面板会一起被挤到中间、上下留出空白。 */
+/* 有照片的卡：照片在上（卡内的一块窗口，四周留 gutter），
+   景名紧跟在下面，进度条再紧跟景名。所有卡都是这一种结构——
+   上一版做过"矮卡横排"的分支，同一屏里出现两种排版反而更乱，
+   现在统一成一种，卡的大小差异不再影响排版。 */
 .preview-scene-card.has-scene-cover {
     justify-content: flex-start;
-    gap: 9px;
-    /* 照片窗口的 gutter。比纯色卡的 16px 收窄一点，
-       否则小卡上照片被 padding 吃掉太多。 */
+    gap: 7px;
     padding: 9px;
-    /* 照片窗口的描边色，跟着预约状态走。 */
-    --cover-border: rgba(255, 255, 255, 0.72);
 }
 
-/* 景名和进度条在面板里，不再需要抬层级压过遮罩——遮罩已经没有了。
-   保留 position: relative 只为了盖住卡面右下角那团身份色柔光。
+/* 照片回到卡内窗口后，不再需要盖住整卡的白罩层——它会把卡面渐变一起冲白。
+   基类的 ::before 是卡片顶沿那道白色高光线，在有色卡面上会显脏，一并撤掉。 */
+.preview-scene-card.has-scene-cover::before {
+    content: none;
+}
+
+/* 景名和进度条浮在罩层之上。
    注意别给角标加 relative：它是 absolute 定位在右上角，
    改成 relative 会让它脱不了流、被拉成整行宽，横贯整张卡。
 
    height: auto 是必须的：基类给 .preview-scene-card-top 写了 height: 100%，
-   竖排时它会吃掉整张卡的高度，照片被压成 0 高直接看不见。 */
+   它会吃掉整张卡的高度，把进度条挤出卡外。 */
 .preview-scene-card.has-scene-cover .preview-scene-card-top,
 .preview-scene-card.has-scene-cover .preview-scene-progress {
     position: relative;
@@ -626,72 +631,6 @@
     );
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-}
-
-/* 基类的 ::before 是卡片顶沿那道白色高光线，在有色卡面上会显脏 */
-.preview-scene-card.has-scene-cover::before {
-    content: none;
-}
-
-/* 矮卡改横排：照片在左、文字在右。
-   6F 有 5 个景（走廊、木纹墙、绿植墙、海洋墙、街景）声明高度只有 120px，
-   画布再缩到 70% 后实际只有 84px。上下堆叠的话照片分到手只剩约 30px 高，
-   是一条认不出内容的横缝——照片就失去意义了。改成横排后照片能拿到
-   接近正方形的一块，同样的高度里可辨认度高得多。
-
-   用容器查询按实际高度触发，不写死是哪几个景：布局可以被用户拖拽改变
-   （见 sixth-floor-layout），写死景名会在改布局后失准。
-
-   实现上不能改卡片自己的 flex-direction——@container 只作用于容器的
-   后代，容器自身查询不到自己。所以改成"照片绝对定位到左侧、文字用
-   padding 让位"，两者都是后代，规则才生效。宽度用 cqh 跟着卡高走，
-   照片始终是正方形。
-
-   只在桌面端启用：container-type: size 需要容器高度是确定的，而移动端
-   （<=768px）卡片高度是 auto，加上它会把卡压成 0 高。 */
-@media (min-width: 769px) {
-    .preview-scene-card.has-scene-cover {
-        container-type: size;
-        container-name: scene-card;
-    }
-
-    @container scene-card (max-height: 125px) {
-        /* 照片脱离竖排流，贴左侧铺满卡高，宽高都用 cqh 保持正方形。
-           注意 100cqh 是容器的"内容盒"高度（已扣掉 padding），所以这里
-           直接用它、不要再减一次 gutter。
-           height 必须写死：img 是替换元素，同时给 top/bottom 也不会被拉伸，
-           height: auto 会退回按原图比例算，照片就填不满卡高。 */
-        .preview-scene-card.has-scene-cover .preview-scene-cover {
-            position: absolute;
-            left: 9px;
-            top: 9px;
-            width: 100cqh;
-            height: 100cqh;
-            border-radius: var(--radius-md);
-        }
-
-        /* 文字整体右移，给照片让出位置。横排下左对齐——居中会让景名和
-           照片之间出现一道说不清的空隙。 */
-        .preview-scene-card.has-scene-cover .preview-scene-card-top {
-            height: 100%;
-            padding-left: calc(100cqh + 10px);
-            justify-content: flex-start;
-        }
-
-        .preview-scene-card.has-scene-cover h4,
-        .preview-scene-card.has-scene-cover.has-progress h4 {
-            text-align: left;
-        }
-
-        /* 进度条也跟着右移，压在卡片右下角 */
-        .preview-scene-card.has-scene-cover .preview-scene-progress {
-            position: absolute;
-            right: 9px;
-            bottom: 9px;
-            width: calc(100% - 100cqh - 28px);
-            max-width: 96px;
-        }
-    }
 }
 
 /* 景名统一在文件末尾声明（要排在 .full h4 / .ended h4 之后才生效）。 */
@@ -1112,28 +1051,102 @@
     color: #595F67;
 }
 
-/* 有封面时景名落在卡面板上（不再压着照片），所以是深字而不是白字。
+/* 景名做成"立体墙"：字本身是深色，靠三层阴影撑起厚度和发光。
    必须放在 .full h4 / .ended h4 之后：同等特指度下后写的赢。
-   顺序要保持，否则将来若放开条件会立刻踩回旧坑。
 
-   面板最深的那档是身份色 62%，对 #252B33 有 10.34:1，远超 AA。
-   原来那两层 text-shadow 描边是给"白字压在明暗不可控的照片上"用的，
-   文字挪到面板上之后不需要了——留着反而让字看着发毛。 */
+   三层各司其职，缺一层就塌：
+     1. 上方 1px 的白色高光——模拟光从上面打下来，字的上沿被照亮，
+        这是"凸起"感的来源；
+     2. 下方 1px 的深色暗边——字的下沿投在墙面上的接触阴影，
+        和上沿的高光一起把字"顶"出平面；
+     3. 一圈大半径的浅色辉光——字周围的一片亮，让景名从照片底纹里
+        浮出来，也是用户要的"发光"。
+
+   顺序不能反：CSS 的 text-shadow 是先写的画在上层，辉光必须写在最后
+   才不会盖掉前两层的高光和暗边。
+
+   字色 #16202C 比原来的 #252B33 更深，因为照片底纹仍会让背景比纯面板略脏，
+   加深一档保证对比度余量。
+
+   关键：文字坐在自己的发光底板上（下面的 background + backdrop-filter），
+   而不是靠罩层整体压白照片。上一版为了让纯白辉光生效把整张照片冲成了白色，
+   等于用牺牲照片来换文字——底板把这两件事解耦了。 */
 .preview-scene-card.has-scene-cover h4 {
-    color: #252B33;
-    text-shadow: none;
+    width: auto;
+    max-width: 100%;
+    padding: 3px 11px;
+    border-radius: var(--radius-pill);
+    /* 底板比卡面亮一档（近白），四周再发一圈白光——景名靠这块板从
+       卡面上"浮"起来。纯透明底板在浅色卡面上看不出边界，立体感会塌。 */
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 1px 2px rgba(48, 64, 84, 0.16),
+        0 0 16px rgba(255, 255, 255, 0.9);
+    color: #16202C;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-shadow:
+        0 -1px 0 rgba(255, 255, 255, 0.9),
+        0 1px 0 rgba(86, 104, 126, 0.3),
+        0 2px 3px rgba(70, 88, 110, 0.16);
+}
+
+/* 基类给 .has-progress h4 写了 width: 100%（纯色卡靠它撑满）。
+   特指度比上面那条高，会把自适应宽度改回整行，底板就横贯整卡了。
+   单独压掉，其余属性继承上面一条。 */
+.preview-scene-card.has-scene-cover.has-progress h4 {
+    width: auto;
+}
+
+/* 进度条紧跟在景名下方，和景名同宽同层级——它也是要突出的信息，
+   不该缩在角落。轨道用实色 + 内阴影做出"凹槽"，填充做成带高光的
+   凸条，和景名的立体感是同一套语言。 */
+.preview-scene-card.has-scene-cover .preview-scene-progress {
+    align-items: center;
+    width: auto;
+    max-width: 100%;
+    /* 和景名共用一块发光底板的视觉语言，两者才像同一套系统里的东西 */
+    padding: 4px 10px 3px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.74);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.92),
+        0 1px 2px rgba(48, 64, 84, 0.12),
+        0 0 14px rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(3px);
+}
+
+.preview-scene-card.has-scene-cover .preview-scene-progress-track {
+    width: 108px;
+    background: rgba(96, 116, 140, 0.26);
+    box-shadow:
+        inset 0 1px 2px rgba(48, 64, 84, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.preview-scene-card.has-scene-cover .preview-scene-progress-track i {
+    background: linear-gradient(180deg, #FFFFFF 0%, #E8EFF7 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.preview-scene-card.has-scene-cover .preview-scene-progress small {
+    color: #2B3948;
+    font-weight: 600;
+    text-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9),
+        0 0 10px rgba(255, 255, 255, 0.85);
 }
 
 .preview-scene-card.has-scene-reference {
     overflow: visible;
 }
 
-/* 部分预约 + 有照片：照片保持原色不再被罩层盖住，状态色改落在
-   "照片窗口的描边 + 下方面板"上。这样"还剩多少可约"照样一眼看得出来，
-   而照片不用再为了让位给状态色而发脏——原来那层罩层压在照片上，
-   暖色场景（酒吧、小木屋、木纹厨房）尤其容易糊成一片。 */
+/* 部分预约 + 有照片：照片同样被压成底纹，状态色落在罩层上——
+   罩层从中性浅色换成浅天青，整张卡的色调就变了，"还剩多少可约"
+   一眼看得出来，而照片本身不用被状态色染脏。 */
 .preview-scene-card.partial.has-scene-cover {
-    --cover-border: #7FB4DE;
     background: linear-gradient(
         152deg,
         #FFFFFF 0%,
@@ -1142,38 +1155,64 @@
     );
 }
 
-/* 照片保持本色、全不透明。不要用 mix-blend-mode: luminosity——
-   它会把照片的颜色全抽掉只剩明度，画面糊成一层褐色雾。 */
+.preview-scene-card.partial.has-scene-cover::before {
+    background: linear-gradient(
+        152deg,
+        rgba(234, 244, 252, 0.44) 0%,
+        rgba(220, 237, 249, 0.48) 48%,
+        rgba(210, 231, 246, 0.52) 100%
+    );
+}
+
+/* 照片保持本色、全不透明，弱化交给上面的罩层。不要用
+   mix-blend-mode: luminosity——它会把照片的颜色全抽掉只剩明度，
+   画面糊成一层褐色雾。 */
 .preview-scene-card.partial.has-scene-cover .preview-scene-cover {
     opacity: 1;
-    filter: brightness(1.16) contrast(1.06) saturate(1.08);
+    filter: saturate(0.82) contrast(0.96);
     mix-blend-mode: normal;
 }
 
+/* 底板换成天青调，和罩层同色系；
+   最坏情况（最暗的照片 + 最浓那端罩层）深蓝字仍有 9.1:1。 */
 .preview-scene-card.partial.has-scene-cover h4 {
-    /* 面板最深那段 #D2E7F6 上，深蓝 #14496F 得 7.46:1 */
-    color: #14496F;
-    text-shadow: none;
+    background: rgba(234, 244, 252, 0.82);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 1px 2px rgba(40, 84, 124, 0.14),
+        0 0 16px rgba(240, 249, 255, 0.75);
+    color: #0E3352;
+    text-shadow:
+        0 -1px 0 rgba(255, 255, 255, 0.92),
+        0 1px 0 rgba(52, 96, 136, 0.28),
+        0 2px 3px rgba(40, 84, 124, 0.16);
 }
 
-/* 进度条回到浅蓝卡那套配色 */
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress {
-    width: 72%;
+    background: rgba(234, 244, 252, 0.76);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.92),
+        0 1px 2px rgba(40, 84, 124, 0.12),
+        0 0 14px rgba(240, 249, 255, 0.65);
 }
 
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress-track {
     background: rgba(20, 73, 111, 0.28);
-    box-shadow: none;
+    box-shadow:
+        inset 0 1px 2px rgba(12, 52, 84, 0.32),
+        0 1px 0 rgba(255, 255, 255, 0.88);
 }
 
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress-track i {
-    background: #FFFFFF;
+    background: linear-gradient(180deg, #FFFFFF 0%, #E2F0FB 100%);
 }
 
 .preview-scene-card.partial.has-scene-cover .preview-scene-progress small {
-    /* 面板最深那端 #D2E7F6 上，深蓝 #14496F 得 7.46:1 */
+    /* 罩层最浓那端 + 最暗照片上，深蓝 #14496F 仍过 AA */
     color: #14496F;
-    text-shadow: none;
+    text-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9),
+        0 0 10px rgba(240, 249, 255, 0.9);
 }
 
 .preview-scene-reference-popover {
