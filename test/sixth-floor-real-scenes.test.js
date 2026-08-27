@@ -176,48 +176,82 @@ test('6F 每个景都有身份色，且暖色景不会被误读成预约状态',
     );
 });
 
-test('实拍封面只在景名背后压暗，画面其余部分保持明亮', () => {
-    const scrim = layoutStyles.match(
-        /\.preview-scene-card\.has-scene-cover::before\s*\{([\s\S]*?)\n\}/
+test('实拍封面是内嵌窗口，景名落在面板上而不是压着照片', () => {
+    // 照片做成内嵌窗口（四周留 gutter），文字在照片下方的卡面板上。
+    // 这条替代了原来"径向压暗遮罩 + 白字描边"那套——那套是为了让白字
+    // 在明暗不可控的照片上还能读；文字挪到面板上之后就不该再有遮罩了。
+    const cover = layoutStyles.match(
+        /\n\.preview-scene-cover\s*\{([\s\S]*?)\n\}/
     );
-    assert.ok(scrim, '没有找到实拍封面的压暗遮罩规则');
+    assert.ok(cover, '没有找到实拍封面规则');
 
-    // 压暗必须是径向的：横贯整卡的带子会在浅色照片上露出硬边，像一条灰雾。
-    const radial = scrim[1].match(/radial-gradient\(([\s\S]*?)\n\s*\),/);
-    assert.ok(radial, '景名压暗应使用 radial-gradient，避免横带在浅底照片上露边界');
+    // 照片必须参与文档流（relative/flex），absolute inset:0 会让它重新铺满整卡。
+    assert.match(cover[1], /position:\s*relative/,
+        '照片应参与文档流，absolute 会让它重新铺满整张卡');
+    assert.doesNotMatch(cover[1], /inset:\s*0/,
+        '照片是内嵌窗口，不应再 inset: 0 铺满');
 
-    // 强度走 --cover-scrim，各状态覆写，所以这里断言变量而不是字面量。
-    assert.match(radial[1], /rgba\(10,\s*14,\s*20,\s*var\(--cover-scrim\)\)\s*0%/,
-        '径向中心应由 --cover-scrim 驱动');
-    assert.match(radial[1], /rgba\(10,\s*14,\s*20,\s*0\)\s*100%/,
-        '径向外沿必须完全透明，否则整片压暗、照片白放');
+    // 窗口自己要有圆角，否则和"卡面留白"合起来看着像张贴歪的图。
+    assert.match(cover[1], /border-radius:\s*var\(--radius-(?:md|lg|xl)\)/,
+        '照片窗口应有自己的圆角');
+
+    // 卡片要给出 gutter，照片才浮得起来。
+    const card = layoutStyles.match(
+        /\n\.preview-scene-card\.has-scene-cover\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(card, '没有找到封面卡规则');
+    const padding = card[1].match(/padding:\s*(\d+)px/);
+    assert.ok(padding && Number(padding[1]) > 0,
+        '封面卡必须有 padding，否则照片贴边、内嵌窗口的观感不成立');
+
+    // 压暗遮罩和白字描边都不该再存在。
+    assert.doesNotMatch(layoutStyles, /--cover-scrim/,
+        '文字已移出照片，压暗遮罩变量不该再有残留');
+
+    const coverTitle = layoutStyles.match(
+        /\.preview-scene-card\.has-scene-cover h4\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(coverTitle, '没有找到封面卡的景名规则');
+    assert.match(coverTitle[1], /text-shadow:\s*none/,
+        '文字在面板上，不该再留描边投影');
 
     const relative = channel => {
         const value = channel / 255;
         return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
     };
-    const whiteTextContrast = alpha => {
-        const blended = [10, 14, 20].map(scrimChannel => 255 * (1 - alpha) + scrimChannel * alpha);
-        const luminance = 0.2126 * relative(blended[0])
-            + 0.7152 * relative(blended[1])
-            + 0.0722 * relative(blended[2]);
-        return 1.05 / (luminance + 0.05);
+    const luminance = rgb => 0.2126 * relative(rgb[0]) + 0.7152 * relative(rgb[1]) + 0.0722 * relative(rgb[2]);
+    const contrast = (a, b) => {
+        const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+        return (hi + 0.05) / (lo + 0.05);
     };
+    const toRgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+    const mix = (a, b, t) => toRgb(a).map((channel, i) => channel + (toRgb(b)[i] - channel) * t);
 
-    const scrimOf = selector => {
-        const rule = layoutStyles.match(
-            new RegExp(`${selector.replace(/[.]/g, '\\.')}\\s*\\{([\\s\\S]*?)\\n\\}`)
-        );
-        assert.ok(rule, `没有找到 ${selector}`);
-        const value = rule[1].match(/--cover-scrim:\s*([\d.]+)/);
-        assert.ok(value, `${selector} 没有声明 --cover-scrim`);
-        return Number(value[1]);
-    };
+    // 景名压在面板最深的那一档上仍要过 AA。面板 = 身份色往白里调，
+    // 最深那段的混合比例从 CSS 里读，避免和实现分叉。
+    const ink = coverTitle[1].match(/color:\s*(#[0-9A-Fa-f]{6})/);
+    assert.ok(ink, '封面卡的景名应指定颜色');
 
-    // 封面只出现在可预约的卡上，所以只有一档。白字要按"照片纯白"最坏情况过 AA。
-    const base = scrimOf('.preview-scene-card.has-scene-cover');
-    const ratio = whiteTextContrast(base);
-    assert.ok(ratio >= 4.5, `遮罩 ${base}，白字只有 ${ratio.toFixed(2)}:1，不足 AA`);
+    // 卡面渐变最深那段。它和上面的 padding 不在同一条规则里
+    // （柔和渐变是单独一块），所以在整张样式表里找。
+    const face = layoutStyles.match(
+        /color-mix\(in srgb, var\(--scene-tint[^)]*\), #FFFFFF (\d+)%\) 100%/
+    );
+    assert.ok(face, '没有找到卡面渐变最深那段');
+    const whiteRatio = Number(face[1]) / 100;
+
+    const tints = [...layoutStyles.matchAll(
+        /\[data-map-area="(sixth-[\w-]+)"\]\s*\{\s*--scene-tint:\s*(#[0-9A-Fa-f]{6})/g
+    )].map(match => match[2]);
+    assert.ok(tints.length >= 21, '身份色数量不足，无法覆盖最坏情况');
+
+    for (const tint of tints) {
+        // color-mix(tint, #FFFFFF N%) = 往白里调 N%，即 tint 占 (1-N)
+        const panel = mix(tint, '#FFFFFF', whiteRatio);
+        const ratio = contrast(toRgb(ink[1]), panel);
+        assert.ok(ratio >= 4.5,
+            `景名 ${ink[1]} 在 ${tint} 的面板上只有 ${ratio.toFixed(2)}:1，不足 AA`);
+    }
 
     // 素材本身偏暗，封面要提亮才立得起来。
     assert.match(layoutStyles, /\.preview-scene-cover\s*\{[\s\S]*?filter:[^;]*brightness\(1\.[0-9]+\)/);
@@ -227,6 +261,55 @@ test('实拍封面只在景名背后压暗，画面其余部分保持明亮', ()
         layoutStyles,
         /\.preview-scene-card\.has-scene-cover::after\s*\{\s*background:\s*none;/
     );
+});
+
+test('照片内嵌窗口不会被基类的 height: 100% 压成 0 高', () => {
+    // 基类给 .preview-scene-card-top 写了 height: 100%，它会吃掉整张卡的高度，
+    // 照片作为 flex 兄弟被压成 0 高——卡上只剩标题，照片彻底看不见。
+    // 这个塌陷在样式表里完全看不出来（没有报错、没有异常值），只有量渲染
+    // 结果才发现，所以在这里钉死。
+    const top = layoutStyles.match(
+        /\.preview-scene-card\.has-scene-cover \.preview-scene-card-top\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(top, '没有找到封面卡的文字区规则');
+    assert.match(top[1], /height:\s*auto/,
+        '必须覆盖基类的 height: 100%，否则照片被挤成 0 高');
+});
+
+test('矮卡横排只作用于后代，不靠改容器自身的 flex-direction', () => {
+    // @container 只作用于容器的后代，容器查询不到自己。给
+    // .preview-scene-card.has-scene-cover 自己写 flex-direction: row 是静默失效的：
+    // 不报错、样式表里看着也对，但渲染出来照片仍是竖排，还会把文字挤出卡外。
+    const query = layoutStyles.match(
+        /@container scene-card \(max-height: (\d+)px\)\s*\{([\s\S]*?)\n {4}\}/
+    );
+    assert.ok(query, '没有找到矮卡横排的容器查询');
+
+    assert.doesNotMatch(
+        query[2],
+        /\.preview-scene-card\.has-scene-cover\s*\{[^}]*flex-direction/,
+        '@container 作用不到容器自身，改它的 flex-direction 是静默失效的'
+    );
+
+    // 照片靠绝对定位挪到左侧，宽高都跟着 cqh 走才能保持正方形。
+    assert.match(query[2], /position:\s*absolute/, '横排下照片应绝对定位到左侧');
+    assert.match(query[2], /width:\s*100cqh/, '照片宽度应跟着卡高走');
+    assert.match(query[2], /height:\s*100cqh/,
+        'img 是替换元素，只给 top/bottom 不会被拉伸，必须写死 height');
+
+    // 阈值要低于 146px：那一档卡（卧室、现代客厅等）竖排放得下照片，
+    // 误判成横排会让照片缩成左侧一小块，白白浪费卡面。
+    assert.ok(Number(query[1]) < 146,
+        `横排阈值 ${query[1]}px 太高，会把放得下竖排照片的卡也改成横排`);
+});
+
+test('容器查询只在桌面端启用，移动端不会把卡压成 0 高', () => {
+    // container-type: size 要求容器高度是确定的。移动端卡片高度是 auto，
+    // 加上它会让卡塌成 0 高，整屏空白。
+    const desktop = layoutStyles.match(
+        /@media \(min-width: 769px\)\s*\{([\s\S]*?container-type:\s*size[\s\S]*?)\n\}/
+    );
+    assert.ok(desktop, 'container-type: size 必须包在 min-width: 769px 里');
 });
 
 test('还能约的景保留照片，约不了的换成纯色卡', () => {
@@ -255,9 +338,9 @@ test('还能约的景保留照片，约不了的换成纯色卡', () => {
         );
     }
 
-    // 部分预约是"照片清晰可见 + 一层浅橙罩住"：照片保持本色不混色，
-    // 罩层统一色调。不能用 mix-blend-mode: luminosity——它会抽掉照片颜色
-    // 只剩明度，画面糊成褐色雾，橙色也跟着发脏。
+    // 部分预约：照片保持原色不再被罩层盖住，状态色落在"照片窗口描边 +
+    // 下方面板"上。原来那层浅蓝罩层压在照片上，暖色场景（酒吧、小木屋、
+    // 木纹厨房）容易糊成一片，内嵌窗口之后不再需要它。
     const partialPhoto = layoutStyles.match(
         /\.preview-scene-card\.partial\.has-scene-cover \.preview-scene-cover\s*\{([\s\S]*?)\n\}/
     );
@@ -266,20 +349,16 @@ test('还能约的景保留照片，约不了的换成纯色卡', () => {
         'luminosity 会抽掉照片颜色，画面发糊');
     const opacity = partialPhoto[1].match(/opacity:\s*([\d.]+)/);
     assert.ok(opacity && Number(opacity[1]) >= 0.9,
-        '照片本身应保持不透明，弱化交给上面的橙罩层');
+        '照片本身应保持不透明');
 
-    // 橙罩层。太淡会和未预约的照片卡混淆，太浓照片就看不见了。
-    const scrim = layoutStyles.match(
-        /\.preview-scene-card\.partial\.has-scene-cover::before\s*\{([\s\S]*?)\n\}/
+    // 状态色必须落在照片窗口的描边上，否则部分预约和可预约的卡看不出区别。
+    const partialCard = layoutStyles.match(
+        /\.preview-scene-card\.partial\.has-scene-cover\s*\{([\s\S]*?)\n\}/
     );
-    assert.ok(scrim, '没有找到部分预约的橙色罩层');
-    const overlay = scrim[1].match(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/);
-    assert.ok(overlay, '罩层应为半透明色');
-    const alpha = Number(overlay[4]);
-    assert.ok(alpha >= 0.7 && alpha <= 0.9,
-        `罩层不透明度 ${alpha} 越界：低于 0.7 会和未预约卡混淆，高于 0.9 照片就看不见了`);
+    assert.ok(partialCard, '没有找到部分预约的封面卡规则');
+    assert.match(partialCard[1], /--cover-border:\s*#[0-9A-Fa-f]{6}/,
+        '部分预约应改写照片窗口的描边色');
 
-    // 罩层是浅橙，所以景名必须是深色——白字在浅橙上读不了。
     const relative = channel => {
         const value = channel / 255;
         return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
@@ -293,15 +372,19 @@ test('还能约的景保留照片，约不了的换成纯色卡', () => {
     assert.ok(ink, '部分预约的景名应指定颜色');
     const inkRgb = [0, 2, 4].map(i => parseInt(ink[1].slice(i, i + 2), 16));
 
-    // 最坏情况：照片暗部(70,70,70)透过罩层后的合成色。
-    const overlayRgb = [1, 2, 3].map(i => Number(overlay[i]));
-    const blended = overlayRgb.map((channel, i) => 70 * (1 - alpha) + channel * alpha);
-    const ratio = (Math.max(luminance(inkRgb), luminance(blended)) + 0.05)
-        / (Math.min(luminance(inkRgb), luminance(blended)) + 0.05);
-    assert.ok(ratio >= 4.5,
-        `景名在照片暗部+罩层上只有 ${ratio.toFixed(2)}:1，不足 AA`);
+    // 景名压在面板渐变最深那段上要过 AA。面板色从 CSS 里读，避免和实现分叉。
+    const panelStops = [...partialCard[1].matchAll(/#([0-9A-Fa-f]{6})\s+\d+%/g)]
+        .map(match => [0, 2, 4].map(i => parseInt(match[1].slice(i, i + 2), 16)));
+    assert.ok(panelStops.length >= 2, '部分预约的面板应是渐变');
 
-    // 这条覆写必须写在通用封面白字规则之后才盖得住。
+    for (const stop of panelStops) {
+        const ratio = (Math.max(luminance(inkRgb), luminance(stop)) + 0.05)
+            / (Math.min(luminance(inkRgb), luminance(stop)) + 0.05);
+        assert.ok(ratio >= 4.5,
+            `景名在面板色 rgb(${stop}) 上只有 ${ratio.toFixed(2)}:1，不足 AA`);
+    }
+
+    // 这条覆写必须写在通用封面景名规则之后才盖得住。
     const coverTitle = layoutStyles.search(/\.preview-scene-card\.has-scene-cover h4\s*\{/);
     const partialTitlePos = layoutStyles.search(/\.preview-scene-card\.partial\.has-scene-cover h4\s*\{/);
     assert.ok(partialTitlePos > coverTitle,
@@ -348,11 +431,11 @@ test('实拍封面样式不绑定楼层，6F 和 7F 共用同一套观感', () =
     assert.match(layoutSource, /assets\/real-studio\/\$\{reference\.cover\}\?v=\$\{SCENE_COVER_VERSION\}/);
 });
 
-test('封面卡的白色景名不会被状态文字色覆盖', () => {
+test('封面卡的景名不会被状态文字色覆盖', () => {
     // .full h4 / .ended h4 和 .has-scene-cover h4 特指度相同，后写的赢。
-    // 顺序写反的话，满约卡的深棕字会压在照片上，几乎看不清。
-    const coverTitle = layoutStyles.search(/\.preview-scene-card\.has-scene-cover h4[\s\S]{0,200}?color:\s*#FFFFFF/);
-    assert.notEqual(coverTitle, -1, '没有找到封面卡的白色景名规则');
+    // 顺序写反的话，满约卡的深蓝字会盖掉封面卡自己的景名色。
+    const coverTitle = layoutStyles.search(/\.preview-scene-card\.has-scene-cover h4\s*\{/);
+    assert.notEqual(coverTitle, -1, '没有找到封面卡的景名规则');
 
     for (const state of ['full', 'ended']) {
         const stateTitle = layoutStyles.search(new RegExp(`\\.preview-scene-card\\.${state} h4\\s*\\{`));
