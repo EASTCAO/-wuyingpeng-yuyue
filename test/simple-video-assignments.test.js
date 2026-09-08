@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const appSource = fs.readFileSync('app.js', 'utf8');
 const serverSource = fs.readFileSync('api/server.js', 'utf8');
 const sharedRulesSource = fs.readFileSync('shared/booking-rules.js', 'utf8');
+const indexSource = fs.readFileSync('index.html', 'utf8');
 
 const assignments = [
     ['曹东', '涂萱'], ['於佳莹', '向芷琪'], ['夏驰', '李冬梅'],
@@ -74,7 +75,14 @@ test('简易视频预约流程隐藏重复的简易视频开关', () => {
     assert.match(appSource, /simpleVideoOption\?\.classList\.toggle\('hidden', !eligible\)/);
     assert.match(appSource, /simpleVideoHint\.textContent = eligible[\s\S]*生成简易视频待办/);
     assert.match(appSource, /simpleVideoCheckbox\.onchange = \(\) => updateSimpleVideoOption\(\{ syncValue: false \}\)/);
-    assert.match(fs.readFileSync('index.html', 'utf8'), /booking-addon-card simple-video-booking-option hidden/);
+    assert.match(indexSource, /booking-addon-card simple-video-booking-option hidden/);
+});
+
+test('摄影师可在预约表单填写并保存备注', () => {
+    assert.match(indexSource, /<label for="bookingNote">备注<\/label>/);
+    assert.match(indexSource, /<textarea id="bookingNote"[\s\S]*aria-describedby="bookingNoteHint">/);
+    assert.match(appSource, /document\.getElementById\('bookingNote'\)\.value = getBookingNote\(bookingToEdit\);/);
+    assert.match(appSource, /const note = document\.getElementById\('bookingNote'\)\.value\.trim\(\);/);
 });
 
 test('简易视频人员刷新后仍能查看、修改和取消后天预约', () => {

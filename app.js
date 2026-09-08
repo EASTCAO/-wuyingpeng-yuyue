@@ -2142,6 +2142,7 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask
     const simpleVideoCheckbox = document.getElementById('needsSimpleVideo');
     const simpleVideoHint = document.getElementById('simpleVideoBookingHint');
     const simpleVideoState = document.getElementById('simpleVideoBookingState');
+    document.getElementById('bookingNote').value = getBookingNote(bookingToEdit);
     const updateSimpleVideoOption = ({ syncValue = true } = {}) => {
         const eligible = !isSimpleVideoRecipient()
             && !simpleVideoBookingContext
@@ -2291,7 +2292,7 @@ async function addBooking() {
     const originalBooking = editingBookingId
         ? allBookings.find(booking => booking.id === editingBookingId)
         : null;
-    const note = originalBooking ? getBookingNote(originalBooking) : '';
+    const note = document.getElementById('bookingNote').value.trim();
     const needsSimpleVideo = !isSimpleVideoRecipient()
         && !simpleVideoBookingContext
         && isSimpleVideoEligibleStudio(studio)
