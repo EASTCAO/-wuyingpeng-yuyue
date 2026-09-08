@@ -81,7 +81,7 @@ test('简易视频预约流程隐藏重复的简易视频开关', () => {
 test('摄影师可在预约表单填写并保存备注', () => {
     assert.match(indexSource, /<label for="bookingNote">备注<\/label>/);
     assert.match(indexSource, /<textarea id="bookingNote"[\s\S]*aria-describedby="bookingNoteHint">/);
-    assert.match(appSource, /document\.getElementById\('bookingNote'\)\.value = getBookingNote\(bookingToEdit\);/);
+    assert.match(appSource, /document\.getElementById\('bookingNote'\)\.value = bookingToEdit \? getBookingNote\(bookingToEdit\) : '';/);
     assert.match(appSource, /const note = document\.getElementById\('bookingNote'\)\.value\.trim\(\);/);
 });
 

@@ -2142,7 +2142,7 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask
     const simpleVideoCheckbox = document.getElementById('needsSimpleVideo');
     const simpleVideoHint = document.getElementById('simpleVideoBookingHint');
     const simpleVideoState = document.getElementById('simpleVideoBookingState');
-    document.getElementById('bookingNote').value = getBookingNote(bookingToEdit);
+    document.getElementById('bookingNote').value = bookingToEdit ? getBookingNote(bookingToEdit) : '';
     const updateSimpleVideoOption = ({ syncValue = true } = {}) => {
         const eligible = !isSimpleVideoRecipient()
             && !simpleVideoBookingContext
