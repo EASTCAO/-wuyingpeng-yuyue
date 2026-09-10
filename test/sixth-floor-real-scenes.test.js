@@ -642,21 +642,32 @@ test('6F 实景卡片轻点优先预约，移动超过阈值后才拖动', () =>
     assert.match(layoutSource, /else \{\s*sixthFloorSuppressClick = true;\s*openRealSceneCard\(state\.card\.dataset\.studioId\);/);
 });
 
-test('楼层和影棚类型使用四选一高频切换控件', () => {
+// 四个组合平铺出来要占满一整行，把日期挤到第二行；收成一个触发器之后，
+// 工具栏只剩"当前场地"这一个宽度很窄的信息块，浮层展开也不占布局。
+test('楼层和影棚类型收进"当前场地"浮层选择器', () => {
     assert.match(layoutSource, /studioToolbarControls/);
-    assert.match(layoutSource, /renderStudioViewTabs\(\)/);
-    assert.match(layoutSource, /6F · 无影棚/);
-    assert.match(layoutSource, /6F · 实景棚/);
-    assert.match(layoutSource, /7F · 无影棚/);
-    assert.match(layoutSource, /7F · 实景棚/);
-    assert.match(layoutSource, /selectStudioView\('\$\{view\.floor\}', '\$\{view\.category\}'\)/);
+    assert.match(layoutSource, /renderStudioVenuePicker\(\)/);
+    assert.match(layoutSource, /const STUDIO_FLOORS = \['6F', '7F'\]/);
+    assert.match(layoutSource, /value: 'cyclorama', label: '无影棚'/);
+    assert.match(layoutSource, /value: 'real-scene', label: '实景棚'/);
+    // 触发器上只写当前场地，展开状态同步到 aria-expanded
+    assert.match(layoutSource, /id="studioVenueTrigger"[\s\S]*?aria-haspopup="true" aria-expanded="\$\{studioVenuePanelOpen\}"[\s\S]*?aria-controls="studioVenuePanel"/);
+    assert.match(layoutSource, /studio-venue-current">\$\{currentStudioFloor\} · \$\{getStudioCategoryLabel\(currentStudioCategory\)\}/);
+    // 面板两行：一行楼层、一行棚型
+    assert.match(layoutSource, /id="studioVenuePanel"[\s\S]*?role="group" aria-label="选择楼层和影棚类型"/);
+    assert.match(layoutSource, /studio-venue-row-label">楼层</);
+    assert.match(layoutSource, /studio-venue-row-label">棚型</);
+    assert.match(layoutSource, /selectStudioView\('\$\{floor\}', currentStudioCategory\)/);
+    assert.match(layoutSource, /selectStudioView\(currentStudioFloor, '\$\{category\.value\}'\)/);
     assert.match(layoutSource, /studio-view:\$\{currentUser \|\| '游客'\}/);
-    assert.match(pageStyles, /\.studio-toolbar-controls\s*\{/);
-    assert.match(pageStyles, /display:\s*flex;/);
-    assert.match(pageStyles, /justify-content:\s*flex-end;/);
-    assert.match(pageStyles, /\.studio-view-tabs\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(4,/);
-    assert.match(pageStyles, /\.studio-view-tab\s*\{[\s\S]*?min-height:\s*26px;[\s\S]*?border-radius:\s*var\(--radius-xs\);/);
-    assert.match(pageStyles, /\.studio-view-tab\.active\s*\{[\s\S]*?background:\s*var\(--accent-solid\);[\s\S]*?color:\s*#FFFFFF;/);
+    // 浮层要能收起来：选完、点外部、按 Escape 三条路
+    assert.match(layoutSource, /if \(event\.target\.closest\('\.studio-venue-picker'\)\) return;/);
+    assert.match(layoutSource, /event\.key === 'Escape' && isStudioVenuePanelOpen\(\)/);
+    assert.match(layoutSource, /closeStudioVenuePanel\(\);/);
+    assert.match(pageStyles, /\.studio-toolbar-controls\s*\{[\s\S]*?display:\s*flex;[\s\S]*?justify-content:\s*flex-end;/);
+    assert.match(pageStyles, /\.studio-venue-trigger\s*\{[\s\S]*?min-height:\s*26px;[\s\S]*?border-radius:\s*var\(--radius-xs\);/);
+    assert.match(pageStyles, /\.studio-venue-panel\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?z-index:\s*1200;/);
+    assert.match(pageStyles, /\.studio-venue-option\.active\s*\{[\s\S]*?background:\s*var\(--accent-solid\);[\s\S]*?color:\s*#FFFFFF;/);
 });
 
 test('预约状态说明固定在实景棚预览右上角且不撑满整行', () => {

@@ -156,28 +156,110 @@ function loadStudioViewPreference() {
     return { floor: '6F', category: 'cyclorama' };
 }
 
-function renderStudioViewTabs() {
-    const views = [
-        { floor: '6F', category: 'cyclorama', label: '6F · 无影棚' },
-        { floor: '6F', category: 'real-scene', label: '6F · 实景棚' },
-        { floor: '7F', category: 'cyclorama', label: '7F · 无影棚' },
-        { floor: '7F', category: 'real-scene', label: '7F · 实景棚' }
-    ];
+const STUDIO_FLOORS = ['6F', '7F'];
+const STUDIO_CATEGORIES = [
+    { value: 'cyclorama', label: '无影棚' },
+    { value: 'real-scene', label: '实景棚' }
+];
+
+let studioVenuePanelOpen = false;
+
+function getStudioCategoryLabel(category) {
+    return STUDIO_CATEGORIES.find(item => item.value === category)?.label || '';
+}
+
+function renderStudioVenueOption({ label, isActive, action }) {
+    return `<button type="button" class="studio-venue-option${isActive ? ' active' : ''}" aria-pressed="${isActive}" onclick="${action}">${label}</button>`;
+}
+
+// 场地选择器：工具栏上平时只有"当前场地 7F · 无影棚"，点开才浮出楼层/棚型两行。
+// 四个组合平铺在工具栏上要占满一整行宽，把日期挤到第二行去；收成一个触发器后，
+// 工具栏重新回到"左边选哪天、右边看哪个棚"两个信息块，宽度只剩原来的一半。
+function renderStudioVenuePicker() {
+    const floorOptions = STUDIO_FLOORS
+        .map(floor => renderStudioVenueOption({
+            label: floor,
+            isActive: currentStudioFloor === floor,
+            action: `selectStudioView('${floor}', currentStudioCategory)`
+        }))
+        .join('');
+    const categoryOptions = STUDIO_CATEGORIES
+        .map(category => renderStudioVenueOption({
+            label: category.label,
+            isActive: currentStudioCategory === category.value,
+            action: `selectStudioView(currentStudioFloor, '${category.value}')`
+        }))
+        .join('');
+
     return `
-        <div class="studio-view-tabs" role="tablist" aria-label="选择楼层和影棚类型">
-            ${views.map(view => {
-                const isActive = currentStudioFloor === view.floor && currentStudioCategory === view.category;
-                return `<button type="button" class="studio-view-tab${isActive ? ' active' : ''}" onclick="selectStudioView('${view.floor}', '${view.category}')" role="tab" aria-selected="${isActive}">${view.label}</button>`;
-            }).join('')}
+        <div class="studio-venue-picker">
+            <span class="studio-venue-label">当前场地</span>
+            <button type="button" id="studioVenueTrigger" class="studio-venue-trigger"
+                    aria-haspopup="true" aria-expanded="${studioVenuePanelOpen}" aria-controls="studioVenuePanel"
+                    onclick="toggleStudioVenuePanel()">
+                <span class="studio-venue-current">${currentStudioFloor} · ${getStudioCategoryLabel(currentStudioCategory)}</span>
+                <span class="studio-venue-caret" aria-hidden="true">▾</span>
+            </button>
+            <div id="studioVenuePanel" class="studio-venue-panel${studioVenuePanelOpen ? '' : ' hidden'}" role="group" aria-label="选择楼层和影棚类型">
+                <div class="studio-venue-row">
+                    <span class="studio-venue-row-label">楼层</span>
+                    <div class="studio-venue-options">${floorOptions}</div>
+                </div>
+                <div class="studio-venue-row">
+                    <span class="studio-venue-row-label">棚型</span>
+                    <div class="studio-venue-options">${categoryOptions}</div>
+                </div>
+            </div>
         </div>
     `;
 }
+
+function isStudioVenuePanelOpen() {
+    return studioVenuePanelOpen;
+}
+
+function openStudioVenuePanel() {
+    studioVenuePanelOpen = true;
+    const trigger = document.getElementById('studioVenueTrigger');
+    const panel = document.getElementById('studioVenuePanel');
+    if (!trigger || !panel) return;
+    panel.classList.remove('hidden');
+    trigger.setAttribute('aria-expanded', 'true');
+    // 键盘用户打开后先落在当前选中项上，Tab 就能在楼层和棚型之间走。
+    panel.querySelector('.studio-venue-option.active')?.focus({ preventScroll: true });
+}
+
+function closeStudioVenuePanel({ restoreFocus = false } = {}) {
+    studioVenuePanelOpen = false;
+    const trigger = document.getElementById('studioVenueTrigger');
+    const panel = document.getElementById('studioVenuePanel');
+    if (!trigger || !panel) return;
+    panel.classList.add('hidden');
+    trigger.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) trigger.focus({ preventScroll: true });
+}
+
+function toggleStudioVenuePanel() {
+    if (isStudioVenuePanelOpen()) closeStudioVenuePanel({ restoreFocus: true });
+    else openStudioVenuePanel();
+}
+
+// 面板浮在内容上方，所以点空白处、按 Escape 都能收起，不挡住底下的日历。
+document.addEventListener('click', event => {
+    if (!isStudioVenuePanelOpen()) return;
+    if (event.target.closest('.studio-venue-picker')) return;
+    closeStudioVenuePanel();
+});
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && isStudioVenuePanelOpen()) closeStudioVenuePanel({ restoreFocus: true });
+});
 
 function renderStudioToolbarControls() {
     const toolbarControls = document.getElementById('studioToolbarControls');
     if (!toolbarControls) return;
     toolbarControls.innerHTML = `
-        ${renderStudioViewTabs()}
+        ${renderStudioVenuePicker()}
     `;
 }
 
@@ -193,6 +275,8 @@ function renderPreviewStatusLegend() {
 
 function selectStudioView(floor, category) {
     if (!['6F', '7F'].includes(floor) || !['cyclorama', 'real-scene'].includes(category)) return;
+    // 选完就收面板：它浮在内容上方，留着会一直压住底下的场次。
+    closeStudioVenuePanel();
     if (currentView !== 'list') switchView('list');
     if (floor === currentStudioFloor && category === currentStudioCategory) return;
     currentStudioFloor = floor;

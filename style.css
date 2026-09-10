@@ -4994,16 +4994,26 @@ textarea:focus-visible,
     background: var(--danger-solid);
 }
 
-/* 新增影棚四选一功能沿用正式站的蓝灰控件风格。 */
-/* 4 个组合排成一行，任意视图都是一步到位；两行网格会把整条工具栏撑高一截。
-   尺寸按导航控件收紧——它们是入口，不该抢主内容的视觉分量。 */
-.studio-view-tabs {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(76px, auto));
-    gap: 3px;
+/* 影棚选择沿用正式站的蓝灰控件风格。
+   四个组合平铺出来要占满一整行，把日期挤到第二行，所以平时只留一个触发器，
+   楼层和棚型收进浮层面板——工具栏的状态一眼可见，选项仍然两次点击可达。
+   尺寸按导航控件收紧，它们是入口，不该抢主内容的视觉分量。 */
+.studio-venue-picker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.studio-view-tab {
+.studio-venue-label {
+    color: var(--ink-muted);
+    font-size: 12px;
+}
+
+.studio-venue-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     min-height: 26px;
     padding: 3px 9px;
     border: 1px solid #D8DEE8;
@@ -5016,27 +5026,88 @@ textarea:focus-visible,
     cursor: pointer;
 }
 
-.studio-view-tab:hover:not(.active) {
+.studio-venue-trigger:hover,
+.studio-venue-trigger[aria-expanded="true"] {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.studio-venue-trigger[aria-expanded="true"] {
+    background: var(--accent-soft);
+}
+
+.studio-venue-caret {
+    color: var(--ink-muted);
+    font-size: 10px;
+    line-height: 1;
+}
+
+/* 面板脱离文档流：展开时日期和日历不会往下跳，选完立刻收起。 */
+.studio-venue-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    border-radius: var(--radius-md);
+    background: #FFFFFF;
+    box-shadow: var(--shadow-overlay);
+}
+
+.studio-venue-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.studio-venue-row-label {
+    width: 30px;
+    color: var(--ink-muted);
+    font-size: 12px;
+}
+
+.studio-venue-options {
+    display: flex;
+    gap: 4px;
+}
+
+.studio-venue-option {
+    min-width: 56px;
+    min-height: 26px;
+    padding: 3px 10px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    color: #4B5563;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.studio-venue-option:hover:not(.active) {
     border-color: #B8C3D3;
     background: #F7F9FC;
     color: var(--accent);
 }
 
-.studio-view-tab.active {
+.studio-venue-option.active {
     border-color: var(--accent);
     background: var(--accent-solid);
     color: #FFFFFF;
 }
 
 @media (max-width: 768px) {
-    /* 手机屏放不下一行 4 个，回到两行两列 */
-    .studio-view-tabs {
+    /* 手机上这行本来是两行两列的大按钮；现在整行给"当前场地"和触发器分两端 */
+    .studio-venue-picker {
         width: 100%;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 6px;
+        justify-content: space-between;
     }
 
-    .studio-view-tab {
+    .studio-venue-trigger {
         min-height: 34px;
     }
 }

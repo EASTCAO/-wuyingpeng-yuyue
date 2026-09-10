@@ -20,8 +20,8 @@ test('登录页保持正式站的卡片和按钮尺寸', () => {
     assert.match(styles, /\.guest-btn\s*\{[\s\S]*?min-height: 42px;[\s\S]*?border-radius: var\(--radius-md\);/);
 });
 
-test('新增影棚四选一控件保留正式站视觉语言', () => {
-    assert.match(styles, /\.studio-view-tabs[\s\S]*grid-template-columns: repeat\(4/);
-    assert.match(styles, /\.studio-view-tab[\s\S]*border-radius: var\(--radius-xs\)/);
-    assert.match(styles, /\.studio-view-tab\.active[\s\S]*background: var\(--accent-solid\)/);
+test('影棚选择浮层保留正式站视觉语言', () => {
+    assert.match(styles, /\.studio-venue-trigger[\s\S]*border-radius: var\(--radius-xs\)/);
+    assert.match(styles, /\.studio-venue-option[\s\S]*border-radius: var\(--radius-xs\)/);
+    assert.match(styles, /\.studio-venue-option\.active[\s\S]*background: var\(--accent-solid\)/);
 });
