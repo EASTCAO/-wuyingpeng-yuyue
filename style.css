@@ -5005,11 +5005,6 @@ textarea:focus-visible,
     gap: 8px;
 }
 
-.studio-venue-label {
-    color: var(--ink-muted);
-    font-size: 12px;
-}
-
 .studio-venue-trigger {
     display: flex;
     align-items: center;
@@ -5101,12 +5096,7 @@ textarea:focus-visible,
 }
 
 @media (max-width: 768px) {
-    /* 手机上这行本来是两行两列的大按钮；现在整行给"当前场地"和触发器分两端 */
-    .studio-venue-picker {
-        width: 100%;
-        justify-content: space-between;
-    }
-
+    /* 手机上这行本来是两行两列的大按钮；触发器由父级靠右对齐，这里只把点击区域加高 */
     .studio-venue-trigger {
         min-height: 34px;
     }

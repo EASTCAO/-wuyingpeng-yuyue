@@ -643,8 +643,8 @@ test('6F 实景卡片轻点优先预约，移动超过阈值后才拖动', () =>
 });
 
 // 四个组合平铺出来要占满一整行，把日期挤到第二行；收成一个触发器之后，
-// 工具栏只剩"当前场地"这一个宽度很窄的信息块，浮层展开也不占布局。
-test('楼层和影棚类型收进"当前场地"浮层选择器', () => {
+// 工具栏只剩当前场地这一处宽度很窄的信息块，浮层展开也不占布局。
+test('楼层和影棚类型收进当前场地浮层选择器', () => {
     assert.match(layoutSource, /studioToolbarControls/);
     assert.match(layoutSource, /renderStudioVenuePicker\(\)/);
     assert.match(layoutSource, /const STUDIO_FLOORS = \['6F', '7F'\]/);
@@ -653,6 +653,9 @@ test('楼层和影棚类型收进"当前场地"浮层选择器', () => {
     // 触发器上只写当前场地，展开状态同步到 aria-expanded
     assert.match(layoutSource, /id="studioVenueTrigger"[\s\S]*?aria-haspopup="true" aria-expanded="\$\{studioVenuePanelOpen\}"[\s\S]*?aria-controls="studioVenuePanel"/);
     assert.match(layoutSource, /studio-venue-current">\$\{currentStudioFloor\} · \$\{getStudioCategoryLabel\(currentStudioCategory\)\}/);
+    // 触发器自己说明白了，旁边不再挂"当前场地"标签
+    assert.doesNotMatch(layoutSource, /studio-venue-label/);
+    assert.doesNotMatch(pageStyles, /\.studio-venue-label/);
     // 面板两行：一行楼层、一行棚型
     assert.match(layoutSource, /id="studioVenuePanel"[\s\S]*?role="group" aria-label="选择楼层和影棚类型"/);
     assert.match(layoutSource, /studio-venue-row-label">楼层</);

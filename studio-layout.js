@@ -172,7 +172,7 @@ function renderStudioVenueOption({ label, isActive, action }) {
     return `<button type="button" class="studio-venue-option${isActive ? ' active' : ''}" aria-pressed="${isActive}" onclick="${action}">${label}</button>`;
 }
 
-// 场地选择器：工具栏上平时只有"当前场地 7F · 无影棚"，点开才浮出楼层/棚型两行。
+// 场地选择器：工具栏上平时只有"7F · 无影棚"这一个触发器，点开才浮出楼层/棚型两行。
 // 四个组合平铺在工具栏上要占满一整行宽，把日期挤到第二行去；收成一个触发器后，
 // 工具栏重新回到"左边选哪天、右边看哪个棚"两个信息块，宽度只剩原来的一半。
 function renderStudioVenuePicker() {
@@ -193,7 +193,6 @@ function renderStudioVenuePicker() {
 
     return `
         <div class="studio-venue-picker">
-            <span class="studio-venue-label">当前场地</span>
             <button type="button" id="studioVenueTrigger" class="studio-venue-trigger"
                     aria-haspopup="true" aria-expanded="${studioVenuePanelOpen}" aria-controls="studioVenuePanel"
                     onclick="toggleStudioVenuePanel()">
