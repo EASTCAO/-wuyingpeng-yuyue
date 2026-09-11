@@ -361,8 +361,10 @@ test('封面卡三块内容各就各位：照片跨两行占左列，景名和�
     assert.match(cover, /grid-column:\s*1/, '照片应占左列');
     assert.match(cover, /grid-row:\s*1\s*\/\s*span 2/,
         '照片要跨满两行，否则右列进度条那行会在照片下方留出空档');
-    assert.match(layoutStyles, /\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.has-scene-cover\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) 68px/,
+    assert.match(layoutStyles, /\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.has-scene-cover\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) 76px/,
         '7F 实景棚应固定右侧信息栏宽度，照片占据剩余主要空间');
+    assert.match(layoutStyles, /\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.has-scene-cover h4,[\s\S]*?font-size:\s*14px;[\s\S]*?font-weight:\s*700;/,
+        '7F 景别名称需要足够大的字号和字重');
 
     // 景名裹在 .preview-scene-card-top 里，进网格的是这个容器而不是 h4 本身。
     const top = placement('\\.preview-scene-card-top');

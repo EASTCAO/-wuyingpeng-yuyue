@@ -1557,7 +1557,7 @@
 /* 7F 实景棚统一卡片内部结构：
    照片使用同一套裁切；标题、状态和进度收进同一个右侧信息栏。 */
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover {
-    grid-template-columns: minmax(0, 1fr) 68px;
+    grid-template-columns: minmax(0, 1fr) 76px;
     grid-template-rows: minmax(0, 1fr);
     align-items: stretch;
     gap: 10px;
@@ -1606,15 +1606,24 @@
     display: flex;
     width: 100%;
     min-height: 36px;
-    padding: 6px 4px;
+    padding: 6px;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 1px;
+    border: 1px solid #C7D1DD;
     border-radius: var(--radius-md);
-    font-size: 12px;
-    line-height: 1.25;
+    background: #FFFFFF;
+    box-shadow:
+        0 2px 5px rgba(31, 45, 61, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.96);
+    color: #111827;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0;
     text-align: center;
+    text-shadow: none;
 }
 
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card[data-map-area="main-bar"] .preview-scene-cover,
@@ -1625,13 +1634,13 @@
 
 @media (max-width: 1180px) and (min-width: 769px) {
     .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover {
-        grid-template-columns: minmax(0, 1fr) 62px;
+        grid-template-columns: minmax(0, 1fr) 70px;
         gap: 8px;
     }
 
     .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover h4,
     .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover.has-progress h4 {
-        font-size: 11px;
+        font-size: 13px;
     }
 }
 
@@ -1656,7 +1665,12 @@
     min-height: 28px;
     margin: 0;
     padding: 5px 7px;
+    border: 1px solid #C7D1DD;
     border-radius: var(--radius-md);
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(31, 45, 61, 0.11);
+    color: #243247;
+    font-weight: 600;
 }
 
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-full-label,
