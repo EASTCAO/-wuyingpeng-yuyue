@@ -591,6 +591,11 @@
     padding: 9px;
 }
 
+/* 7F 实景棚卡片：照片是主要识别内容，左侧占约 72%，右侧只留景别与状态。 */
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover {
+    grid-template-columns: minmax(0, 72%) minmax(0, 1fr);
+}
+
 /* 照片占左列、跨满两行 */
 .preview-scene-card.has-scene-cover .preview-scene-cover {
     /* 单图封面由外层 cover-group 占据左列；保留规则兼容旧缓存 DOM。 */
