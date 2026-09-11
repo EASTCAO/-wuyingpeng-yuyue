@@ -546,6 +546,27 @@
     pointer-events: none;
 }
 
+.preview-scene-cover-group {
+    display: flex;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+    min-width: 0;
+    min-height: 46px;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.72),
+        0 1px 3px rgba(24, 34, 48, 0.12);
+}
+
+.preview-scene-cover-group .preview-scene-cover {
+    flex: 1 1 0;
+    min-width: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
 /* 有封面时撤掉身份色柔光——照片已经把身份说清楚了，再叠色斑只会脏。 */
 .preview-scene-card.has-scene-cover::after {
     background: none;
@@ -572,6 +593,7 @@
 
 /* 照片占左列、跨满两行 */
 .preview-scene-card.has-scene-cover .preview-scene-cover {
+    /* 单图封面由外层 cover-group 占据左列；保留规则兼容旧缓存 DOM。 */
     grid-column: 1;
     grid-row: 1 / span 2;
     align-self: stretch;

@@ -16,7 +16,7 @@ const STUDIO_SCENE_REFERENCES = {
     '客厅景': { cover: 'living-room.webp', alt: '客厅景场景示意图' },
     '工具台景': { cover: 'workbench.webp', alt: '工具台景场景示意图' },
     '木纹台面-厨房景': { cover: 'wood-kitchen.webp', alt: '木纹台面厨房景场景示意图' },
-    '儿童房景/户外下午茶景': { cover: 'kids-tea.webp', alt: '儿童房景与户外下午茶景场景示意图' },
+    '儿童房景/户外下午茶景': { cover: 'kids-room.webp', covers: ['kids-room.webp', 'garden.webp'], alt: '儿童房景与户外下午茶景场景示意图' },
     '洗衣房景别': {
         src: 'assets/real-studio/laundry.webp?v=20260804-laundry-reference',
         cover: 'laundry-cover.webp',
@@ -37,7 +37,12 @@ function getSceneReference(studioId) {
         ...reference,
         coverSrc: reference.cover
             ? `assets/real-studio/${reference.cover}?v=${SCENE_COVER_VERSION}`
-            : null
+            : null,
+        coverSrcs: reference.covers
+            ? reference.covers.map(cover => `assets/real-studio/${cover}?v=${SCENE_COVER_VERSION}`)
+            : reference.cover
+                ? [`assets/real-studio/${reference.cover}?v=${SCENE_COVER_VERSION}`]
+                : []
     };
 }
 
@@ -466,8 +471,9 @@ function renderRealSceneCard(studio, state, index, layout = null) {
     // 已约满 + 已过期约不了了 → 换成纯色卡，直接从选择里排除掉。
     // 部分预约的状态色不铺满卡面，只留在边框和进度条上——色层蒙在照片上会发脏，
     // 暖色场景（酒吧、小木屋、木纹厨房）尤其容易糊成一片。
+    const isSeventhFloor = currentStudioFloor === '7F';
     const showCover = Boolean(reference?.coverSrc)
-        && (state.type === 'available' || state.type === 'partial');
+        && (isSeventhFloor || state.type === 'available' || state.type === 'partial');
     return `
         <article
             class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference?.src ? ' has-scene-reference' : ''}${showCover ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}"
@@ -482,14 +488,17 @@ function renderRealSceneCard(studio, state, index, layout = null) {
             tabindex="0"
         >
             ${showCover ? `
-                <img
-                    class="preview-scene-cover"
-                    src="${escapeHtml(reference.coverSrc)}"
-                    alt=""
-                    aria-hidden="true"
-                    loading="lazy"
-                    decoding="async"
-                >
+                <div class="preview-scene-cover-group" aria-hidden="true">
+                    ${reference.coverSrcs.map(src => `
+                        <img
+                            class="preview-scene-cover"
+                            src="${escapeHtml(src)}"
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                        >
+                    `).join('')}
+                </div>
             ` : ''}
             <div class="preview-scene-card-top">
                 <h4>${escapeHtml(studio.title)}</h4>
