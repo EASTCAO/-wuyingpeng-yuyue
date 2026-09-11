@@ -46,6 +46,20 @@ function getSceneReference(studioId) {
     };
 }
 
+const STUDIO_SCENE_TITLE_LINES = {
+    '洗衣房景别': ['洗衣房', '景别'],
+    '木纹台面-厨房景': ['木纹台面', '厨房景'],
+    '黑色台面-厨房景': ['黑色台面', '厨房景'],
+    '儿童房景/户外下午茶景': ['儿童房景', '户外下午茶景']
+};
+
+function renderStudioSceneTitle(title) {
+    const lines = STUDIO_SCENE_TITLE_LINES[title] || [title];
+    return `<h4 aria-label="${escapeHtml(title)}">${lines
+        .map(line => `<span class="preview-scene-title-line" aria-hidden="true">${escapeHtml(line)}</span>`)
+        .join('')}</h4>`;
+}
+
 const SIXTH_FLOOR_LAYOUT_VERSION = 6;
 const SIXTH_FLOOR_CANVAS_SIZE = { width: 1800, height: 1040 };
 const SIXTH_FLOOR_FRAME_INSETS = { top: 76, right: 20, bottom: 20, left: 20 };
@@ -500,27 +514,29 @@ function renderRealSceneCard(studio, state, index, layout = null) {
                     `).join('')}
                 </div>
             ` : ''}
-            <div class="preview-scene-card-top">
-                <h4>${escapeHtml(studio.title)}</h4>
-            </div>
-            ${state.type === 'ended' ? `
-                <span class="preview-scene-expired-label" role="status">已过期</span>
-            ` : state.bookings.length > 0 && state.type === 'full' ? `
-                <span class="preview-scene-full-label" role="status" aria-label="当前日期已约满">已约满</span>
-            ` : state.bookings.length > 0 ? `
-                <div
-                    class="preview-scene-progress"
-                    role="progressbar"
-                    aria-label="当前日期已预约时段"
-                    aria-valuemin="0"
-                    aria-valuemax="${state.totalSegments}"
-                    aria-valuenow="${state.occupiedSegments}"
-                    title="已预约 ${state.occupiedSegments} 个时段，剩余 ${state.remainingSegments} 个"
-                >
-                    <span class="preview-scene-progress-track"><i style="width:${state.occupiedPercentage}%"></i></span>
-                    <small>${state.remainingSegments}/${state.totalSegments}</small>
+            <div class="preview-scene-info">
+                <div class="preview-scene-card-top">
+                    ${renderStudioSceneTitle(studio.title)}
                 </div>
-            ` : ''}
+                ${state.type === 'ended' ? `
+                    <span class="preview-scene-expired-label" role="status">已过期</span>
+                ` : state.bookings.length > 0 && state.type === 'full' ? `
+                    <span class="preview-scene-full-label" role="status" aria-label="当前日期已约满">已约满</span>
+                ` : state.bookings.length > 0 ? `
+                    <div
+                        class="preview-scene-progress"
+                        role="progressbar"
+                        aria-label="当前日期已预约时段"
+                        aria-valuemin="0"
+                        aria-valuemax="${state.totalSegments}"
+                        aria-valuenow="${state.occupiedSegments}"
+                        title="已预约 ${state.occupiedSegments} 个时段，剩余 ${state.remainingSegments} 个"
+                    >
+                        <span class="preview-scene-progress-track"><i style="width:${state.occupiedPercentage}%"></i></span>
+                        <small>${state.remainingSegments}/${state.totalSegments}</small>
+                    </div>
+                ` : ''}
+            </div>
             ${reference?.src ? `
                 <figure class="preview-scene-reference-popover" aria-hidden="true">
                     <img src="${escapeHtml(reference.src)}" alt="${escapeHtml(reference.alt)}" decoding="async">

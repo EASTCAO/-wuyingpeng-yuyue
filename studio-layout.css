@@ -591,11 +591,6 @@
     padding: 9px;
 }
 
-/* 7F 实景棚卡片：照片是主要识别内容，左侧占约 72%，右侧只留景别与状态。 */
-.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover {
-    grid-template-columns: minmax(0, 72%) minmax(0, 1fr);
-}
-
 /* 照片占左列、跨满两行 */
 .preview-scene-card.has-scene-cover .preview-scene-cover {
     /* 单图封面由外层 cover-group 占据左列；保留规则兼容旧缓存 DOM。 */
@@ -619,6 +614,10 @@
     /* 覆盖基类的 72% + auto 居中：右列本来就窄，进度条撑满才够长 */
     width: 100%;
     margin: 0;
+}
+
+.preview-scene-info {
+    display: contents;
 }
 
 
@@ -1553,4 +1552,122 @@
     .preview-scene-card:active {
         transform: none;
     }
+}
+
+/* 7F 实景棚统一卡片内部结构：
+   照片使用同一套裁切；标题、状态和进度收进同一个右侧信息栏。 */
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover {
+    grid-template-columns: minmax(0, 1fr) 68px;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 10px;
+    padding: 8px;
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-cover-group {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 0;
+    border-radius: var(--radius-md);
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-cover {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    border-radius: 0;
+    object-fit: cover;
+    object-position: center;
+    filter: saturate(0.82) contrast(0.96);
+    opacity: 1;
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-info {
+    display: flex;
+    grid-column: 2;
+    grid-row: 1;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover .preview-scene-card-top,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover.has-progress .preview-scene-card-top {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover h4,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover.has-progress h4 {
+    box-sizing: border-box;
+    display: flex;
+    width: 100%;
+    min-height: 36px;
+    padding: 6px 4px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    line-height: 1.25;
+    text-align: center;
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card[data-map-area="main-bar"] .preview-scene-cover,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card[data-map-area="main-living"] .preview-scene-cover,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card[data-map-area="main-study"] .preview-scene-cover {
+    object-position: center;
+}
+
+@media (max-width: 1180px) and (min-width: 769px) {
+    .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover {
+        grid-template-columns: minmax(0, 1fr) 62px;
+        gap: 8px;
+    }
+
+    .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover h4,
+    .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover.has-progress h4 {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 768px) {
+    .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover {
+        grid-template-columns: minmax(0, 1fr) 72px;
+    }
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-title-line {
+    display: block;
+    max-width: 100%;
+    white-space: nowrap;
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover .preview-scene-progress,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-full-label,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-expired-label {
+    position: static;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 28px;
+    margin: 0;
+    padding: 5px 7px;
+    border-radius: var(--radius-md);
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-full-label,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-expired-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover .preview-scene-progress small {
+    margin-top: 4px;
+    text-align: center;
 }
