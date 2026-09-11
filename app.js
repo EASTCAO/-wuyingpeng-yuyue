@@ -1296,10 +1296,9 @@ function getActiveBookingWindowDays() {
 function getToolbarDates() {
     const isAdmin = currentUser === 'admin';
     const windowDays = getActiveBookingWindowDays();
-    const selectable = new Map(getSelectableDates({ isAdmin, windowDays }).map(item => [item.date, item.label]));
+    const selectable = new Set(getSelectableDates({ isAdmin, windowDays }).map(item => item.date));
     return getVisibleWeekDates({ isAdmin, windowDays }).map(date => ({
         date,
-        label: selectable.get(date) || '',
         weekday: getWeekdayLabel(date),
         selectable: selectable.has(date)
     }));
@@ -1316,10 +1315,10 @@ function renderBookingDateSwitcher() {
         const classes = ['booking-date-item'];
         if (isActive) classes.push('active');
         if (!option.selectable) classes.push('is-locked');
-        // 今天/明天用口语标签，其余显示星期几；title 里给完整信息避免歧义
+        // 日期条统一显示星期几（例如周五、周六）；title 里给完整信息避免歧义
         const title = `${option.weekday} ${Number(month)}月${Number(day)}日${option.selectable ? '' : '（不在可预约范围内）'}`;
         return `<button type="button" class="${classes.join(' ')}" onclick="selectBookingDate('${option.date}')" aria-pressed="${isActive}" title="${escapeHtml(title)}"${option.selectable ? '' : ' disabled'}>
-            <span class="booking-date-name">${option.label || option.weekday}</span>
+            <span class="booking-date-name">${option.weekday}</span>
             <small class="booking-date-detail">${Number(month)}.${Number(day)}</small>
         </button>`;
     }).join('');
