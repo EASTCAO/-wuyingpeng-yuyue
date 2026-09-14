@@ -41,3 +41,28 @@ test('6F 景名跟着卡片尺寸放大，缩到屏幕后仍然明显', () => {
     assert.match(rule, /font-weight:\s*700/);
     assert.doesNotMatch(rule, /font-size:\s*19px/);
 });
+
+test('细高竖列卡片的景名改成竖排', () => {
+    assert.match(source, /const verticalTitle = Boolean\(position && position\.height >= position\.width \* 2\)/);
+    assert.match(source, /\$\{verticalTitle \? ' is-vertical-title' : ''\}/);
+
+    const rule = styles.match(
+        /\.preview-floor-map-sixth-floor \.preview-scene-card\.is-vertical-title h4\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(rule, '没有找到竖排景名规则');
+    assert.match(rule[1], /writing-mode:\s*vertical-rl/);
+    assert.match(rule[1], /text-orientation:\s*upright/);
+    assert.match(rule[1], /letter-spacing:/);
+});
+
+test('竖排只落在真正细高的三张卡片上', () => {
+    const context = vm.createContext({});
+    vm.runInContext(source.match(/const SIXTH_FLOOR_DEFAULT_LAYOUT = \{[\s\S]*?\n\};/)[0], context);
+    // 同一 context 里的后续脚本能读到前面 const 声明的词法绑定（但它不是 context 属性）。
+    const layout = vm.runInContext('SIXTH_FLOOR_DEFAULT_LAYOUT', context);
+    const vertical = Object.entries(layout)
+        .filter(([, card]) => card.height >= card.width * 2)
+        .map(([key]) => key)
+        .sort();
+    assert.deepEqual(vertical, ['fifth-balcony', 'sixth-greenery-wall', 'sixth-tea-room']);
+});

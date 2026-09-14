@@ -688,6 +688,18 @@
     margin-top: 12px;
 }
 
+/* 竖排景名：只用在细高的竖列卡片上（阈值由 JS 按卡片宽高判断）。
+   竖排后 inline 轴变成纵向，所以这里用 height 撑满卡高、width 交给内容，
+   再靠 .preview-scene-card-top 的居中把整列字放在卡片正中。 */
+.preview-floor-map-sixth-floor .preview-scene-card.is-vertical-title h4 {
+    width: auto;
+    height: 100%;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: 0.08em;
+    font-size: clamp(40px, calc(var(--card-width) * 0.14), 64px);
+}
+
 .preview-floor-map-sixth-floor .preview-scene-progress-track {
     height: 14px;
     border-radius: var(--radius-xs);

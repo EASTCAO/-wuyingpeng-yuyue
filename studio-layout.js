@@ -413,6 +413,9 @@ function renderRealSceneMap(scenes) {
 function renderRealSceneCard(studio, state, index, layout = null) {
     const reference = getSceneReference(studio.id);
     const position = layout?.[studio.mapArea];
+    // 细高的竖列卡片（高 ≥ 宽的两倍）横排文字只能挤在中间一小段，
+    // 改成竖排后字能顺着卡片的长边排开，见 .is-vertical-title。
+    const verticalTitle = Boolean(position && position.height >= position.width * 2);
     // 只有完全没被预约的景才铺实拍照片。一旦有人约了，就换回纯色状态卡
     // （浅蓝=部分预约 / 中蓝=已约满 / 灰=已过期）。
     // 照片和纯色是两种截然不同的东西，扫一眼就能分出哪些还能约，
@@ -427,7 +430,7 @@ function renderRealSceneCard(studio, state, index, layout = null) {
         && (isSeventhFloor || state.type === 'available' || state.type === 'partial');
     return `
         <article
-            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference?.src ? ' has-scene-reference' : ''}${showCover ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}"
+            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference?.src ? ' has-scene-reference' : ''}${showCover ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}${verticalTitle ? ' is-vertical-title' : ''}"
             data-map-area="${escapeHtml(studio.mapArea)}"
             data-studio-id="${escapeHtml(studio.id)}"
             ${position ? `style="--preview-index:${index};--card-x:${position.x}px;--card-y:${position.y}px;--card-width:${position.width}px;--card-height:${position.height}px"` : ''}
