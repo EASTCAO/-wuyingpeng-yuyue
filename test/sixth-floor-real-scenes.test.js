@@ -131,27 +131,28 @@ test('6F 实景卡片使用圆润圆角', () => {
         `画布缩放后圆角会被压掉一半多，画布坐标里至少要 24px，实际 ${token[1]}px`);
 });
 
-test('6F 不再有按景身份色，22 张卡的卡面完全同色', () => {
+test('6F 不再有按景身份色，22 张卡共用同一套卡面', () => {
     // 曾经每个景一个身份色（21 条 --scene-tint）。单看有信息量，摆在一起
     // 是二十来种深浅不一的色块，用户反馈"太花、不够整齐"，于是整体退场。
     assert.doesNotMatch(layoutStyles, /--scene-tint\s*:/, '按景身份色的定义应已整体移除');
 
-    const available = layoutStyles.match(
-        /\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card\.available\s*\{([\s\S]*?)\n\}/
-    );
-    assert.ok(available, '没有找到 6F 卡面规则');
-    // 卡面只认字面色值：出现 var() 就意味着又能按景/按状态漂移。
-    const gradient = available[1].match(/linear-gradient\(([\s\S]*?)\);/);
-    assert.ok(gradient, '卡面应是实色渐变');
-    assert.doesNotMatch(gradient[1], /var\(--/, '卡面渐变不能再引用变量');
-    const stops = [...gradient[1].matchAll(/#[0-9A-Fa-f]{6}/g)];
-    assert.ok(stops.length >= 2, '卡面渐变至少要有两档颜色');
+    // 卡面只允许有一份配方。按景或按状态各写一份，摆在一起就会花。
+    // 选择器必须"从头"就是这张画布——不锚 ^ 的话，
+    // `.preview-floor-map:not(.preview-floor-map-sixth-floor)` 里的那段文字也会被算成一条。
+    const faces = [...layoutStyles.matchAll(/^\.preview-floor-map-sixth-floor[^{]*\{([\s\S]*?)\n\}/gm)]
+        .filter(match => /background:\s*(?:linear|radial)-gradient/.test(match[1]));
+    assert.equal(faces.length, 1,
+        `6F 卡面应只有一份统一配方，实际 ${faces.length} 份`);
 
-    // 状态卡必须撤掉身份柔光，否则橙底叠色斑会糊成脏色。
-    assert.match(
-        layoutStyles,
-        /\.preview-scene-card\.partial::after,[\s\S]{0,200}?\.preview-scene-card\.full::after,[\s\S]{0,200}?::after\s*\{\s*background:\s*none;/
+    // 状态卡必须撤掉身份柔光色斑，把 ::after 让给"棱光"——
+    // 顶/左受光、底/右背光，半透明卡才有体积，否则看着像一片塑料膜。
+    const rim = layoutStyles.match(
+        /\.preview-floor-map-sixth-floor \.preview-scene-card\.partial::after,[\s\S]{0,400}?\{([\s\S]*?)\n\}/
     );
+    assert.ok(rim, '没有找到 6F 卡面的棱光规则');
+    assert.match(rim[1], /background:\s*none;/, '身份柔光色斑应已撤掉');
+    assert.match(rim[1], /inset 0 1px 0 rgba\(255, 255, 255/, '顶沿要有受光高光');
+    assert.match(rim[1], /inset 0 -1px 0 rgba\(\d+,\s*\d+,\s*\d+/, '底沿要有背光暗边');
 });
 
 test('实拍封面是内嵌窗口，景名落在面板上而不是压着照片', () => {
@@ -218,6 +219,9 @@ test('实拍封面是内嵌窗口，景名落在面板上而不是压着照片',
     };
     const toRgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
     const mix = (a, b, t) => toRgb(a).map((channel, i) => channel + (toRgb(b)[i] - channel) * t);
+    // 半透明叠加：top 以 alpha 压在 bottom 上，得到实际看到的颜色。
+    const composite = (bottom, topRgb, alpha) =>
+        bottom.map((channel, i) => channel * (1 - alpha) + topRgb[i] * alpha);
 
     // 景名压在面板最深的那一档上仍要过 AA。面板 = 身份色往白里调，
     // 最深那段的混合比例从 CSS 里读，避免和实现分叉。
@@ -253,20 +257,64 @@ test('实拍封面是内嵌窗口，景名落在面板上而不是压着照片',
     assert.ok(ratio >= 4.5,
         `景名 ${ink[1]} 在 ${coverFace} 的卡面 + 底板上只有 ${ratio.toFixed(2)}:1，不足 AA`);
 
-    // 6F 卡没有底板，景名直接压在卡面上，所以拿最暗那一档直接比。
-    const sixthFloor = layoutStyles.match(
-        /\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card\.available\s*\{[\s\S]*?linear-gradient\(([\s\S]*?)\);/
+    // 6F 卡没有底板，景名直接压在卡面上。但卡面已经是半透明毛玻璃——
+    // 透出来的是"画布 → 玻璃"两层叠出来的颜色，不能再拿卡面字面色直接算。
+
+    // 第 1 层：画布。取底色里最暗的一档，再把四团色场全叠上去。
+    // 色场在空间上互相错开、不可能同时落在一处，全叠是刻意往暗里估，
+    // 宁可高估问题也不放过。
+    const canvas = layoutStyles.match(/\.sixth-floor-canvas-viewport\s*\{\n([\s\S]*?)\n\}/);
+    assert.ok(canvas, '没有找到 6F 画布底色规则');
+    const canvasBg = canvas[1].match(/background:([\s\S]*?);/);
+    assert.ok(canvasBg, '没有找到 6F 画布背景');
+    const baseStops = [...canvasBg[1].matchAll(/#([0-9A-Fa-f]{6})/g)].map(match => toRgb('#' + match[1]));
+    assert.ok(baseStops.length >= 1, '画布底色应有字面色值');
+    let backdrop = baseStops.reduce((a, b) => (luminance(a) <= luminance(b) ? a : b));
+    for (const field of canvasBg[1].matchAll(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/g)) {
+        backdrop = composite(backdrop, [1, 2, 3].map(i => Number(field[i])), Number(field[4]));
+    }
+
+    // 第 2 层：玻璃。最透的那一档让最多画布透过来，合成后最暗、对比度最差。
+    const glass = layoutStyles.match(
+        /\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card\s*\{([\s\S]*?)\n\}/
     );
-    assert.ok(sixthFloor, '没有找到 6F 卡面渐变');
-    const stops = [...sixthFloor[1].matchAll(/#[0-9A-Fa-f]{6}/g)].map(match => match[0]);
-    const worst = stops[stops.length - 1];
+    assert.ok(glass, '没有找到 6F 毛玻璃卡面规则');
+    const glassBg = glass[1].match(/background:([\s\S]*?);/);
+    assert.ok(glassBg, '没有找到 6F 卡面背景');
+    const glassStops = [...glassBg[1].matchAll(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/g)]
+        .map(match => ({ rgb: [1, 2, 3].map(i => Number(match[i])), alpha: Number(match[4]) }));
+    assert.ok(glassStops.length >= 2, '玻璃渐变至少要有两档');
+
     const sixthInk = layoutStyles.match(
         /\.preview-floor-map-sixth-floor \.preview-scene-card h4\s*\{\s*color:\s*(#[0-9A-Fa-f]{6})/
     );
     assert.ok(sixthInk, '没有找到 6F 景名颜色');
-    const direct = contrast(toRgb(sixthInk[1]), toRgb(worst));
-    assert.ok(direct >= 4.5,
-        `6F 景名 ${sixthInk[1]} 在最暗卡面 ${worst} 上只有 ${direct.toFixed(2)}:1，不足 AA`);
+
+    // 第 3 层：状态色。它压在玻璃上，同样会拉低景名对比度。
+    const washes = [{ name: '可预约', rgb: [255, 255, 255], alpha: 0 }];
+    for (const state of ['partial', 'full', 'ended']) {
+        const found = layoutStyles.match(new RegExp(
+            String.raw`\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card\.${state} \{[\s\S]*?--state-wash: rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)`
+        ));
+        assert.ok(found, `没有找到 ${state} 的状态色`);
+        washes.push({ name: state, rgb: [1, 2, 3].map(i => Number(found[i])), alpha: Number(found[4]) });
+    }
+
+    // 四种状态 × 每一档玻璃，全部算一遍，取最差的那个组合。
+    let worstRatio = Infinity;
+    let worstLabel = '';
+    for (const wash of washes) {
+        for (const stop of glassStops) {
+            const seen = composite(composite(backdrop, stop.rgb, stop.alpha), wash.rgb, wash.alpha);
+            const ratio = contrast(toRgb(sixthInk[1]), seen);
+            if (ratio < worstRatio) {
+                worstRatio = ratio;
+                worstLabel = `${wash.name} × 玻璃 alpha ${stop.alpha}`;
+            }
+        }
+    }
+    assert.ok(worstRatio >= 4.5,
+        `6F 景名 ${sixthInk[1]} 在最差组合（${worstLabel}）上只有 ${worstRatio.toFixed(2)}:1，不足 AA`);
 
     // 底板的发光和内高光是"立体墙"的来源，缺了字就贴在平面上。
     const box = coverTitle[1].match(/box-shadow:([\s\S]*?);/);

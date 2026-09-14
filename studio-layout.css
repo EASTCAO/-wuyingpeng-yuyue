@@ -367,7 +367,36 @@
    这里把底压深，让接近纯白的卡片能浮起来。 */
 .studio-booking-page .list-view.real-scene-active,
 .sixth-floor-canvas-viewport {
-    background: #E9EEF4;
+    /* 画布底：冷灰，上面叠"光"——不是叠色。
+
+       这一层是专门为毛玻璃准备的。磨砂的观感来自"背面有东西被糊开"：
+       背影越平，模糊前后越一样，玻璃就越像一层白膜。实测过，底色若只有
+       几团大而软的色场，blur(8px) 和 blur(44px) 的渲染结果几乎没差别。
+
+       所以这里给的是**有边界的光束**（斜向光带 + 一小团灯下光），
+       低频的明暗仍在、局部还有可被糊掉的边缘，卡片透过去才看得见磨砂。
+       色相刻意收在蓝紫一系、透明度压得很低（0.05~0.22），
+       它是"打光"不是"配色"，不会退回上一版按景着色那种花。 */
+    background:
+        radial-gradient(38% 46% at 13% 22%, rgba(126, 162, 214, 0.22), transparent 62%),
+        radial-gradient(30% 38% at 87% 14%, rgba(158, 146, 208, 0.13), transparent 64%),
+        radial-gradient(34% 44% at 76% 84%, rgba(104, 152, 178, 0.16), transparent 62%),
+        radial-gradient(26% 30% at 30% 92%, rgba(150, 166, 200, 0.12), transparent 66%),
+        linear-gradient(
+            104deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.42) 7%,
+            rgba(255, 255, 255, 0.06) 15%,
+            transparent 22%,
+            transparent 34%,
+            rgba(255, 255, 255, 0.30) 41%,
+            rgba(255, 255, 255, 0.04) 48%,
+            transparent 55%,
+            transparent 68%,
+            rgba(214, 226, 244, 0.28) 74%,
+            transparent 82%
+        ),
+        linear-gradient(158deg, #EEF2F7 0%, #E9EEF4 46%, #E3E9F0 100%);
 }
 
 .sixth-floor-canvas-viewport {
@@ -623,13 +652,22 @@
 
 /* 景名统一在文件末尾声明（要排在 .full h4 / .ended h4 之后才生效）。 */
 
-/* 卡面色改为铺满整张卡面的渐变（见下面的规则），不再糊成右下角一团色斑。
-   ::after 只留基类的玻璃内缘高光，色斑整块撤掉。 */
+/* 卡面已经是铺满整张的玻璃层，不再需要基类那团右下角色斑；把 ::after 让给
+   "棱光"——玻璃的立体感主要就来自这一层，撤掉它半透明卡看着像一片塑料膜。
+   顶/左是受光边（亮），底/右是背光边（暗），中间再走一层内侧明暗渐变，
+   用来补"顶面亮、底面沉"的体积感。 */
 .preview-floor-map-sixth-floor .preview-scene-card.partial::after,
 .preview-floor-map-sixth-floor .preview-scene-card.full::after,
 .preview-floor-map-sixth-floor .preview-scene-card.ended::after,
 .preview-floor-map-sixth-floor .preview-scene-card.available::after {
     background: none;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 1px 0 0 rgba(255, 255, 255, 0.62),
+        inset 0 -1px 0 rgba(116, 132, 154, 0.18),
+        inset -1px 0 0 rgba(116, 132, 154, 0.10),
+        inset 0 24px 32px -20px rgba(255, 255, 255, 0.90),
+        inset 0 -30px 38px -24px rgba(96, 116, 142, 0.16);
 }
 
 .preview-floor-map-sixth-floor .preview-scene-card h4 {
@@ -649,25 +687,75 @@
     line-height: 1.2;
 }
 
-/* 卡面配色复刻参考图：22 张卡用的是同一个近白冷色，不再按景给各自的身份色。
-   之前每个景一个色相（儿童房偏粉、木墙偏米、绿植偏绿……）单看有信息量，
-   摆在一起却是二十来种深浅不一的色块，整体显得花、不整齐。
-   参考图的做法相反：卡与卡之间完全同色，靠"左上近纯白 → 右下淡冷灰"的
-   斜向渐变撑出层次，差异交给景名，不交给颜色。
-   只写给 available：partial / full / ended 是预约状态色，必须继续压过卡面底色。
-   三层的选择器是为了稳压基类的 .has-progress / .has-scene-cover 系列。 */
-.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.available {
-    /* 取色自参考图实测：左上角 rgb(252,252,253)、右下角 rgb(241,245,249)，
-       横向落差略大于纵向（120deg），所以角上的色不随卡片大小变化。 */
-    background: linear-gradient(
-        120deg,
-        #FCFCFD 0%,
-        #F7F9FB 50%,
-        #F1F5F9 100%
-    );
-    /* 卡面已经是实色渐变，基类的磨砂再叠一层只会让卡面发灰。 */
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+/* 卡面：22 张卡同一套"透明毛玻璃"，状态只作为一层很薄的色调叠上去。
+
+   结构是两层——
+     第 1 层（上）--state-wash：状态色。可预约时是透明的，所以底下的玻璃
+                 原样透出来；部分预约 / 已约满 / 已过期叠一层薄色，
+                 既保住状态的可辨识度，又不把毛玻璃糊成实色卡。
+     第 2 层（下）半透明白渐变：玻璃本体。左上偏白、右下偏冷，还原参考图
+                 那个斜向落差。
+
+   底色是半透明的（0.46~0.72），这是"透"的来源；纯白卡做不到这个效果。
+   透明度是调出来的：再实就退回普通白卡，再透景名开始被背景色带糊。
+
+   backdrop-filter 的半径写在画布坐标系里——画布整体缩到约 47%，26px 到
+   屏幕上约 12px；低于 20px 基本看不出磨砂。saturate 顺带把背后色场的
+   彩度提一点，透出来的色才不至于被白色冲成灰。
+
+   选择器三层（画布 + 布局卡 + 场景卡）是为了稳压基类的 .has-progress /
+   .has-scene-cover 系列，以及 .preview-scene-card.partial 那些实色状态卡。 */
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card {
+    background:
+        linear-gradient(var(--state-wash), var(--state-wash)),
+        linear-gradient(
+            120deg,
+            rgba(255, 255, 255, 0.72) 0%,
+            rgba(250, 252, 254, 0.58) 50%,
+            rgba(235, 241, 248, 0.46) 100%
+        ),
+        /* 细颗粒。磨砂玻璃是"毛面"，只有模糊、没有颗粒会像一层干净的白膜。
+           SVG 的 feTurbulence 现生成噪声，内联成 data URI，不多一次请求；
+           颗粒压在最后（= 最底层），上面两层半透明渐变自然把它衰减到很淡，
+           所以这里 opacity 给 0.5 也不会显脏。
+           频率 0.9 是"细砂"不是"噪点"：再高像屏幕坏点，再低像颗粒噪。 */
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23g)' opacity='0.5'/></svg>");
+    backdrop-filter: blur(26px) saturate(170%) brightness(1.05);
+    -webkit-backdrop-filter: blur(26px) saturate(170%) brightness(1.05);
+    /* 玻璃靠"弥散光晕"浮起来，不能用基类那条 0 2px 0 的硬投影——
+       硬投影是纸质卡片的语言，放在透明玻璃上会显得又薄又假。 */
+    box-shadow:
+        0 1px 2px rgba(38, 52, 68, 0.05),
+        0 5px 12px rgba(38, 52, 68, 0.08),
+        0 18px 34px rgba(38, 52, 68, 0.11),
+        0 36px 64px rgba(38, 52, 68, 0.07);
+}
+
+/* 状态色调。只改 --state-wash，玻璃配方本身不动——四种状态共用同一套质感。 */
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.partial {
+    --state-wash: rgba(152, 206, 245, 0.34);
+}
+
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.full {
+    --state-wash: rgba(92, 160, 214, 0.60);
+}
+
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.ended {
+    --state-wash: rgba(138, 146, 157, 0.38);
+}
+
+/* 悬停：光晕加深拉长，是"玻璃抬起来"，不是"卡片变厚"。
+   基类的 .preview-scene-card:hover 只有两层选择器，压不过上面那条玻璃规则，
+   所以这里必须自己再写一份（三层），否则悬停时投影会被玻璃规则顶回去、毫无变化。 */
+@media (hover: hover) and (pointer: fine) {
+    .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card:hover,
+    .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card:focus {
+        box-shadow:
+            0 2px 4px rgba(38, 52, 68, 0.06),
+            0 9px 20px rgba(38, 52, 68, 0.10),
+            0 28px 50px rgba(38, 52, 68, 0.15),
+            0 50px 88px rgba(38, 52, 68, 0.10);
+    }
 }
 
 .preview-floor-map-sixth-floor .preview-scene-progress {
