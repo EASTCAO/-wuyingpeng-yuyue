@@ -95,6 +95,7 @@ const STUDIO_IDS = [
   '6F·国风景',
   '6F·工具间景',
   '6F·现代厨房景',
+  '6F·茶水间',
   '5F·阳台景'
 ];
 const FROZEN_STUDIO_IDS = new Set(['小无影棚1', '小无影棚2']);

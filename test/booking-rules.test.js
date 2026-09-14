@@ -127,7 +127,7 @@ test('只有 6F 实景棚的预约窗口是 7 天', () => {
     assert.equal(rules.getBookingWindowDays(CYCLORAMA_6F), 2, '6F 无影棚不在放宽名单里');
     assert.equal(rules.getBookingWindowDays('大无影棚1（工位对面）'), 2);
     assert.equal(rules.getBookingWindowDays(undefined), 2);
-    assert.equal(rules.EXTENDED_WINDOW_STUDIO_IDS.length, 21);
+    assert.equal(rules.EXTENDED_WINDOW_STUDIO_IDS.length, 23);
 });
 
 test('6F 实景棚今天起 7 天都能约，第 8 天不行', () => {

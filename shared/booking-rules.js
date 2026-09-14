@@ -134,6 +134,7 @@
         '6F·国风景',
         '6F·工具间景',
         '6F·现代厨房景',
+        '6F·茶水间',
         '5F·阳台景'
     ]);
     const EXTENDED_BOOKING_WINDOW_DAYS = 7;
@@ -298,4 +299,3 @@
         getVisibleWeekDates
     };
 });
-

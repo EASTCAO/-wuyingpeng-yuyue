@@ -115,7 +115,7 @@ test('点击已过期实景棚会自动切换到下一可预约日期并打开�
 });
 
 test('6F 场景结构变化后拒绝读取旧版个人布局', () => {
-    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*6/);
+    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*10/);
     assert.match(layoutSource, /stored\?\.version === SIXTH_FLOOR_LAYOUT_VERSION/);
 });
 
@@ -577,12 +577,12 @@ function parseDefaultLayout() {
 test('6F 默认布局的卡片互不重叠且都在画布内', () => {
     const layout = parseDefaultLayout();
     const entries = Object.entries(layout);
-    assert.equal(entries.length, 21);
+    assert.equal(entries.length, 23);
 
     for (const [key, card] of entries) {
         assert.ok(card.x >= 0 && card.y >= 0, `${key} 坐标为负`);
-        assert.ok(card.x + card.width <= 1800, `${key} 右沿超出画布`);
-        assert.ok(card.y + card.height <= 1040, `${key} 下沿超出画布`);
+        assert.ok(card.x + card.width <= 3280, `${key} 右沿超出画布`);
+        assert.ok(card.y + card.height <= 1560, `${key} 下沿超出画布`);
     }
 
     // 重叠会让两个棚在画布上叠在一起，点击命中也会串，属于必须挡住的回退。
@@ -597,34 +597,12 @@ test('6F 默认布局的卡片互不重叠且都在画布内', () => {
     }
 });
 
-test('6F 默认布局用间距分级分出三条功能带，而不是一张均匀网格', () => {
-    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*6/);
-    assert.match(layoutSource, /SIXTH_FLOOR_CANVAS_SIZE\s*=\s*\{\s*width:\s*1800,\s*height:\s*1040\s*\}/);
-
+test('6F 参考图布局保留原有卡片尺寸', () => {
     const layout = parseDefaultLayout();
-    const rowStarts = [...new Set(Object.values(layout).map(card => card.y))].sort((a, b) => a - b);
-    const topBand = Object.values(layout).filter(card => card.y === rowStarts[0]);
-    const bottomBand = Object.values(layout).filter(card => card.y === rowStarts[rowStarts.length - 1]);
-
-    // 左右两端必须收齐，否则整块布局会看着豁口。
-    const left = Math.min(...Object.values(layout).map(card => card.x));
-    const right = Math.max(...Object.values(layout).map(card => card.x + card.width));
-    assert.equal(left, 40);
-    assert.equal(right, 1760);
-
-    // 带间距要明显大于带内间距，布局才靠疏密分组而不是靠均匀网格摊平。
-    const topBottom = Math.max(...topBand.map(card => card.y + card.height));
-    const secondRowTop = rowStarts.find(y => y > topBottom - 1 && y > rowStarts[0]);
-    assert.ok(secondRowTop - topBottom >= 48, `带间距应 >=48px，实际 ${secondRowTop - topBottom}px`);
-
-    // 顶排和底排不能是同一套等分列位，否则上下两条栅栏会把中段夹成三明治。
-    const topX = topBand.map(card => card.x).sort((a, b) => a - b).join(',');
-    const bottomX = bottomBand.map(card => card.x).sort((a, b) => a - b).join(',');
-    assert.notEqual(topX, bottomX, '顶排和底排的列位完全相同，布局过于规整');
-
-    // 每一排都不是等宽等分。
-    assert.ok(new Set(topBand.map(card => card.width)).size > 1, '顶排是等宽等分');
-    assert.ok(new Set(bottomBand.map(card => card.width)).size > 1, '底排是等宽等分');
+    assert.equal(layout['sixth-clinic'].width, 528);
+    assert.equal(layout['sixth-greenery'].height, 576);
+    assert.equal(layout['sixth-bedroom'].width, 248);
+    assert.equal(layout['sixth-street'].height, 120);
 });
 
 test('6F 已保存和拖动中的卡片坐标都会被限制在画布内', () => {
