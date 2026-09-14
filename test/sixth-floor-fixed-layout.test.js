@@ -38,8 +38,8 @@ test('6F 景名统一固定字号，不跟着卡片大小变化', () => {
     assert.ok(rule, '没有找到 6F 景名规则');
     const size = rule.match(/font-size:\s*(\d+)px/);
     assert.ok(size, '景名字号应为固定像素值');
-    // 缩到屏幕上之后仍要明显大于正文。
-    assert.ok(Number(size[1]) >= 40, `景名字号 ${size[1]}px 偏小`);
+    // 缩到屏幕上（约 42%）之后仍要大于正文（14px）。
+    assert.ok(Number(size[1]) >= 36, `景名字号 ${size[1]}px 偏小`);
     // 卡片尺寸一旦参与计算，大字卡的字就会跟着变大，这正是要避免的。
     assert.doesNotMatch(rule, /clamp\(/);
     assert.doesNotMatch(rule, /var\(--card-width\)/);
