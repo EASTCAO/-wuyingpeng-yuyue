@@ -225,8 +225,7 @@ const STUDIO_GROUPS = [
             { id: '6F·吧台景', title: '吧台景', location: '6F 实景棚', mapArea: 'sixth-bar' },
             { id: '6F·国风景', title: '国风景', location: '6F 实景棚', mapArea: 'sixth-chinese' },
             { id: '6F·工具间景', title: '工具间景', location: '6F 实景棚', mapArea: 'sixth-workshop' },
-            { id: '6F·现代厨房景', title: '现代厨房景', location: '6F 实景棚', mapArea: 'sixth-modern-kitchen' }
-        ]
+            { id: '6F·现代厨房景', title: '现代厨房景', location: '6F 实景棚', mapArea: 'sixth-modern-kitchen' }        ]
     }
 ];
 
@@ -3487,3 +3486,4 @@ function renderStatsView() {
         `;
     }).join('');
 }
+
