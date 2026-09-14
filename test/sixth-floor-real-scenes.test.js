@@ -12,7 +12,7 @@ test('6F 实景棚包含户型图中的 21 个可预约空间', () => {
         '6F·走廊景', '6F·木墙景', '6F·绿植背景墙景',
         '6F·绿植房景', '6F·儿童房景', '6F·教室景', '6F·医护室景',
         '6F·海洋背景墙景',
-        '6F·书房景', '6F·复古客厅景', '6F·复古餐厅景', '6F·现代客厅景',
+        '6F·书房景', '6F·复古餐厅景', '6F·现代客厅景',
         '6F·现代餐厅景', '6F·街道景', '6F·户外咖啡景', '6F·卧室景', '6F·洗浴室景',
         '6F·吧台景', '6F·国风景', '6F·工具间景', '6F·现代厨房景'
     ];
@@ -577,7 +577,7 @@ function parseDefaultLayout() {
 test('6F 默认布局的卡片互不重叠且都在画布内', () => {
     const layout = parseDefaultLayout();
     const entries = Object.entries(layout);
-    assert.equal(entries.length, 23);
+    assert.equal(entries.length, 22);
 
     for (const [key, card] of entries) {
         assert.ok(card.x >= 0 && card.y >= 0, `${key} 坐标为负`);

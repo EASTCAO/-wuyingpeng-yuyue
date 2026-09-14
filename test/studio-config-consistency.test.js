@@ -43,7 +43,7 @@ test('放宽到 7 天的棚位清单和 6F 实景棚配置完全一致', () => {
     );
     const groupIds = [...groupSource.matchAll(/id: '([^']+)'/g)].map(match => match[1]);
 
-    assert.equal(groupIds.length, 23, '6F 实景棚包含原场景、茶水间及5楼阳台');
+    assert.equal(groupIds.length, 22, '6F 实景棚包含参考图场景、茶水间及5楼阳台');
     assert.deepEqual(
         [...rules.EXTENDED_WINDOW_STUDIO_IDS].sort(),
         [...groupIds].sort(),

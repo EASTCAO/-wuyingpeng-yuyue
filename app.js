@@ -214,7 +214,6 @@ const STUDIO_GROUPS = [
             { id: '6F·医护室景', title: '医护室景', location: '6F 实景棚', mapArea: 'sixth-clinic' },
             { id: '6F·海洋背景墙景', title: '海洋区', location: '6F 实景棚', mapArea: 'sixth-ocean-wall' },
             { id: '6F·书房景', title: '书房景', location: '6F 实景棚', mapArea: 'sixth-study' },
-            { id: '6F·复古客厅景', title: '复古客厅景', location: '6F 实景棚', mapArea: 'sixth-vintage-living' },
             { id: '6F·复古餐厅景', title: '复古客餐厅', location: '6F 实景棚', mapArea: 'sixth-vintage-dining' },
             { id: '6F·现代客厅景', title: '现代客厅景', location: '6F 实景棚', mapArea: 'sixth-modern-living' },
             { id: '6F·现代餐厅景', title: '现代餐厅景', location: '6F 实景棚', mapArea: 'sixth-modern-dining' },
