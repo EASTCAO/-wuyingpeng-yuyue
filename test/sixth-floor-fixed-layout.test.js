@@ -29,21 +29,27 @@ test('画布不再提供手动缩放、平移和复位', () => {
     assert.match(source, /function bindSixthFloorCanvas\(\)[\s\S]*?fitSixthFloorCanvasToViewport\(loadSixthFloorLayout\(\)\);/);
 });
 
-test('6F 景名跟着卡片尺寸放大，缩到屏幕后仍然明显', () => {
-    // 画布整体会被缩到约 42%，固定字号跟着一起缩小，所以必须按卡片尺寸计算。
+test('6F 景名统一固定字号，不跟着卡片大小变化', () => {
+    // 画布整体会被缩到约 42%，所以画布坐标里的字号要明显大于正文。
     // 同选择器有"颜色"和"字号"两条规则，这里只取带 font-size 的那条。
     const rules = [...styles.matchAll(/\.preview-floor-map-sixth-floor \.preview-scene-card h4\s*\{([\s\S]*?)\n\}/g)]
         .map(match => match[1]);
     const rule = rules.find(body => /font-size:/.test(body));
     assert.ok(rule, '没有找到 6F 景名规则');
-    assert.match(rule, /font-size:\s*clamp\(\s*32px,\s*min\(calc\(var\(--card-width\)/);
-    assert.match(rule, /calc\(var\(--card-height\)/);
+    const size = rule.match(/font-size:\s*(\d+)px/);
+    assert.ok(size, '景名字号应为固定像素值');
+    // 缩到屏幕上之后仍要明显大于正文。
+    assert.ok(Number(size[1]) >= 40, `景名字号 ${size[1]}px 偏小`);
+    // 卡片尺寸一旦参与计算，大字卡的字就会跟着变大，这正是要避免的。
+    assert.doesNotMatch(rule, /clamp\(/);
+    assert.doesNotMatch(rule, /var\(--card-width\)/);
+    assert.doesNotMatch(rule, /var\(--card-height\)/);
     // 字重跟参考图走，是常规字重，不是加粗的黑体。
     assert.match(rule, /font-weight:\s*400/);
     assert.doesNotMatch(rule, /font-size:\s*19px/);
 });
 
-test('细高竖列卡片的景名改成竖排', () => {
+test('细高竖列卡片的景名改成竖排，并沿用统一字号', () => {
     assert.match(source, /const verticalTitle = Boolean\(position && position\.height >= position\.width \* 2\)/);
     assert.match(source, /\$\{verticalTitle \? ' is-vertical-title' : ''\}/);
 
@@ -54,6 +60,8 @@ test('细高竖列卡片的景名改成竖排', () => {
     assert.match(rule[1], /writing-mode:\s*vertical-rl/);
     assert.match(rule[1], /text-orientation:\s*upright/);
     assert.match(rule[1], /letter-spacing:/);
+    // 竖排卡不能再来自定义字号，否则又会跟卡片尺寸挂钩。
+    assert.doesNotMatch(rule[1], /font-size:/);
 });
 
 test('竖排只落在真正细高的三张卡片上', () => {
