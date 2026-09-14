@@ -34,6 +34,7 @@
     --radius-xl: 16px;          /* <- 16 17 18 */
     --radius-2xl: 20px;         /* <- 20 24 */
     --radius-pill: 999px;
+    --radius-canvas-xl: 32px;   /* 6F 画布专用：画布缩到约 47%，圆角要按画布尺度给大值 */
 
     --danger: #EF4444;          /* 危险色文字 / 图形 */
     --danger-solid: #DC2626;    /* 承载白字的危险按钮（4.83:1；#EF4444 只有 3.76） */

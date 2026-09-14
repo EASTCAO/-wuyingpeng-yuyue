@@ -119,12 +119,16 @@ test('6F 卡片拖动时不会选中文字', () => {
 });
 
 test('6F 实景卡片使用圆润圆角', () => {
-    // 画布整体缩到 70%，圆角会跟着被压掉三成，所以这里只要求"不小于 lg"，
-    // 不写死某个 token——换成更圆的 xl 是改进，不该让测试变红。
+    // 画布整体缩到约 47%，圆角跟着被压掉一半多，所以画布坐标里给的值必须明显大。
+    // 只卡下限不写死具体数值：往更圆的方向调是改进，不该让测试变红。
     const rule = layoutStyles.match(/\.preview-floor-map-sixth-floor \.preview-scene-card\s*\{([\s\S]*?)\}/);
     assert.ok(rule, '没有找到 6F 实景卡片规则');
-    const radius = rule[1].match(/border-radius:\s*var\((--radius-(?:lg|xl))\)/);
-    assert.ok(radius, `圆角应至少为 --radius-lg，实际规则：${rule[1].trim()}`);
+    const radius = rule[1].match(/border-radius:\s*var\(--radius-canvas-xl\)/);
+    assert.ok(radius, `圆角应走 --radius-canvas-xl（固定像素、不随卡片大小变），实际规则：${rule[1].trim()}`);
+    const token = pageStyles.match(/--radius-canvas-xl:\s*(\d+)px/);
+    assert.ok(token, '没有找到 --radius-canvas-xl 的定义');
+    assert.ok(Number(token[1]) >= 24,
+        `画布缩放后圆角会被压掉一半多，画布坐标里至少要 24px，实际 ${token[1]}px`);
 });
 
 test('6F 不再有按景身份色，22 张卡的卡面完全同色', () => {
