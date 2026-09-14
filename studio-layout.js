@@ -457,7 +457,6 @@ function renderRealSceneCard(studio, state, index, layout = null) {
                 <div class="preview-scene-card-top">
                     ${renderStudioSceneTitle(studio.title)}
                 </div>
-                ${position ? '<p class="preview-scene-code" aria-hidden="true">SCENE</p>' : ''}
                 ${state.type === 'ended' ? `
                     <span class="preview-scene-expired-label" role="status">已过期</span>
                 ` : state.bookings.length > 0 && state.type === 'full' ? `

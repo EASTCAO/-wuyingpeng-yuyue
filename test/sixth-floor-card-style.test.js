@@ -16,6 +16,13 @@ test('6F 卡面配色复刻参考图：整卡从白渐变到身份色', () => {
     assert.match(available[1], /linear-gradient\(/);
     assert.match(available[1], /var\(--scene-tint\)/);
 
+    // 参考图的色很淡：身份色必须往白里调掉七八成，深色版会压过景名。
+    const whites = [...available[1].matchAll(/var\(--scene-tint\), #FFFFFF (\d+)%/g)].map(match => Number(match[1]));
+    assert.equal(whites.length, 2, '渐变应有中间和末端两档身份色');
+    for (const white of whites) {
+        assert.ok(white >= 65, `身份色往白里调的比例应 >=65%，实际 ${white}%`);
+    }
+
     // 身份色铺满整卡之后，原来的"右下角一团色斑"必须撤掉，否则两层色会发脏。
     assert.doesNotMatch(styles, /radial-gradient\(\s*128% 140%/);
 });
@@ -36,36 +43,20 @@ test('卡面身份色只作用于可预约卡片，不会盖掉预约状态色',
     }
 });
 
-test('6F 文字排版复刻参考图：标题沉到左下角，下面跟细分隔线和小字标签', () => {
-    const card = rule(CARD);
-    assert.ok(card, '没有找到 6F 卡片排版规则');
-    assert.match(card[1], /justify-content:\s*flex-end/);
-    assert.match(card[1], /align-items:\s*flex-start/);
-    assert.match(card[1], /text-align:\s*left/);
+test('6F 文字排版保持居中，不再改成左下角', () => {
+    // 参考图的左下角标题块已被用户否掉，这里锁住旧版：标题居中、无分隔线、无标签。
+    assert.doesNotMatch(styles, new RegExp(String.raw`${CARD}\s*\{[^}]*justify-content:\s*flex-end`));
+    assert.doesNotMatch(styles, /preview-scene-code/);
+    assert.doesNotMatch(styles, /border-top:\s*1px solid rgba\(37, 43, 51/);
 
-    const top = rule(String.raw`${CARD} \.preview-scene-card-top`);
-    assert.ok(top, '没有找到 6F 标题块规则');
-    assert.match(top[1], /order:\s*2/);
-    assert.match(top[1], /height:\s*auto/);
-    assert.match(top[1], /justify-content:\s*flex-start/);
-
-    const code = rule(String.raw`${CARD} \.preview-scene-code`);
-    assert.ok(code, '没有找到 6F 小字标签规则');
-    assert.match(code[1], /order:\s*3/);
-    assert.match(code[1], /border-top:\s*1px solid/);
-    assert.match(code[1], /letter-spacing:/);
-    assert.match(code[1], /text-align:\s*left/);
-
-    // 有预约时进度条排在标题之上，底边仍由标题块收口。
-    const progress = rule(String.raw`${CARD} \.preview-scene-progress`);
-    assert.ok(progress, '没有找到 6F 进度条排版规则');
-    assert.match(progress[1], /order:\s*1/);
+    // 卡片本身仍由基类的居中规则排版。
+    assert.match(styles, /\.preview-scene-card\s*\{[\s\S]*?justify-content:\s*center/);
+    assert.match(styles, /\.preview-scene-card h4\s*\{[\s\S]*?text-align:\s*center/);
 });
 
-test('6F 卡片只留文字标签，不带编号', () => {
-    // 标签是纯装饰（编号已按用户要求去掉），所以 aria-hidden，读屏只念景名。
-    assert.match(source, /position \? '<p class="preview-scene-code" aria-hidden="true">SCENE<\/p>' : ''/);
-    assert.doesNotMatch(source, /preview-scene-code[^>]*>[^<]*\d/);
-    // 7F 走同一套卡片渲染，不能跟着多出这个标签。
-    assert.match(source, /const verticalTitle = Boolean\(position/);
+test('6F 卡片不带编号，也不带装饰标签', () => {
+    assert.doesNotMatch(source, /preview-scene-code|SCENE \//);
+    assert.doesNotMatch(source, /preview-scene-number/);
+    // 7F 走同一套卡片渲染，同样不能多出编号。
+    assert.doesNotMatch(source, /class="[^"]*preview-scene-(code|number)/);
 });
