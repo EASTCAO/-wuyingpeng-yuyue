@@ -453,6 +453,50 @@
 
 .sixth-floor-layout-card.is-dragging { z-index: 20; opacity: 0.86; }
 
+.sixth-floor-alignment-guide {
+    position: absolute;
+    z-index: 18;
+    display: block;
+    pointer-events: none;
+    background: var(--accent-solid);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+
+.sixth-floor-alignment-guide.vertical {
+    top: 0;
+    width: 2px;
+    height: 100%;
+}
+
+.sixth-floor-alignment-guide.horizontal {
+    left: 0;
+    width: 100%;
+    height: 2px;
+}
+
+.sixth-floor-alignment-guide[hidden],
+.sixth-floor-card-metrics[hidden] {
+    display: none;
+}
+
+.sixth-floor-card-metrics {
+    position: absolute;
+    z-index: 22;
+    min-width: 92px;
+    padding: 7px 9px;
+    border: 1px solid #B8C6D6;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--shadow-raised);
+    color: #27364A;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
 .sixth-floor-resize-handle {
     position: absolute;
     right: 2px;

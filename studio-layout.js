@@ -67,6 +67,8 @@ const SIXTH_FLOOR_DEFAULT_SCALE = 0.75;
 // 手动缩放下限；首次适配允许更小倍率，以完整展示扩展后的布局。
 const SIXTH_FLOOR_MIN_SCALE = 0.7;
 const SIXTH_FLOOR_DRAG_THRESHOLD = 10;
+const SIXTH_FLOOR_GRID_SIZE = 12;
+const SIXTH_FLOOR_SNAP_THRESHOLD = 16;
 // 按参考图的空间关系摆放，保留原卡片宽高；图外的复古客厅放在底部。
 // 修改版本号使旧个人布局失效，避免旧坐标覆盖新版默认位置。
 const SIXTH_FLOOR_DEFAULT_LAYOUT = {
@@ -141,6 +143,81 @@ function resizeSixthFloorCard(card, width, height) {
         width: Math.max(120, Math.min(SIXTH_FLOOR_CANVAS_SIZE.width - card.x, Math.round(width))),
         height: Math.max(80, Math.min(SIXTH_FLOOR_CANVAS_SIZE.height - card.y, Math.round(height)))
     };
+}
+
+function getSixthFloorSnapTargets(layout, activeKey, axis) {
+    const targets = [];
+    for (const [key, card] of Object.entries(layout)) {
+        if (key === activeKey) continue;
+        if (axis === 'x') targets.push(card.x, card.x + card.width / 2, card.x + card.width);
+        else targets.push(card.y, card.y + card.height / 2, card.y + card.height);
+    }
+    return targets;
+}
+
+function snapSixthFloorCard(layout, activeKey, card, mode, disabled = false) {
+    if (disabled) return { card, guideX: null, guideY: null };
+    const next = { ...card };
+    let guideX = null;
+    let guideY = null;
+    const axes = [
+        {
+            axis: 'x',
+            anchors: mode === 'resize' ? [next.width] : [0, next.width / 2, next.width],
+            targets: getSixthFloorSnapTargets(layout, activeKey, 'x')
+        },
+        {
+            axis: 'y',
+            anchors: mode === 'resize' ? [next.height] : [0, next.height / 2, next.height],
+            targets: getSixthFloorSnapTargets(layout, activeKey, 'y')
+        }
+    ];
+    for (const { axis, anchors, targets } of axes) {
+        const origin = axis === 'x' ? next.x : next.y;
+        let closest = null;
+        for (const anchor of anchors) {
+            for (const target of targets) {
+                const distance = Math.abs(origin + anchor - target);
+                if (distance <= SIXTH_FLOOR_SNAP_THRESHOLD && (!closest || distance < closest.distance)) {
+                    closest = { anchor, target, distance };
+                }
+            }
+        }
+        if (!closest) continue;
+        if (mode === 'resize') {
+            if (axis === 'x') next.width = closest.target - next.x;
+            else next.height = closest.target - next.y;
+        } else if (axis === 'x') {
+            next.x = closest.target - closest.anchor;
+        } else {
+            next.y = closest.target - closest.anchor;
+        }
+        if (axis === 'x') guideX = closest.target;
+        else guideY = closest.target;
+    }
+    return { card: next, guideX, guideY };
+}
+
+function updateSixthFloorAlignmentOverlay(card = null, guideX = null, guideY = null) {
+    const vertical = document.querySelector('[data-alignment-guide="vertical"]');
+    const horizontal = document.querySelector('[data-alignment-guide="horizontal"]');
+    const metrics = document.querySelector('[data-card-metrics]');
+    if (vertical) {
+        vertical.hidden = guideX === null;
+        if (guideX !== null) vertical.style.left = `${guideX}px`;
+    }
+    if (horizontal) {
+        horizontal.hidden = guideY === null;
+        if (guideY !== null) horizontal.style.top = `${guideY}px`;
+    }
+    if (metrics) {
+        metrics.hidden = !card;
+        if (card) {
+            metrics.textContent = `${Math.round(card.width)} × ${Math.round(card.height)}`;
+            metrics.style.left = `${card.x + card.width + 12}px`;
+            metrics.style.top = `${card.y + card.height / 2}px`;
+        }
+    }
 }
 
 function handleSixthFloorResizeKey(event, key) {
@@ -480,6 +557,9 @@ function renderRealSceneMap(scenes) {
                         <button type="button" data-canvas-action="reset">复位</button>
                     </div>` : ''}
                     <div class="sixth-floor-canvas" data-sixth-floor-canvas style="width:${SIXTH_FLOOR_CANVAS_SIZE.width}px;height:${SIXTH_FLOOR_CANVAS_SIZE.height}px;transform:translate(calc(-50% + ${sixthFloorViewport.x}px), calc(-50% + ${sixthFloorViewport.y}px)) scale(${sixthFloorViewport.scale})">
+                        <i class="sixth-floor-alignment-guide vertical" data-alignment-guide="vertical" hidden></i>
+                        <i class="sixth-floor-alignment-guide horizontal" data-alignment-guide="horizontal" hidden></i>
+                        <output class="sixth-floor-card-metrics" data-card-metrics hidden></output>
                         ${scenes.map(({ studio, state }, index) => renderRealSceneCard(studio, state, index, layout)).join('')}
                     </div>
                 </div>
@@ -647,24 +727,32 @@ function bindSixthFloorCanvas() {
         if (state.type === 'card') {
             const next = layout[state.key];
             if (state.resizing) {
-                Object.assign(next, resizeSixthFloorCard(state.original,
+                const resized = resizeSixthFloorCard(state.original,
                     state.original.width + dx / sixthFloorViewport.scale,
-                    state.original.height + dy / sixthFloorViewport.scale));
+                    state.original.height + dy / sixthFloorViewport.scale);
+                const snapped = snapSixthFloorCard(layout, state.key, resized, 'resize', event.altKey);
+                Object.assign(next, resizeSixthFloorCard(snapped.card, snapped.card.width, snapped.card.height));
                 state.card.style.setProperty('--card-width', `${next.width}px`);
                 state.card.style.setProperty('--card-height', `${next.height}px`);
                 state.card.classList.add('is-dragging');
+                updateSixthFloorAlignmentOverlay(next, snapped.guideX, snapped.guideY);
                 return;
             }
             const bounded = clampSixthFloorCardPosition({
                 ...next,
-                x: Math.round((state.originX + dx / sixthFloorViewport.scale) / 12) * 12,
-                y: Math.round((state.originY + dy / sixthFloorViewport.scale) / 12) * 12
+                x: event.altKey
+                    ? Math.round(state.originX + dx / sixthFloorViewport.scale)
+                    : Math.round((state.originX + dx / sixthFloorViewport.scale) / SIXTH_FLOOR_GRID_SIZE) * SIXTH_FLOOR_GRID_SIZE,
+                y: event.altKey
+                    ? Math.round(state.originY + dy / sixthFloorViewport.scale)
+                    : Math.round((state.originY + dy / sixthFloorViewport.scale) / SIXTH_FLOOR_GRID_SIZE) * SIXTH_FLOOR_GRID_SIZE
             });
-            next.x = bounded.x;
-            next.y = bounded.y;
+            const snapped = snapSixthFloorCard(layout, state.key, bounded, 'move', event.altKey);
+            Object.assign(next, clampSixthFloorCardPosition(snapped.card));
             state.card.style.setProperty('--card-x', `${next.x}px`);
             state.card.style.setProperty('--card-y', `${next.y}px`);
             state.card.classList.add('is-dragging');
+            updateSixthFloorAlignmentOverlay(next, snapped.guideX, snapped.guideY);
         } else {
             sixthFloorViewport.x = state.originX + dx;
             sixthFloorViewport.y = state.originY + dy;
@@ -690,6 +778,7 @@ function bindSixthFloorCanvas() {
                 }, 0);
             }
         }
+        updateSixthFloorAlignmentOverlay();
         sixthFloorDragState = null;
         if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
     });
@@ -703,6 +792,7 @@ function bindSixthFloorCanvas() {
                 state.card.style.setProperty(`--card-${field}`, `${state.original[field]}px`);
             }
         }
+        updateSixthFloorAlignmentOverlay();
         sixthFloorDragState = null;
         if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
     });
