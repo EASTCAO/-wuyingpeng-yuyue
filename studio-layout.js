@@ -136,6 +136,29 @@ function saveSixthFloorLayout(layout) {
     localStorage.setItem(getSixthFloorLayoutStorageKey(), JSON.stringify({ version: SIXTH_FLOOR_LAYOUT_VERSION, layout }));
 }
 
+function resizeSixthFloorCard(card, width, height) {
+    return {
+        ...card,
+        width: Math.max(120, Math.min(SIXTH_FLOOR_CANVAS_SIZE.width - card.x, Math.round(width))),
+        height: Math.max(80, Math.min(SIXTH_FLOOR_CANVAS_SIZE.height - card.y, Math.round(height)))
+    };
+}
+
+function handleSixthFloorResizeKey(event, key) {
+    event.stopPropagation();
+    if (!canEditSixthFloorLayout()) return;
+    const delta = { ArrowLeft: [-12, 0], ArrowRight: [12, 0], ArrowUp: [0, -12], ArrowDown: [0, 12] }[event.key];
+    if (!delta) return;
+    event.preventDefault();
+    const layout = loadSixthFloorLayout();
+    const card = layout[key];
+    layout[key] = resizeSixthFloorCard(card, card.width + delta[0], card.height + delta[1]);
+    const element = event.currentTarget.closest('[data-layout-key]');
+    element.style.setProperty('--card-width', `${layout[key].width}px`);
+    element.style.setProperty('--card-height', `${layout[key].height}px`);
+    saveSixthFloorLayout(layout);
+}
+
 function resetSixthFloorLayout() {
     if (!canEditSixthFloorLayout()) return;
     localStorage.removeItem(getSixthFloorLayoutStorageKey());
@@ -495,6 +518,11 @@ function renderRealSceneCard(studio, state, index, layout = null) {
             role="button"
             tabindex="0"
         >
+            ${editable ? `<button type="button" class="sixth-floor-resize-handle"
+                data-resize-handle aria-label="调整${escapeHtml(studio.title)}的尺寸，方向键调整宽高"
+                title="拖动调整宽高（不锁定比例）；也可用方向键调整"
+                onclick="event.stopPropagation()"
+                onkeydown="handleSixthFloorResizeKey(event, '${escapeHtml(studio.mapArea)}')">↘</button>` : ''}
             ${showCover ? `
                 <div class="preview-scene-cover-group" aria-hidden="true">
                     ${reference.coverSrcs.map(src => `
@@ -602,8 +630,9 @@ function bindSixthFloorCanvas() {
         const card = event.target.closest('[data-draggable="true"]');
         if (card) {
             const key = card.dataset.layoutKey;
+            Object.assign(layout, loadSixthFloorLayout());
             const start = layout[key];
-            sixthFloorDragState = { type: 'card', card, key, startX: event.clientX, startY: event.clientY, originX: start.x, originY: start.y, moved: false };
+            sixthFloorDragState = { type: 'card', resizing: Boolean(event.target.closest('[data-resize-handle]')), card, key, startX: event.clientX, startY: event.clientY, originX: start.x, originY: start.y, original: { ...start }, moved: false };
         } else if (!event.target.closest('.sixth-floor-canvas-toolbar')) {
             sixthFloorDragState = { type: 'canvas', startX: event.clientX, startY: event.clientY, originX: sixthFloorViewport.x, originY: sixthFloorViewport.y, moved: false };
         }
@@ -618,6 +647,15 @@ function bindSixthFloorCanvas() {
         state.moved = true;
         if (state.type === 'card') {
             const next = layout[state.key];
+            if (state.resizing) {
+                Object.assign(next, resizeSixthFloorCard(state.original,
+                    state.original.width + dx / sixthFloorViewport.scale,
+                    state.original.height + dy / sixthFloorViewport.scale));
+                state.card.style.setProperty('--card-width', `${next.width}px`);
+                state.card.style.setProperty('--card-height', `${next.height}px`);
+                state.card.classList.add('is-dragging');
+                return;
+            }
             const bounded = clampSixthFloorCardPosition({
                 ...next,
                 x: Math.round((state.originX + dx / sixthFloorViewport.scale) / 12) * 12,
@@ -645,7 +683,7 @@ function bindSixthFloorCanvas() {
                 setTimeout(() => {
                     sixthFloorSuppressClick = false;
                 }, 0);
-            } else {
+            } else if (!state.resizing) {
                 sixthFloorSuppressClick = true;
                 openRealSceneCard(state.card.dataset.studioId);
                 setTimeout(() => {
@@ -659,7 +697,13 @@ function bindSixthFloorCanvas() {
     viewport.addEventListener('pointercancel', event => {
         const state = sixthFloorDragState;
         if (!state) return;
-        if (state.type === 'card') state.card.classList.remove('is-dragging');
+        if (state.type === 'card') {
+            state.card.classList.remove('is-dragging');
+            layout[state.key] = state.original;
+            for (const field of ['x', 'y', 'width', 'height']) {
+                state.card.style.setProperty(`--card-${field}`, `${state.original[field]}px`);
+            }
+        }
         sixthFloorDragState = null;
         if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
     });

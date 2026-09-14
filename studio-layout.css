@@ -453,6 +453,28 @@
 
 .sixth-floor-layout-card.is-dragging { z-index: 20; opacity: 0.86; }
 
+.sixth-floor-resize-handle {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    z-index: 5;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid #AEBCCC;
+    border-radius: var(--radius-md);
+    background: #F8FAFC;
+    color: #394B60;
+    font-size: 24px;
+    cursor: nwse-resize;
+    touch-action: none;
+}
+
+.sixth-floor-resize-handle:focus-visible {
+    outline: 3px solid var(--accent-solid);
+    outline-offset: 2px;
+}
+
 .sixth-floor-layout-card[data-draggable="true"] { cursor: move; }
 .sixth-floor-layout-card:not([data-draggable="true"]) { cursor: pointer; }
 
