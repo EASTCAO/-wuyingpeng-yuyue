@@ -7,7 +7,7 @@ const layoutSource = fs.readFileSync('studio-layout.js', 'utf8');
 const layoutStyles = fs.readFileSync('studio-layout.css', 'utf8');
 const pageStyles = fs.readFileSync('style.css', 'utf8');
 
-test('6F 实景棚包含户型图中的 21 个可预约空间', () => {
+test('6F 实景棚包含参考图中的可预约空间', () => {
     const expectedScenes = [
         '6F·走廊景', '6F·木墙景', '6F·绿植背景墙景',
         '6F·绿植房景', '6F·儿童房景', '6F·教室景', '6F·医护室景',
@@ -20,7 +20,7 @@ test('6F 实景棚包含户型图中的 21 个可预约空间', () => {
     for (const scene of expectedScenes) {
         assert.match(appSource, new RegExp(`id: '${scene}'`));
     }
-    assert.equal(expectedScenes.length, 21);
+    assert.equal(expectedScenes.length, 20);
 });
 
 test('6F 实景棚可以在楼层预览中展示', () => {
@@ -93,11 +93,11 @@ test('6F 户型图中的所有文字场景都作为可预约卡片', () => {
     const expectedSceneIds = [
         'sixth-corridor', 'sixth-wood-wall', 'sixth-greenery-wall', 'sixth-greenery',
         'sixth-kids', 'sixth-classroom', 'sixth-clinic', 'sixth-ocean-wall',
-        'sixth-study', 'sixth-vintage-living', 'sixth-vintage-dining', 'sixth-modern-living',
+        'sixth-study', 'sixth-vintage-dining', 'sixth-modern-living',
         'sixth-modern-dining', 'sixth-street', 'sixth-outdoor-cafe', 'sixth-bedroom',
         'sixth-bathroom', 'sixth-bar', 'sixth-chinese', 'sixth-workshop', 'sixth-modern-kitchen'
     ];
-    assert.equal(expectedSceneIds.length, 21);
+    assert.equal(expectedSceneIds.length, 20);
     expectedSceneIds.forEach(sceneId => assert.match(appSource, new RegExp(`mapArea: '${sceneId}'`)));
     expectedSceneIds.forEach(sceneId => assert.match(layoutSource, new RegExp(`'${sceneId}'`)));
 });

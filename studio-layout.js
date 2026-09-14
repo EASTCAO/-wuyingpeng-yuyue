@@ -79,7 +79,6 @@ const SIXTH_FLOOR_DEFAULT_LAYOUT = {
     'sixth-kids': { x: 730, y: 40, width: 240, height: 160 },
     'sixth-classroom': { x: 1000, y: 40, width: 264, height: 160 },
     'sixth-study': { x: 1560, y: 40, width: 264, height: 344 },
-    'sixth-vintage-living': { x: 730, y: 1190, width: 272, height: 344 },
     'sixth-vintage-dining': { x: 1850, y: 40, width: 320, height: 576 },
     'sixth-clinic': { x: 1000, y: 240, width: 528, height: 160 },
     'sixth-modern-living': { x: 2200, y: 40, width: 264, height: 208 },
