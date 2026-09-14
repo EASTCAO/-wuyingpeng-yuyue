@@ -10,6 +10,43 @@ function rule(selector) {
     return styles.match(new RegExp(`${selector}\\s*\\{([\\s\\S]*?)\\n\\}`));
 }
 
+// 把 background 拆成一层层渐变。卡面是叠出来的（状态色 / 高光 / 玻璃本体 / 颗粒），
+// 正则一把梭会把高光那层的透明端点当成"玻璃的一档"，量出错误的透过率。
+function gradientLayers(declaration) {
+    const layers = [];
+    const opener = /(?:linear|radial)-gradient\(/g;
+    let match;
+    while ((match = opener.exec(declaration))) {
+        let depth = 1;
+        let i = opener.lastIndex;
+        for (; i < declaration.length && depth > 0; i++) {
+            if (declaration[i] === '(') depth++;
+            else if (declaration[i] === ')') depth--;
+        }
+        layers.push(declaration.slice(opener.lastIndex, i - 1));
+        opener.lastIndex = i;
+    }
+    return layers;
+}
+
+function rgbaStops(layer) {
+    return [...layer.matchAll(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/g)]
+        .map(match => ({ rgb: [1, 2, 3].map(i => Number(match[i])), alpha: Number(match[4]) }));
+}
+
+// 玻璃本体 = 唯一那一层"每一档都半透明"的渐变。
+// 高光层必然有一档是全透明的（它得淡出），据此把两者分开。
+function glassBody(cardRule) {
+    const bg = cardRule[1].match(/background:([\s\S]*?);/);
+    assert.ok(bg, '没有找到卡面背景');
+    const bodies = gradientLayers(bg[1])
+        .map(rgbaStops)
+        .filter(stops => stops.length >= 2 && stops.every(s => s.alpha > 0 && s.alpha < 1));
+    assert.equal(bodies.length, 1,
+        `应当正好有一层"每档都半透明"的玻璃本体，实际 ${bodies.length} 层`);
+    return bodies[0];
+}
+
 test('6F 卡面统一成同一套透明毛玻璃，不再按景着色', () => {
     const glass = rule(CARD);
     assert.ok(glass, '没有找到 6F 卡面规则');
@@ -27,23 +64,58 @@ test('6F 卡面统一成同一套透明毛玻璃，不再按景着色', () => {
         `卡面只能引用 --state-wash 叠状态色，实际引用了 ${vars.join(', ') || '（无）'}`);
 
     // "透明"是这版的关键：全不透明的白卡模糊前后一模一样，等于没有玻璃。
-    // 所以玻璃本体的每一档都必须是半透明，且至少两档才是渐变。
-    const stops = [...bg[1].matchAll(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/g)]
-        .map(match => ({ rgb: [1, 2, 3].map(i => Number(match[i])), alpha: Number(match[4]) }));
-    assert.ok(stops.length >= 2, `玻璃渐变至少要有两档，实际 ${stops.length}`);
+    const stops = glassBody(glass);
     for (const { rgb, alpha } of stops) {
-        assert.ok(alpha > 0 && alpha < 1,
-            `玻璃每一档都要半透明（0 < alpha < 1），实际 alpha=${alpha}`);
         // 近白冷色：保持参考图那种干净的冷灰，别退回暖黄或深灰。
         assert.ok(Math.min(...rgb) >= 225, `玻璃色 rgb(${rgb}) 太暗，卡面会显脏`);
         assert.ok(rgb[2] >= rgb[0], `玻璃色 rgb(${rgb}) 应偏冷（蓝 >= 红）`);
+        assert.ok(alpha > 0 && alpha < 1,
+            `玻璃每一档都要半透明（0 < alpha < 1），实际 alpha=${alpha}`);
     }
+
+    // 高光扫过：玻璃最强的识别线索，缺了它就只是"一张更白的卡"。
+    const sheens = gradientLayers(bg[1]).filter(layer => /rgba\(\s*255,\s*255,\s*255,\s*0(?:\.0+)?\s*\)/.test(layer));
+    assert.ok(sheens.length >= 1, '卡面应有一层从亮到全透明的高光扫过');
 
     // 按景的身份色整体退场，不留半截定义。
     assert.doesNotMatch(styles, /--scene-tint\s*:/, '按景身份色的定义应已整体移除');
 
     // 色斑铺满整卡之后，原来的"右下角一团柔光"必须撤掉，否则两层色会发脏。
     assert.doesNotMatch(styles, /radial-gradient\(\s*128% 140%/);
+});
+
+test('毛玻璃卡面必须明显亮于画布，否则卡片会溶进背景', () => {
+    // 半透明卡在平涂画布上面临一个硬约束：alpha 越低，合成出来的颜色越接近画布。
+    // 低到一定程度，卡片就只剩一圈边框、右下角直接和背景连成一片——那就不像卡片了。
+    // 这条把"卡片最暗处仍要明显亮于画布"钉住，避免以后为了"更透"把卡片调没。
+    const canvas = styles.match(
+        /\.studio-booking-page \.list-view\.real-scene-active,\s*\n\.sixth-floor-canvas-viewport\s*\{\s*\n\s*background:\s*(#[0-9A-Fa-f]{6})/
+    );
+    assert.ok(canvas, '没有找到 6F 画布底色');
+    const backdrop = [1, 3, 5].map(i => parseInt(canvas[1].slice(i, i + 2), 16));
+
+    // 只算"玻璃本体"那几档的合成：高光扫过和颗粒不改本体的透过率下限。
+    const stops = glassBody(rule(CARD));
+    const composites = stops.map(({ rgb, alpha }) =>
+        rgb.map((channel, i) => channel * alpha + backdrop[i] * (1 - alpha)));
+
+    // 用标准的相对亮度（含 sRGB 传递函数），结果落在 0~1。
+    // 别用 0~255 的加权和当亮度：那不是亮度，算出来的差值也没有可解释的量纲。
+    const channel = v => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    };
+    const luminance = rgb => 0.2126 * channel(rgb[0]) + 0.7152 * channel(rgb[1]) + 0.0722 * channel(rgb[2]);
+
+    const darkest = composites.reduce((a, b) => (luminance(a) <= luminance(b) ? a : b));
+    const gap = luminance(darkest) - luminance(backdrop);
+
+    // 下限 0.04：当前设计的最透一档是 0.048，刚好在线上，说明这个下限卡得住
+    // 又不过分——再往下调玻璃就会溶进画布（alpha 0.3 时只剩约 0.024，会被拦下）。
+    // 卡片另有边框和棱光帮忙定形，所以这里不需要很高的差值。
+    assert.ok(gap >= 0.04,
+        `卡面最暗处 rgb(${darkest.map(v => v.toFixed(0))}) 只比画布亮 ${gap.toFixed(3)}（相对亮度），` +
+        '再透就会溶进背景、只剩一圈边框');
 });
 
 test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色而不是换卡面', () => {

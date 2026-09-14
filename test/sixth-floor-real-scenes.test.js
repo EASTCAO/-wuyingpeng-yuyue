@@ -260,19 +260,13 @@ test('实拍封面是内嵌窗口，景名落在面板上而不是压着照片',
     // 6F 卡没有底板，景名直接压在卡面上。但卡面已经是半透明毛玻璃——
     // 透出来的是"画布 → 玻璃"两层叠出来的颜色，不能再拿卡面字面色直接算。
 
-    // 第 1 层：画布。取底色里最暗的一档，再把四团色场全叠上去。
-    // 色场在空间上互相错开、不可能同时落在一处，全叠是刻意往暗里估，
-    // 宁可高估问题也不放过。
-    const canvas = layoutStyles.match(/\.sixth-floor-canvas-viewport\s*\{\n([\s\S]*?)\n\}/);
-    assert.ok(canvas, '没有找到 6F 画布底色规则');
-    const canvasBg = canvas[1].match(/background:([\s\S]*?);/);
-    assert.ok(canvasBg, '没有找到 6F 画布背景');
-    const baseStops = [...canvasBg[1].matchAll(/#([0-9A-Fa-f]{6})/g)].map(match => toRgb('#' + match[1]));
-    assert.ok(baseStops.length >= 1, '画布底色应有字面色值');
-    let backdrop = baseStops.reduce((a, b) => (luminance(a) <= luminance(b) ? a : b));
-    for (const field of canvasBg[1].matchAll(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/g)) {
-        backdrop = composite(backdrop, [1, 2, 3].map(i => Number(field[i])), Number(field[4]));
-    }
+    // 第 1 层：画布。它是平涂的单一颜色，直接读色值即可——
+    // 没有多层叠加，也就不存在"合成顺序理解错"的空间。
+    const canvas = layoutStyles.match(
+        /\.studio-booking-page \.list-view\.real-scene-active,\s*\n\.sixth-floor-canvas-viewport\s*\{\s*\n\s*background:\s*(#[0-9A-Fa-f]{6})/
+    );
+    assert.ok(canvas, '没有找到 6F 画布底色');
+    const backdrop = toRgb(canvas[1]);
 
     // 第 2 层：玻璃。最透的那一档让最多画布透过来，合成后最暗、对比度最差。
     const glass = layoutStyles.match(
