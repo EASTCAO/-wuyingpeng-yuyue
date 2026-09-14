@@ -110,7 +110,7 @@ test('毛玻璃卡面必须明显亮于画布，否则卡片会溶进背景', ()
     const darkest = composites.reduce((a, b) => (luminance(a) <= luminance(b) ? a : b));
     const gap = luminance(darkest) - luminance(backdrop);
 
-    // 下限 0.04：当前设计的最透一档是 0.048，刚好在线上，说明这个下限卡得住
+    // 下限 0.04：当前设计的最透一档仍明显高于画布，说明这个下限卡得住
     // 又不过分——再往下调玻璃就会溶进画布（alpha 0.3 时只剩约 0.024，会被拦下）。
     // 卡片另有边框和棱光帮忙定形，所以这里不需要很高的差值。
     assert.ok(gap >= 0.04,
