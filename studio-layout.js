@@ -77,6 +77,7 @@ const SIXTH_FLOOR_DRAG_THRESHOLD = 10;
 // 左右各留一根通高柱（绿植房景 240 宽、复古餐厅景 320 宽）收边。
 // 每行宽度之和都精确等于 1720，右沿严丝合缝落在 x1760。
 // 改过坐标就升 SIXTH_FLOOR_LAYOUT_VERSION，让残留的旧版个人布局作废。
+const SIXTH_FLOOR_DEFAULT_LAYOUT = {
     'sixth-corridor': { x: 40, y: 40, width: 264, height: 120 },
     'sixth-wood-wall': { x: 328, y: 40, width: 264, height: 120 },
     'sixth-greenery-wall': { x: 616, y: 40, width: 360, height: 120 },
@@ -689,5 +690,6 @@ function handleRealSceneCardKeydown(event, studioId) {
     event.preventDefault();
     openRealSceneCard(studioId);
 }
+
 
 
