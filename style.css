@@ -7,6 +7,20 @@
    纯图形元素（开关、勾选框）适用 3:1 标准，可继续用主色。
 
    圆角：17 个历史值映射到 6 档 + 胶囊，单处位移不超过 4px。 */
+/* 中文字体：思源黑体同源的 Noto Sans SC。
+   不指定中文字体时，Windows 会退回微软雅黑——笔画粗细不匀、观感偏旧，
+   和设计稿那种均匀细致的现代中文字差得远。自带一份能保证各平台一致，
+   也不依赖墙外的字体 CDN。
+   字体只包含项目实际用到的 1016 个汉字 + 数字、标点和拉丁字母，
+   子集化后约 330KB，可离线缓存。 */
+@font-face {
+    font-family: "Noto Sans SC";
+    src: url("assets/fonts/noto-sans-sc-subset.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
     --accent: #4C7DFF;          /* 图形、边框、指示器（图形 AA 需 3:1） */
     --accent-solid: #2563EB;    /* 承载白字的按钮 / 激活态（5.17:1） */
@@ -55,7 +69,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background: #F7F9FC;
     background-image: none;
     background-attachment: fixed;

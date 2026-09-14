@@ -38,7 +38,8 @@ test('6F 景名跟着卡片尺寸放大，缩到屏幕后仍然明显', () => {
     assert.ok(rule, '没有找到 6F 景名规则');
     assert.match(rule, /font-size:\s*clamp\(\s*32px,\s*min\(calc\(var\(--card-width\)/);
     assert.match(rule, /calc\(var\(--card-height\)/);
-    assert.match(rule, /font-weight:\s*700/);
+    // 字重跟参考图走，是常规字重，不是加粗的黑体。
+    assert.match(rule, /font-weight:\s*400/);
     assert.doesNotMatch(rule, /font-size:\s*19px/);
 });
 

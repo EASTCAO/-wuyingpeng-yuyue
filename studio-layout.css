@@ -665,7 +665,9 @@
    大卡有上限，缩到屏幕上之后仍然明显。7F 是 1:1 渲染，不受影响。 */
 .preview-floor-map-sixth-floor .preview-scene-card h4 {
     font-size: clamp(32px, min(calc(var(--card-width) * 0.062), calc(var(--card-height) * 0.18)), 48px);
-    font-weight: 700;
+    /* 参考图用的是常规字重（按同字高下的墨迹覆盖率比对，400 最接近）；
+       粗黑体压不出那种干净的观感。 */
+    font-weight: 400;
     line-height: 1.2;
 }
 

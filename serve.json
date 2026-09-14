@@ -4,7 +4,7 @@
   "directoryListing": false,
   "headers": [
     {
-      "source": "**/*.@(js|css|webp)",
+      "source": "**/*.@(js|css|webp|woff2)",
       "headers": [
         {
           "key": "Cache-Control",
