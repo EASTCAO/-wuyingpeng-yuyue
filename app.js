@@ -207,8 +207,8 @@ const STUDIO_GROUPS = [
         studios: [
             { id: '6F·走廊景', title: '走廊景', location: '6F 实景棚', mapArea: 'sixth-corridor' },
             { id: '6F·木墙景', title: '木墙景', location: '6F 实景棚', mapArea: 'sixth-wood-wall' },
-            { id: '6F·绿植背景墙景', title: '绿植背景墙景', location: '6F 实景棚', mapArea: 'sixth-greenery-wall' },
-            { id: '6F·绿植房景', title: '绿植房景', location: '6F 实景棚', mapArea: 'sixth-greenery' },
+            { id: '6F·绿植背景墙景', title: '绿植背景墙景', location: '6F 实景棚', mapArea: 'sixth-greenery' },
+            { id: '6F·绿植房景', title: '绿植房景', location: '6F 实景棚', mapArea: 'sixth-greenery-wall' },
             { id: '6F·儿童房景', title: '儿童房景', location: '6F 实景棚', mapArea: 'sixth-kids' },
             { id: '6F·教室景', title: '教室景', location: '6F 实景棚', mapArea: 'sixth-classroom' },
             { id: '6F·医护室景', title: '医护室景', location: '6F 实景棚', mapArea: 'sixth-clinic' },
@@ -225,7 +225,9 @@ const STUDIO_GROUPS = [
             { id: '6F·吧台景', title: '吧台景', location: '6F 实景棚', mapArea: 'sixth-bar' },
             { id: '6F·国风景', title: '国风景', location: '6F 实景棚', mapArea: 'sixth-chinese' },
             { id: '6F·工具间景', title: '工具间景', location: '6F 实景棚', mapArea: 'sixth-workshop' },
-            { id: '6F·现代厨房景', title: '现代厨房景', location: '6F 实景棚', mapArea: 'sixth-modern-kitchen' }        ]
+            { id: '6F·现代厨房景', title: '现代厨房景', location: '6F 实景棚', mapArea: 'sixth-modern-kitchen' },
+            { id: '5F·阳台景', title: '5楼阳台', location: '5F 阳台', mapArea: 'fifth-balcony' }
+        ]
     }
 ];
 
@@ -3486,4 +3488,5 @@ function renderStatsView() {
         `;
     }).join('');
 }
+
 

@@ -60,7 +60,7 @@ function renderStudioSceneTitle(title) {
         .join('')}</h4>`;
 }
 
-const SIXTH_FLOOR_LAYOUT_VERSION = 8;
+const SIXTH_FLOOR_LAYOUT_VERSION = 9;
 const SIXTH_FLOOR_CANVAS_SIZE = { width: 1800, height: 1040 };
 const SIXTH_FLOOR_FRAME_INSETS = { top: 76, right: 20, bottom: 20, left: 20 };
 const SIXTH_FLOOR_DEFAULT_SCALE = 0.75;
@@ -98,7 +98,8 @@ const SIXTH_FLOOR_DEFAULT_LAYOUT = {
     'sixth-bar': { x: 400, y: 864, width: 288, height: 140 },
     'sixth-chinese': { x: 712, y: 864, width: 288, height: 140 },
     'sixth-workshop': { x: 1024, y: 864, width: 336, height: 140 },
-    'sixth-modern-kitchen': { x: 1384, y: 864, width: 376, height: 140 }
+    'sixth-modern-kitchen': { x: 1384, y: 864, width: 376, height: 140 },
+    'fifth-balcony': { x: 1780, y: 864, width: 288, height: 140 }
 };
 
 let sixthFloorViewport = { x: 0, y: 0, scale: 1 };
@@ -690,6 +691,7 @@ function handleRealSceneCardKeydown(event, studioId) {
     event.preventDefault();
     openRealSceneCard(studioId);
 }
+
 
 
 

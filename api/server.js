@@ -94,7 +94,8 @@ const STUDIO_IDS = [
   '6F·吧台景',
   '6F·国风景',
   '6F·工具间景',
-  '6F·现代厨房景'
+  '6F·现代厨房景',
+  '5F·阳台景'
 ];
 const FROZEN_STUDIO_IDS = new Set(['小无影棚1', '小无影棚2']);
 const SIMPLE_VIDEO_STUDIO_IDS = [
@@ -770,3 +771,4 @@ process.on('SIGTERM', () => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
