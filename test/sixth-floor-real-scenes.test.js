@@ -35,10 +35,9 @@ test('6F 小屏预览保留横向户型图而不是降级为卡片列表', () =>
     assert.match(layoutStyles, /\.preview-floor-map-sixth-floor\s*{[\s\S]*?min-width:\s*0;/);
 });
 
-test('6F 自由画布具备默认坐标、用户隔离存储和游客只读规则', () => {
+test('6F 画布使用统一固定坐标', () => {
     assert.match(layoutSource, /SIXTH_FLOOR_DEFAULT_LAYOUT/);
-    assert.match(layoutSource, /studio-layout:6F:/);
-    assert.match(layoutSource, /currentUser\.startsWith\('游客'\)/);
+    assert.doesNotMatch(layoutSource, /studio-layout:6F:/);
     assert.match(layoutSource, /data-layout-key/);
     assert.match(layoutSource, /resetSixthFloorLayout/);
     assert.match(layoutStyles, /sixth-floor-canvas/);
@@ -114,9 +113,8 @@ test('点击已过期实景棚会自动切换到下一可预约日期并打开�
     assert.match(openCardSource, /showAddBookingForm\(studioId\);/);
 });
 
-test('6F 场景结构变化后拒绝读取旧版个人布局', () => {
-    assert.match(layoutSource, /SIXTH_FLOOR_LAYOUT_VERSION\s*=\s*10/);
-    assert.match(layoutSource, /stored\?\.version === SIXTH_FLOOR_LAYOUT_VERSION/);
+test('6F 不读取旧版个人布局', () => {
+    assert.match(layoutSource, /function loadSixthFloorLayout\(\) \{\s*return structuredClone\(SIXTH_FLOOR_DEFAULT_LAYOUT\);/);
 });
 
 test('6F 卡片拖动时不会选中文字', () => {
@@ -597,31 +595,27 @@ test('6F 默认布局的卡片互不重叠且都在画布内', () => {
     }
 });
 
-test('6F 参考图布局保留原有卡片尺寸', () => {
+test('6F 固定布局保留最终截图卡片比例', () => {
     const layout = parseDefaultLayout();
-    assert.equal(layout['sixth-clinic'].width, 528);
-    assert.equal(layout['sixth-greenery'].height, 576);
-    assert.equal(layout['sixth-bedroom'].width, 248);
-    assert.equal(layout['sixth-street'].height, 120);
+    assert.equal(layout['sixth-clinic'].width, 476);
+    assert.equal(layout['sixth-greenery'].height, 502);
+    assert.equal(layout['sixth-bedroom'].width, 430);
+    assert.equal(layout['sixth-street'].height, 193);
 });
 
-test('6F 已保存和拖动中的卡片坐标都会被限制在画布内', () => {
-    assert.match(layoutSource, /function clampSixthFloorCardPosition/);
-    assert.match(layoutSource, /Math\.min\(SIXTH_FLOOR_CANVAS_SIZE\.width - card\.width/);
-    assert.match(layoutSource, /clampSixthFloorLayout/);
-    assert.match(layoutSource, /clampSixthFloorCardPosition\(\{[\s\S]*\.\.\.next/);
+test('6F 卡片不再提供拖动和调整尺寸入口', () => {
+    assert.doesNotMatch(layoutSource, /data-draggable|data-resize-handle|saveSixthFloorLayout/);
+    assert.doesNotMatch(layoutStyles, /sixth-floor-resize-handle|cursor:\s*move/);
 });
 
-test('6F 拖动后的点击抑制标记会自动清理', () => {
-    assert.match(layoutSource, /setTimeout\(\(\) => \{\s*sixthFloorSuppressClick = false;/);
+test('6F 平移状态在结束或取消时清理', () => {
+    assert.match(layoutSource, /pointerup[\s\S]*?sixthFloorPanState = null;/);
     assert.match(layoutSource, /pointercancel/);
 });
 
-test('6F 实景卡片轻点优先预约，移动超过阈值后才拖动', () => {
-    assert.match(layoutSource, /SIXTH_FLOOR_DRAG_THRESHOLD\s*=\s*10/);
-    assert.match(layoutSource, /if \(!state\.moved && Math\.hypot\(dx, dy\) < SIXTH_FLOOR_DRAG_THRESHOLD\) return;/);
-    assert.match(layoutSource, /state\.moved = true;[\s\S]*if \(state\.type === 'card'\)/);
-    assert.match(layoutSource, /else if \(!state\.resizing\) \{\s*sixthFloorSuppressClick = true;\s*openRealSceneCard\(state\.card\.dataset\.studioId\);/);
+test('6F 卡片只点击预约，不参与画布平移', () => {
+    assert.match(layoutSource, /if \(event\.target\.closest\('\[data-layout-key\]'\)\) return;/);
+    assert.match(layoutSource, /function handleSixthFloorCardClick\(event, studioId\) \{\s*openRealSceneCard\(studioId\);/);
 });
 
 // 四个组合平铺出来要占满一整行，把日期挤到第二行；收成一个触发器之后，
