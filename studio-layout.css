@@ -230,23 +230,14 @@
 
 }
 
-.studio-booking-page .list-view.real-scene-active .preview-workspace-6f .preview-status-legend,
-.studio-booking-page .list-view.real-scene-active .preview-workspace-6f .sixth-floor-canvas-toolbar {
+.studio-booking-page .list-view.real-scene-active .preview-workspace-6f .preview-status-legend {
+    top: 8px;
     right: 8px;
     box-sizing: border-box;
     width: 152px;
     height: 23px;
     justify-content: center;
-}
-
-.studio-booking-page .list-view.real-scene-active .preview-workspace-6f .preview-status-legend {
-    top: 8px;
     flex-wrap: nowrap;
-}
-
-/* 紧贴在状态说明下方：8(顶) + 23(说明高) + 6(间距) */
-.studio-booking-page .list-view.real-scene-active .preview-workspace-6f .sixth-floor-canvas-toolbar {
-    top: 37px;
 }
 
 .preview-workspace {
@@ -387,41 +378,7 @@
     border: 0;
     border-radius: 0;
     box-shadow: none;
-    cursor: grab;
 }
-
-.sixth-floor-canvas-viewport:active { cursor: grabbing; }
-
-.sixth-floor-canvas-toolbar {
-    position: absolute;
-    z-index: 30;
-    top: 2px;
-    right: 0;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    padding: 1px;
-    border: 1px solid #E1E7ED;
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 4px 12px rgba(42, 51, 61, 0.08);
-}
-
-/* 19px = 23px 外框 - 2px 边框 - 2px 内边距，按钮正好填满工具条高度 */
-.sixth-floor-canvas-toolbar button {
-    min-width: 19px;
-    height: 19px;
-    padding: 0 4px;
-    border: 0;
-    border-radius: var(--radius-xs);
-    background: #F4F6F8;
-    color: #4B5563;
-    font-size: 12px;
-    cursor: pointer;
-}
-
-.sixth-floor-canvas-toolbar button:hover { background: #E8EEF8; }
-.sixth-floor-canvas-toolbar span { min-width: 28px; color: #687483; font-size: 9px; text-align: center; }
 
 .sixth-floor-canvas {
     position: absolute;
@@ -446,12 +403,10 @@
     min-height: 0;
     margin: 0;
     z-index: 2;
-    touch-action: none;
     -webkit-user-select: none;
     user-select: none;
+    cursor: pointer;
 }
-
-.sixth-floor-layout-card { cursor: pointer; }
 
 .sixth-floor-layout-card .preview-scene-card-top { pointer-events: none; }
 

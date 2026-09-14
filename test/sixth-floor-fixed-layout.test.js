@@ -23,8 +23,8 @@ test('移除智能吸附、辅助线和尺寸提示', () => {
     assert.doesNotMatch(styles, /sixth-floor-alignment-guide|sixth-floor-card-metrics/);
 });
 
-test('复位只恢复视图，不删除用户存储', () => {
-    const reset = source.match(/function resetSixthFloorLayout\(\)[\s\S]*?\n\}/)[0];
-    assert.doesNotMatch(reset, /localStorage/);
-    assert.match(reset, /sixthFloorViewport = \{ x: 0, y: 0, scale: 1 \}/);
+test('画布不再提供手动缩放、平移和复位', () => {
+    assert.doesNotMatch(source, /sixthFloorPanState|resetSixthFloorLayout|SIXTH_FLOOR_MIN_SCALE/);
+    assert.doesNotMatch(source, /addEventListener\('wheel'/);
+    assert.match(source, /function bindSixthFloorCanvas\(\)[\s\S]*?fitSixthFloorCanvasToViewport\(loadSixthFloorLayout\(\)\);/);
 });

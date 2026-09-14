@@ -63,8 +63,6 @@ function renderStudioSceneTitle(title) {
 const SIXTH_FLOOR_CANVAS_SIZE = { width: 3280, height: 1560 };
 const SIXTH_FLOOR_FRAME_INSETS = { top: 76, right: 20, bottom: 20, left: 20 };
 const SIXTH_FLOOR_DEFAULT_SCALE = 0.75;
-// 手动缩放下限；首次适配允许更小倍率，以完整展示扩展后的布局。
-const SIXTH_FLOOR_MIN_SCALE = 0.7;
 // 按最终确认截图固化位置和尺寸，不再读取个人布局或允许调整卡片。
 const SIXTH_FLOOR_DEFAULT_LAYOUT = {
     'sixth-corridor': { x: 48, y: 40, width: 626, height: 352 },
@@ -92,15 +90,9 @@ const SIXTH_FLOOR_DEFAULT_LAYOUT = {
 };
 
 let sixthFloorViewport = { x: 0, y: 0, scale: 1 };
-let sixthFloorPanState = null;
 
 function loadSixthFloorLayout() {
     return structuredClone(SIXTH_FLOOR_DEFAULT_LAYOUT);
-}
-
-function resetSixthFloorLayout() {
-    sixthFloorViewport = { x: 0, y: 0, scale: 1 };
-    renderRealSceneOverview();
 }
 
 let currentStudioFloor = null;
@@ -411,12 +403,6 @@ function renderRealSceneMap(scenes) {
             ${isSixthFloor ? `
                 <div class="sixth-floor-canvas-viewport" data-canvas-viewport>
                     ${renderPreviewStatusLegend()}
-                    <div class="sixth-floor-canvas-toolbar" aria-label="画布工具">
-                        <button type="button" data-canvas-action="zoom-out" aria-label="缩小">−</button>
-                        <span data-canvas-zoom>100%</span>
-                        <button type="button" data-canvas-action="zoom-in" aria-label="放大">+</button>
-                        <button type="button" data-canvas-action="reset">复位</button>
-                    </div>
                     <div class="sixth-floor-canvas" data-sixth-floor-canvas style="width:${SIXTH_FLOOR_CANVAS_SIZE.width}px;height:${SIXTH_FLOOR_CANVAS_SIZE.height}px;transform:translate(calc(-50% + ${sixthFloorViewport.x}px), calc(-50% + ${sixthFloorViewport.y}px)) scale(${sixthFloorViewport.scale})">
                         ${scenes.map(({ studio, state }, index) => renderRealSceneCard(studio, state, index, layout)).join('')}
                     </div>
@@ -506,8 +492,6 @@ function applySixthFloorViewport() {
     const canvas = document.querySelector('[data-sixth-floor-canvas]');
     if (!canvas) return;
     canvas.style.transform = `translate(calc(-50% + ${sixthFloorViewport.x}px), calc(-50% + ${sixthFloorViewport.y}px)) scale(${sixthFloorViewport.scale})`;
-    const zoom = document.querySelector('[data-canvas-zoom]');
-    if (zoom) zoom.textContent = `${Math.round(sixthFloorViewport.scale * 100)}%`;
 }
 
 function getSixthFloorLayoutBounds(layout) {
@@ -536,39 +520,8 @@ function bindSixthFloorCanvas() {
     const viewport = document.querySelector('[data-canvas-viewport]');
     const canvas = document.querySelector('[data-sixth-floor-canvas]');
     if (!viewport || !canvas) return;
-    const layout = loadSixthFloorLayout();
-    fitSixthFloorCanvasToViewport(layout);
-    viewport.addEventListener('wheel', event => {
-        event.preventDefault();
-        const delta = event.deltaY < 0 ? 0.1 : -0.1;
-        sixthFloorViewport.scale = Math.min(1.5, Math.max(SIXTH_FLOOR_MIN_SCALE, Number((sixthFloorViewport.scale + delta).toFixed(2))));
-        applySixthFloorViewport();
-    }, { passive: false });
-    viewport.querySelectorAll('[data-canvas-action]').forEach(button => button.addEventListener('click', () => {
-        const action = button.dataset.canvasAction;
-        if (action === 'reset') return resetSixthFloorLayout();
-        sixthFloorViewport.scale = Math.min(1.5, Math.max(SIXTH_FLOOR_MIN_SCALE, Number((sixthFloorViewport.scale + (action === 'zoom-in' ? 0.1 : -0.1)).toFixed(2))));
-        applySixthFloorViewport();
-    }));
-    canvas.addEventListener('pointerdown', event => {
-        if (event.target.closest('[data-layout-key]')) return;
-        sixthFloorPanState = { startX: event.clientX, startY: event.clientY, originX: sixthFloorViewport.x, originY: sixthFloorViewport.y };
-        viewport.setPointerCapture(event.pointerId);
-    });
-    viewport.addEventListener('pointermove', event => {
-        if (!sixthFloorPanState) return;
-        sixthFloorViewport.x = sixthFloorPanState.originX + event.clientX - sixthFloorPanState.startX;
-        sixthFloorViewport.y = sixthFloorPanState.originY + event.clientY - sixthFloorPanState.startY;
-        applySixthFloorViewport();
-    });
-    viewport.addEventListener('pointerup', event => {
-        sixthFloorPanState = null;
-        if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
-    });
-    viewport.addEventListener('pointercancel', event => {
-        sixthFloorPanState = null;
-        if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
-    });
+    // 布局固定，画布只按视口自动等比适配，不再提供手动缩放或平移。
+    fitSixthFloorCanvasToViewport(loadSixthFloorLayout());
 }
 
 function openRealSceneCard(studioId) {
