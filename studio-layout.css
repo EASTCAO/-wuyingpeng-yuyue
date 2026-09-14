@@ -426,40 +426,6 @@
     border-radius: var(--radius-xl);
 }
 
-/* 每个景的身份色。卡面本身留白，色只作为右下角的一团柔光（见 ::after），
-   原因是卡面填充已经被"预约状态"占用了——满约是中蓝、部分预约是浅蓝。
-   身份和状态各占一层，才不会让"国风景"这类暖色景看着像已约满。
-   为此暖色景的饱和度统一压到 <=16%，明确低于 partial 状态的 23%。
-   所有色对景名 #252B33 的对比度都在 8:1 以上，远超 AA。 */
-.preview-floor-map-sixth-floor .preview-scene-card {
-    --scene-tint: #D2D8DE;
-}
-
-/* 背景墙与通道：冷调、低饱和，属于"平面背景"而非房间 */
-.preview-floor-map-sixth-floor [data-map-area="sixth-corridor"] { --scene-tint: #C9D4E2; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-wood-wall"] { --scene-tint: #D9CBB6; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-greenery-wall"] { --scene-tint: #BFD8C2; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-ocean-wall"] { --scene-tint: #B8D4E3; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-street"] { --scene-tint: #C6C9D1; }
-
-/* 生活与功能房间：跟着该景实际的主色走 */
-.preview-floor-map-sixth-floor [data-map-area="sixth-greenery"] { --scene-tint: #C3DAC6; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-kids"] { --scene-tint: #F2D2D8; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-classroom"] { --scene-tint: #CBD9EC; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-clinic"] { --scene-tint: #CFE3E8; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-study"] { --scene-tint: #D3C6B0; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-vintage-living"] { --scene-tint: #DECBBB; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-vintage-dining"] { --scene-tint: #DAC8B8; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-modern-living"] { --scene-tint: #D2D8DE; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-modern-dining"] { --scene-tint: #DCD4C8; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-outdoor-cafe"] { --scene-tint: #D6CDBE; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-bedroom"] { --scene-tint: #DAD0DC; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-bathroom"] { --scene-tint: #C8DBE0; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-bar"] { --scene-tint: #C9C4CE; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-chinese"] { --scene-tint: #E0C4BE; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-workshop"] { --scene-tint: #CDD2D6; }
-.preview-floor-map-sixth-floor [data-map-area="sixth-modern-kitchen"] { --scene-tint: #D4DADD; }
-
 /* 实拍封面。照片说明"这是哪个景"，但它是背景不是主角——景名才是。
 
    照片铺满整张卡（inset: 0），上面盖一层高不透明度的浅色罩，把照片压成
@@ -603,19 +569,20 @@
 
 
 /* 立体感走"弥散光晕"而不是硬投影：多层大半径、低透明度的阴影叠起来，
-   而且阴影染上该景的身份色（--scene-tint）而不是灰。这一条是整个观感的
-   关键——同样的模糊半径，灰阴影看着像廉价的 drop-shadow，带色的才有
-   参考图那种"卡片浮在有色光晕上"的高级感。
+   而且阴影染一点冷色（#C4CCD6 这类蓝灰）而不是纯灰。这一条是整个观感的
+   关键——同样的模糊半径，灰阴影看着像廉价的 drop-shadow，带一点冷调的才有
+   参考图那种"卡片浮在光晕上"的高级感。
 
-   color-mix 把身份色往深里调再压透明度：直接用 --scene-tint 原色太浅，
-   在浅色画布上等于没有阴影。 */
+   color-mix 把冷色往深里调再压透明度：直接用原色太浅，在浅色画布上等于没有阴影。
+   这里的 #C4CCD6 早先是"每个景一个身份色"的兜底值；6F 改成统一卡面后身份色
+   整体退场，兜底值就成了唯一的取值，所以直接写死。 */
 .preview-scene-card.has-scene-cover {
-    border-color: color-mix(in srgb, var(--scene-tint, #C4CCD6), #3E4A5C 68%);
+    border-color: color-mix(in srgb, #C4CCD6, #3E4A5C 68%);
     box-shadow:
-        0 1px 2px color-mix(in srgb, var(--scene-tint, #C4CCD6), transparent 62%),
-        0 6px 14px color-mix(in srgb, var(--scene-tint, #C4CCD6), transparent 58%),
-        0 16px 32px color-mix(in srgb, var(--scene-tint, #C4CCD6), transparent 66%),
-        0 28px 56px color-mix(in srgb, var(--scene-tint, #C4CCD6), transparent 74%);
+        0 1px 2px color-mix(in srgb, #C4CCD6, transparent 62%),
+        0 6px 14px color-mix(in srgb, #C4CCD6, transparent 58%),
+        0 16px 32px color-mix(in srgb, #C4CCD6, transparent 66%),
+        0 28px 56px color-mix(in srgb, #C4CCD6, transparent 74%);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -623,23 +590,23 @@
     .preview-scene-card.has-scene-cover:hover,
     .preview-scene-card.has-scene-cover:focus-visible {
         box-shadow:
-            0 2px 4px color-mix(in srgb, var(--scene-tint, #C4CCD6), transparent 54%),
-            0 10px 20px color-mix(in srgb, var(--scene-tint, #C4CCD6), transparent 50%),
-            0 24px 44px color-mix(in srgb, var(--scene-tint, #C4CCD6), transparent 58%),
-            0 40px 76px color-mix(in srgb, var(--scene-tint, #C4CCD6), transparent 66%);
+            0 2px 4px color-mix(in srgb, #C4CCD6, transparent 54%),
+            0 10px 20px color-mix(in srgb, #C4CCD6, transparent 50%),
+            0 24px 44px color-mix(in srgb, #C4CCD6, transparent 58%),
+            0 40px 76px color-mix(in srgb, #C4CCD6, transparent 66%);
         transform: translateY(-4px) scale(1.012);
     }
 }
 
-/* 卡面：身份色往白里调的柔和渐变，参考图那种浅紫/浅蓝低饱和面就是这个。
+/* 卡面：冷色往白里调的柔和渐变（7F 实拍封面卡用，色值走兜底的 #C4CCD6）。
    撤掉基类的玻璃磨砂（backdrop-filter）——那套是给"白色玻璃卡"调的，
-   放在有色面上会把身份色也一起糊掉。 */
+   放在有色面上会把色一起糊掉。 */
 .preview-scene-card.has-scene-cover {
     background: linear-gradient(
         152deg,
         #FFFFFF 0%,
-        color-mix(in srgb, var(--scene-tint, #C4CCD6), #FFFFFF 72%) 46%,
-        color-mix(in srgb, var(--scene-tint, #C4CCD6), #FFFFFF 38%) 100%
+        color-mix(in srgb, #C4CCD6, #FFFFFF 72%) 46%,
+        color-mix(in srgb, #C4CCD6, #FFFFFF 38%) 100%
     );
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -647,8 +614,8 @@
 
 /* 景名统一在文件末尾声明（要排在 .full h4 / .ended h4 之后才生效）。 */
 
-/* 身份色不再糊成右下角一团色斑，而是像参考图那样铺满整张卡面
-   （见下面的渐变规则）。::after 只留基类的玻璃内缘高光，色斑整块撤掉。 */
+/* 卡面色改为铺满整张卡面的渐变（见下面的规则），不再糊成右下角一团色斑。
+   ::after 只留基类的玻璃内缘高光，色斑整块撤掉。 */
 .preview-floor-map-sixth-floor .preview-scene-card.partial::after,
 .preview-floor-map-sixth-floor .preview-scene-card.full::after,
 .preview-floor-map-sixth-floor .preview-scene-card.ended::after,
@@ -673,19 +640,23 @@
     line-height: 1.2;
 }
 
-/* 卡面配色复刻参考图：整卡从白渐变到该景的身份色，而不是白底加一块色斑。
-   参考图的色很淡——色只在卡片一角若隐若现，所以身份色要往白里调掉七八成；
-   调浅之后卡片回到"近白为主、色作点缀"，深色版会压过景名也显脏。
-   只写给 available：partial / full / ended 是预约状态色，必须继续压过身份色。
+/* 卡面配色复刻参考图：22 张卡用的是同一个近白冷色，不再按景给各自的身份色。
+   之前每个景一个色相（儿童房偏粉、木墙偏米、绿植偏绿……）单看有信息量，
+   摆在一起却是二十来种深浅不一的色块，整体显得花、不整齐。
+   参考图的做法相反：卡与卡之间完全同色，靠"左上近纯白 → 右下淡冷灰"的
+   斜向渐变撑出层次，差异交给景名，不交给颜色。
+   只写给 available：partial / full / ended 是预约状态色，必须继续压过卡面底色。
    三层的选择器是为了稳压基类的 .has-progress / .has-scene-cover 系列。 */
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.available {
+    /* 取色自参考图实测：左上角 rgb(252,252,253)、右下角 rgb(241,245,249)，
+       横向落差略大于纵向（120deg），所以角上的色不随卡片大小变化。 */
     background: linear-gradient(
-        163deg,
-        #FFFFFF 0%,
-        color-mix(in srgb, var(--scene-tint), #FFFFFF 86%) 52%,
-        color-mix(in srgb, var(--scene-tint), #FFFFFF 68%) 100%
+        120deg,
+        #FCFCFD 0%,
+        #F7F9FB 50%,
+        #F1F5F9 100%
     );
-    /* 卡面已经是实色渐变，基类的磨砂再叠一层只会让身份色发灰。 */
+    /* 卡面已经是实色渐变，基类的磨砂再叠一层只会让卡面发灰。 */
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
 }

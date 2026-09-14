@@ -127,42 +127,21 @@ test('6F 实景卡片使用圆润圆角', () => {
     assert.ok(radius, `圆角应至少为 --radius-lg，实际规则：${rule[1].trim()}`);
 });
 
-test('6F 每个景都有身份色，且暖色景不会被误读成预约状态', () => {
-    const tints = [...layoutStyles.matchAll(
-        /\[data-map-area="(sixth-[\w-]+)"\]\s*\{\s*--scene-tint:\s*(#[0-9A-Fa-f]{6})/g
-    )].map(match => ({ area: match[1], hex: match[2] }));
+test('6F 不再有按景身份色，22 张卡的卡面完全同色', () => {
+    // 曾经每个景一个身份色（21 条 --scene-tint）。单看有信息量，摆在一起
+    // 是二十来种深浅不一的色块，用户反馈"太花、不够整齐"，于是整体退场。
+    assert.doesNotMatch(layoutStyles, /--scene-tint\s*:/, '按景身份色的定义应已整体移除');
 
-    // 21 个景每个都要有自己的身份色，漏一个就会退回默认灰。
-    assert.equal(tints.length, 21, `应有 21 个景的身份色，实际 ${tints.length}`);
-    assert.equal(new Set(tints.map(item => item.area)).size, 21, '有景的身份色重复声明');
-
-    const saturation = hex => {
-        const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
-        const max = Math.max(r, g, b);
-        return max ? (max - Math.min(r, g, b)) / max : 0;
-    };
-    const hue = hex => {
-        const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
-        const max = Math.max(r, g, b);
-        const delta = max - Math.min(r, g, b);
-        if (!delta) return 0;
-        let value = max === r ? 60 * (((g - b) / delta) % 6)
-            : max === g ? 60 * ((b - r) / delta + 2)
-                : 60 * ((r - g) / delta + 4);
-        return value < 0 ? value + 360 : value;
-    };
-
-    // 卡面填充归"预约状态"，身份色只是右下角柔光。落在橙色相区间的暖色景必须
-    // 把饱和度压到 partial 状态（23%）以下，否则"复古餐厅景"看着就像已约满。
-    for (const { area, hex } of tints) {
-        const isWarm = hue(hex) >= 0 && hue(hex) <= 45;
-        if (isWarm) {
-            assert.ok(
-                saturation(hex) < 0.23,
-                `${area} 落在橙色相区且饱和度 ${(saturation(hex) * 100).toFixed(0)}% 不低于 partial 状态，会和预约状态混淆`
-            );
-        }
-    }
+    const available = layoutStyles.match(
+        /\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card\.available\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(available, '没有找到 6F 卡面规则');
+    // 卡面只认字面色值：出现 var() 就意味着又能按景/按状态漂移。
+    const gradient = available[1].match(/linear-gradient\(([\s\S]*?)\);/);
+    assert.ok(gradient, '卡面应是实色渐变');
+    assert.doesNotMatch(gradient[1], /var\(--/, '卡面渐变不能再引用变量');
+    const stops = [...gradient[1].matchAll(/#[0-9A-Fa-f]{6}/g)];
+    assert.ok(stops.length >= 2, '卡面渐变至少要有两档颜色');
 
     // 状态卡必须撤掉身份柔光，否则橙底叠色斑会糊成脏色。
     assert.match(
@@ -242,17 +221,14 @@ test('实拍封面是内嵌窗口，景名落在面板上而不是压着照片',
     assert.ok(ink, '封面卡的景名应指定颜色');
 
     // 卡面渐变最深那段。它和上面的 padding 不在同一条规则里
-    // （柔和渐变是单独一块），所以在整张样式表里找。
+    // （柔和渐变是单独一块），所以在整张样式表里找。身份色已随 6F 统一卡面
+    // 撤掉，这里的冷色是写死的底色。
     const face = layoutStyles.match(
-        /color-mix\(in srgb, var\(--scene-tint[^)]*\), #FFFFFF (\d+)%\) 100%/
+        /color-mix\(in srgb, (#[0-9A-Fa-f]{6}), #FFFFFF (\d+)%\) 100%/
     );
     assert.ok(face, '没有找到卡面渐变最深那段');
-    const whiteRatio = Number(face[1]) / 100;
-
-    const tints = [...layoutStyles.matchAll(
-        /\[data-map-area="(sixth-[\w-]+)"\]\s*\{\s*--scene-tint:\s*(#[0-9A-Fa-f]{6})/g
-    )].map(match => match[2]);
-    assert.ok(tints.length >= 21, '身份色数量不足，无法覆盖最坏情况');
+    const whiteRatio = Number(face[2]) / 100;
+    const coverFace = face[1];
 
     // 文字并不直接压在卡面上，中间还有一块近白底板。合成链是
     // 卡面 → 底板 → 文字，底板必须算进去，否则会低估实际对比度。
@@ -265,14 +241,28 @@ test('实拍封面是内嵌窗口，景名落在面板上而不是压着照片',
     assert.ok(plateAlpha >= 0.85,
         `底板 ${plateAlpha} 太透，在浅色卡面上看不出边界，景名浮不起来`);
 
-    for (const tint of tints) {
-        // color-mix(tint, #FFFFFF N%) = 往白里调 N%，即 tint 占 (1-N)
-        const panel = mix(tint, '#FFFFFF', whiteRatio);
-        const underText = panel.map(channel => 255 * plateAlpha + channel * (1 - plateAlpha));
-        const ratio = contrast(toRgb(ink[1]), underText);
-        assert.ok(ratio >= 4.5,
-            `景名 ${ink[1]} 在 ${tint} 的卡面 + 底板上只有 ${ratio.toFixed(2)}:1，不足 AA`);
-    }
+    // 封面卡：景名压在近白底板上，合成链是 卡面 → 底板 → 文字。
+    // color-mix(tint, #FFFFFF N%) = 往白里调 N%，即 tint 占 (1-N)
+    const panel = mix(coverFace, '#FFFFFF', whiteRatio);
+    const underText = panel.map(channel => 255 * plateAlpha + channel * (1 - plateAlpha));
+    const ratio = contrast(toRgb(ink[1]), underText);
+    assert.ok(ratio >= 4.5,
+        `景名 ${ink[1]} 在 ${coverFace} 的卡面 + 底板上只有 ${ratio.toFixed(2)}:1，不足 AA`);
+
+    // 6F 卡没有底板，景名直接压在卡面上，所以拿最暗那一档直接比。
+    const sixthFloor = layoutStyles.match(
+        /\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card\.available\s*\{[\s\S]*?linear-gradient\(([\s\S]*?)\);/
+    );
+    assert.ok(sixthFloor, '没有找到 6F 卡面渐变');
+    const stops = [...sixthFloor[1].matchAll(/#[0-9A-Fa-f]{6}/g)].map(match => match[0]);
+    const worst = stops[stops.length - 1];
+    const sixthInk = layoutStyles.match(
+        /\.preview-floor-map-sixth-floor \.preview-scene-card h4\s*\{\s*color:\s*(#[0-9A-Fa-f]{6})/
+    );
+    assert.ok(sixthInk, '没有找到 6F 景名颜色');
+    const direct = contrast(toRgb(sixthInk[1]), toRgb(worst));
+    assert.ok(direct >= 4.5,
+        `6F 景名 ${sixthInk[1]} 在最暗卡面 ${worst} 上只有 ${direct.toFixed(2)}:1，不足 AA`);
 
     // 底板的发光和内高光是"立体墙"的来源，缺了字就贴在平面上。
     const box = coverTitle[1].match(/box-shadow:([\s\S]*?);/);
