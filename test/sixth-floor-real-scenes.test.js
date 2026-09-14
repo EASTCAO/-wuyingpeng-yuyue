@@ -600,6 +600,12 @@ test('6F 固定布局保留最终截图卡片比例', () => {
     assert.equal(layout['sixth-street'].height, 193);
 });
 
+test('6F 实景棚不铺实拍照片', () => {
+    // 6F 是紧凑的绝对定位画布，卡内照片会把景名挤到角落，所以整层只用身份色。
+    assert.doesNotMatch(layoutSource, /'6F·[^']+':\s*\{[^}]*cover:/);
+    assert.doesNotMatch(layoutSource, /'6F·洗浴室景'/);
+});
+
 test('6F 卡片不再提供拖动和调整尺寸入口', () => {
     assert.doesNotMatch(layoutSource, /data-draggable|data-resize-handle|saveSixthFloorLayout/);
     assert.doesNotMatch(layoutStyles, /sixth-floor-resize-handle|cursor:\s*move/);

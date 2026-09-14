@@ -25,9 +25,7 @@ const STUDIO_SCENE_REFERENCES = {
     '浴室景': { cover: 'bathroom.webp', alt: '浴室景场景示意图' },
     '黑色台面-厨房景': { cover: 'black-kitchen.webp', alt: '黑色台面厨房景场景示意图' },
 
-    // 6F 实景棚：洗浴室景复用 7F 浴室的同一张素材（同类场景）。
-    // 其余 20 个景暂无素材，继续用身份色柔光，两种风格可以共存。
-    '6F·洗浴室景': { cover: 'bathroom.webp', alt: '洗浴室景场景示意图' }
+    // 6F 实景棚：21 个景都不铺实拍照片，统一用身份色柔光。
 };
 
 function getSceneReference(studioId) {
