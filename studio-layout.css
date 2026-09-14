@@ -674,13 +674,13 @@
     color: #252B33;
 }
 
-/* 6F 画布默认缩放到 70%，声明值会被整体压掉三成：
-   14px 的景名实际只有 9.8px、8px 的进度条数字只有 5.6px，都低于可读下限。
-   这里按 1/0.7 反向补偿回来。7F 实景棚是 1:1 渲染，不受影响也不需要跟着放大。 */
+/* 6F 画布会整体缩放到视口里（桌面约 42%），固定字号跟着一起缩小，
+   19px 的景名最终只剩约 8px。这里改成按卡片宽高算字号：窄卡有下限、
+   大卡有上限，缩到屏幕上之后仍然明显。7F 是 1:1 渲染，不受影响。 */
 .preview-floor-map-sixth-floor .preview-scene-card h4 {
-    font-size: 19px;
-    font-weight: 600;
-    line-height: 1.25;
+    font-size: clamp(32px, min(calc(var(--card-width) * 0.062), calc(var(--card-height) * 0.18)), 48px);
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 .preview-floor-map-sixth-floor .preview-scene-progress {
@@ -689,19 +689,19 @@
 }
 
 .preview-floor-map-sixth-floor .preview-scene-progress-track {
-    height: 10px;
+    height: 14px;
     border-radius: var(--radius-xs);
 }
 
 .preview-floor-map-sixth-floor .preview-scene-progress small {
     margin-top: 6px;
-    font-size: 14px;
+    font-size: 22px;
 }
 
 .preview-floor-map-sixth-floor .preview-scene-full-label,
 .preview-floor-map-sixth-floor .preview-scene-expired-label {
-    padding: 4px 9px;
-    font-size: 13px;
+    padding: 6px 14px;
+    font-size: 22px;
 }
 
 .preview-scene-card {

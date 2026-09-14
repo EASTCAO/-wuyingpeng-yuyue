@@ -28,3 +28,16 @@ test('画布不再提供手动缩放、平移和复位', () => {
     assert.doesNotMatch(source, /addEventListener\('wheel'/);
     assert.match(source, /function bindSixthFloorCanvas\(\)[\s\S]*?fitSixthFloorCanvasToViewport\(loadSixthFloorLayout\(\)\);/);
 });
+
+test('6F 景名跟着卡片尺寸放大，缩到屏幕后仍然明显', () => {
+    // 画布整体会被缩到约 42%，固定字号跟着一起缩小，所以必须按卡片尺寸计算。
+    // 同选择器有"颜色"和"字号"两条规则，这里只取带 font-size 的那条。
+    const rules = [...styles.matchAll(/\.preview-floor-map-sixth-floor \.preview-scene-card h4\s*\{([\s\S]*?)\n\}/g)]
+        .map(match => match[1]);
+    const rule = rules.find(body => /font-size:/.test(body));
+    assert.ok(rule, '没有找到 6F 景名规则');
+    assert.match(rule, /font-size:\s*clamp\(\s*32px,\s*min\(calc\(var\(--card-width\)/);
+    assert.match(rule, /calc\(var\(--card-height\)/);
+    assert.match(rule, /font-weight:\s*700/);
+    assert.doesNotMatch(rule, /font-size:\s*19px/);
+});
