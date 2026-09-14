@@ -47,7 +47,7 @@ test('细高竖列卡片的景名改成竖排', () => {
     assert.match(source, /\$\{verticalTitle \? ' is-vertical-title' : ''\}/);
 
     const rule = styles.match(
-        /\.preview-floor-map-sixth-floor \.preview-scene-card\.is-vertical-title h4\s*\{([\s\S]*?)\n\}/
+        /\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card\.is-vertical-title h4\s*\{([\s\S]*?)\n\}/
     );
     assert.ok(rule, '没有找到竖排景名规则');
     assert.match(rule[1], /writing-mode:\s*vertical-rl/);

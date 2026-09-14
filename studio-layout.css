@@ -424,7 +424,6 @@
        用 xl(16px) 换取参考图那种圆润感，实际呈现约 11px。
        测试断言的是"圆角不小于 radius-lg"，不是写死某个 token。 */
     border-radius: var(--radius-xl);
-    background: #FFFFFF;
 }
 
 /* 每个景的身份色。卡面本身留白，色只作为右下角的一团柔光（见 ::after），
@@ -648,25 +647,12 @@
 
 /* 景名统一在文件末尾声明（要排在 .full h4 / .ended h4 之后才生效）。 */
 
-/* 身份色柔光：一团糊开的色斑压在卡片右下角，参考图里的渐变块就是这个做法。
-   放右下是因为景名在左上偏中，两者不抢位置。
-   ::after 在基类里已用于玻璃内缘高光，这里叠加而不是覆盖。 */
-.preview-floor-map-sixth-floor .preview-scene-card::after {
-    background:
-        radial-gradient(
-            128% 140% at 100% 100%,
-            var(--scene-tint) 0%,
-            color-mix(in srgb, var(--scene-tint), transparent 34%) 30%,
-            color-mix(in srgb, var(--scene-tint), transparent 74%) 58%,
-            transparent 84%
-        );
-}
-
-/* 满约/部分预约的卡面已经是天青蓝，再叠身份色会糊成脏色，这里撤掉柔光，
-   只保留基类的玻璃高光。状态永远优先于身份。 */
+/* 身份色不再糊成右下角一团色斑，而是像参考图那样铺满整张卡面
+   （见下面的渐变规则）。::after 只留基类的玻璃内缘高光，色斑整块撤掉。 */
 .preview-floor-map-sixth-floor .preview-scene-card.partial::after,
 .preview-floor-map-sixth-floor .preview-scene-card.full::after,
-.preview-floor-map-sixth-floor .preview-scene-card.ended::after {
+.preview-floor-map-sixth-floor .preview-scene-card.ended::after,
+.preview-floor-map-sixth-floor .preview-scene-card.available::after {
     background: none;
 }
 
@@ -683,17 +669,80 @@
     line-height: 1.2;
 }
 
+/* 卡面配色复刻参考图：整卡从白渐变到该景的身份色，而不是白底加一块色斑。
+   只写给 available：partial / full / ended 是预约状态色，必须继续压过身份色。
+   三层的选择器是为了稳压基类的 .has-progress / .has-scene-cover 系列。 */
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.available {
+    background: linear-gradient(
+        163deg,
+        #FFFFFF 0%,
+        color-mix(in srgb, var(--scene-tint), #FFFFFF 58%) 54%,
+        color-mix(in srgb, var(--scene-tint), #FFFFFF 30%) 100%
+    );
+    /* 卡面已经是实色渐变，基类的磨砂再叠一层只会让身份色发灰。 */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* 文字排版复刻参考图：标题块沉到左下角，标题下面是细分隔线和小字标签。
+   进度条排在标题之上，底边仍然由标题块收口。
+   选择器写到四层，是为了不被基类那两条同样改 justify-content 的
+   .has-progress 规则按文件顺序盖回去。 */
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card {
+    justify-content: flex-end;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card .preview-scene-card-top {
+    order: 2;
+    width: 100%;
+    height: auto;
+    justify-content: flex-start;
+}
+
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card .preview-scene-card-top h4 {
+    width: 100%;
+    text-align: left;
+}
+
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card .preview-scene-progress {
+    order: 1;
+    width: 100%;
+    margin: 0 0 16px;
+}
+
+/* 数字跟着整块左下角文字左对齐，不再单独居中。 */
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card .preview-scene-progress small {
+    text-align: left;
+}
+
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card .preview-scene-code {
+    order: 3;
+    width: 100%;
+    margin: 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(37, 43, 51, 0.22);
+    color: #5C6672;
+    font-size: clamp(20px, calc(var(--card-width) * 0.042), 28px);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.22em;
+    text-align: left;
+}
+
 .preview-floor-map-sixth-floor .preview-scene-progress {
     width: 78%;
     margin-top: 12px;
 }
 
 /* 竖排景名：只用在细高的竖列卡片上（阈值由 JS 按卡片宽高判断）。
-   竖排后 inline 轴变成纵向，所以这里用 height 撑满卡高、width 交给内容，
-   再靠 .preview-scene-card-top 的居中把整列字放在卡片正中。 */
-.preview-floor-map-sixth-floor .preview-scene-card.is-vertical-title h4 {
+   竖排后 inline 轴变成纵向，所以这里把 height 交给内容、width 收到一个字宽，
+   整列字和左下角的标签共用同一条左边线。 */
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.is-vertical-title h4 {
     width: auto;
-    height: 100%;
+    height: auto;
+    align-self: flex-start;
     writing-mode: vertical-rl;
     text-orientation: upright;
     letter-spacing: 0.08em;
