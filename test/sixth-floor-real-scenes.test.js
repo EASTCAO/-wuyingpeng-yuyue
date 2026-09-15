@@ -283,32 +283,54 @@ test('实拍封面是内嵌窗口，景名落在面板上而不是压着照片',
         /\.preview-floor-map-sixth-floor \.preview-scene-card h4\s*\{\s*color:\s*(#[0-9A-Fa-f]{6})/
     );
     assert.ok(sixthInk, '没有找到 6F 景名颜色');
+    const fullInk = layoutStyles.match(
+        /\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card\.full h4\s*\{\s*color:\s*(#[0-9A-Fa-f]{6})/
+    );
+    assert.ok(fullInk, '没有找到 6F 已约满景名颜色');
 
     // 第 3 层：状态色。它压在玻璃上，同样会拉低景名对比度。
     const washes = [{ name: '可预约', rgb: [255, 255, 255], alpha: 0 }];
     for (const state of ['partial', 'full', 'ended']) {
-        const found = layoutStyles.match(new RegExp(
-            String.raw`\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card\.${state} \{[\s\S]*?--state-wash: rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)`
+        const stateRule = layoutStyles.match(new RegExp(
+            String.raw`\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card\.${state}\s*\{([\s\S]*?)\n\}`
         ));
-        assert.ok(found, `没有找到 ${state} 的状态色`);
-        washes.push({ name: state, rgb: [1, 2, 3].map(i => Number(found[i])), alpha: Number(found[4]) });
+        assert.ok(stateRule, `没有找到 ${state} 的状态色规则`);
+        const rgba = stateRule[1].match(
+            /--state-wash:\s*rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/
+        );
+        const hex = stateRule[1].match(/--state-wash:\s*#([0-9A-Fa-f]{6})/);
+        assert.ok(rgba || hex, `没有找到 ${state} 的状态色`);
+        washes.push(rgba
+            ? {
+                name: state,
+                rgb: [1, 2, 3].map(i => Number(rgba[i])),
+                alpha: Number(rgba[4])
+            }
+            : {
+                name: state,
+                rgb: [0, 2, 4].map(i => parseInt(hex[1].slice(i, i + 2), 16)),
+                alpha: 1
+            });
     }
 
     // 四种状态 × 每一档玻璃，全部算一遍，取最差的那个组合。
     let worstRatio = Infinity;
     let worstLabel = '';
+    let worstInk = sixthInk[1];
     for (const wash of washes) {
         for (const stop of glassStops) {
             const seen = composite(composite(backdrop, stop.rgb, stop.alpha), wash.rgb, wash.alpha);
-            const ratio = contrast(toRgb(sixthInk[1]), seen);
+            const ink = wash.name === 'full' ? fullInk[1] : sixthInk[1];
+            const ratio = contrast(toRgb(ink), seen);
             if (ratio < worstRatio) {
                 worstRatio = ratio;
                 worstLabel = `${wash.name} × 玻璃 alpha ${stop.alpha}`;
+                worstInk = ink;
             }
         }
     }
     assert.ok(worstRatio >= 4.5,
-        `6F 景名 ${sixthInk[1]} 在最差组合（${worstLabel}）上只有 ${worstRatio.toFixed(2)}:1，不足 AA`);
+        `6F 景名 ${worstInk} 在最差组合（${worstLabel}）上只有 ${worstRatio.toFixed(2)}:1，不足 AA`);
 
     // 底板的发光和内高光是"立体墙"的来源，缺了字就贴在平面上。
     const box = coverTitle[1].match(/box-shadow:([\s\S]*?);/);

@@ -140,7 +140,7 @@ test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色�
     assert.match(base[1], /--state-wash:\s*rgba\(\s*255,\s*255,\s*255,\s*0\s*\)\s*0%/,
         '可预约卡不应叠任何状态色，否则玻璃会被染上一层底灰');
 
-    // 状态之间必须有层次。部分预约靠暖色渐变、已约满靠深蓝、已过期靠浅灰区分。
+    // 状态之间必须有层次。部分预约靠暖色渐变、已约满靠近黑、已过期靠浅灰区分。
     const washAlpha = state => {
         const found = rule(String.raw`${CARD}\.${state}`)[1]
             .match(/--state-wash:\s*rgba\([^)]*?([\d.]+)\s*\)/);
@@ -157,8 +157,8 @@ test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色�
         return found ? found.slice(1).map(Number) : [];
     };
     const fullRgb = washRgb('full');
-    assert.ok(fullRgb[2] > fullRgb[0],
-        `已约满应保持冷色压暗，实际 rgb(${fullRgb})`);
+    assert.ok(Math.max(...fullRgb) <= 40 && Math.max(...fullRgb) - Math.min(...fullRgb) <= 12,
+        `已约满应使用近黑中性色，实际 rgb(${fullRgb})`);
 
     // 部分预约是唯一实色铺满的状态：橙色一掺白就发粉发浊，跟参考稿差一整档明度，
     // 所以这里刻意不留透明度，用和场地总览完全相同的那组珊瑚橙。
@@ -172,6 +172,27 @@ test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色�
     assert.ok(partialLegend, '没有找到部分预约图例');
     assert.match(partialLegend[1], /#FF716B[\s\S]*#FFA45D[\s\S]*#FFC154/,
         '部分预约图例应和卡片使用同一组珊瑚橙渐变');
+});
+
+test('6F 已约满卡使用深色居中样式和胶囊状态', () => {
+    const info = rule(String.raw`${CARD}\.full \.preview-scene-info`);
+    assert.ok(info, '没有找到已约满卡的信息区规则');
+    assert.match(info[1], /display:\s*flex;/);
+    assert.match(info[1], /flex-direction:\s*column;/);
+    assert.match(info[1], /align-items:\s*center;/);
+    assert.match(info[1], /justify-content:\s*center;/);
+    assert.match(info[1], /gap:\s*16px;/);
+
+    const title = rule(String.raw`${CARD}\.full h4`);
+    assert.ok(title, '没有找到已约满卡的景名规则');
+    assert.match(title[1], /color:\s*#F7F7F8;/);
+
+    const label = rule(String.raw`${CARD}\.full \.preview-scene-full-label`);
+    assert.ok(label, '没有找到已约满卡的胶囊规则');
+    assert.match(label[1], /position:\s*static;/);
+    assert.match(label[1], /border-radius:\s*999px;/);
+    assert.match(label[1], /background:\s*#4A4D52;/);
+    assert.match(label[1], /color:\s*#F0F1F3;/);
 });
 
 test('6F 文字排版保持居中，不再改成左下角', () => {
