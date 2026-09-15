@@ -63,3 +63,18 @@ test('放宽到 7 天的棚位清单和 6F 实景棚配置完全一致', () => {
     }
     assert.equal(rules.getBookingWindowDays('6F无影棚'), 2, '6F 无影棚不在放宽范围内');
 });
+
+test('新增登录账号同时加入前端本地模式和后端默认账号', () => {
+    const expectedUsers = ['陈洋', '罗暄', '汤诗槐', '刘家其', '孙焱林', '曾雪萍'];
+    const frontendUsers = readQuotedValues(
+        readArraySource(appSource, 'const DEFAULT_USERS = {', '\n};')
+    );
+    const backendUsers = readQuotedValues(
+        readArraySource(serverSource, 'const DEFAULT_USER_NAMES = [', '\n];')
+    );
+
+    for (const username of expectedUsers) {
+        assert.ok(frontendUsers.includes(username), `前端默认用户缺少 ${username}`);
+        assert.ok(backendUsers.includes(username), `后端默认用户缺少 ${username}`);
+    }
+});
