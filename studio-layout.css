@@ -722,17 +722,17 @@
 
 /* 状态色调。只改 --state-wash，玻璃配方本身不动——四种状态共用同一套质感。 */
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.partial {
-    /* 薄荷青：借鉴参考图的高饱和状态层级，但避开橙色，形成自己的识别色。 */
-    --state-wash: rgba(96, 194, 177, 0.34);
+    /* 柔和琥珀：用暖色提示“仍有余量”，比参考图更低饱和，避免直接照搬。 */
+    --state-wash: rgba(226, 168, 74, 0.42);
 }
 
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.full {
-    /* 靛蓝：比参考图的蓝更深、更克制，和薄荷青构成冷色双状态。 */
-    --state-wash: rgba(89, 133, 211, 0.56);
+    /* 雾霾蓝：压低饱和度和亮度，和琥珀色形成清晰的冷暖层级。 */
+    --state-wash: rgba(59, 84, 132, 0.55);
 }
 
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.ended {
-    --state-wash: rgba(161, 166, 184, 0.30);
+    --state-wash: rgba(150, 157, 173, 0.26);
 }
 
 /* 悬停：光晕加深拉长，是"玻璃抬起来"，不是"卡片变厚"。

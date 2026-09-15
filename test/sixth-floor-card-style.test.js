@@ -152,6 +152,18 @@ test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色�
     assert.ok(full > partial, `已约满(${full})应比部分预约(${partial})更重`);
     assert.ok(full > ended, `已约满(${full})应比已过期(${ended})更重`);
     assert.ok(partial > 0 && ended > 0, '部分预约和已过期都要有可见的状态色');
+
+    const washRgb = state => {
+        const found = rule(String.raw`${CARD}\.${state}`)[1]
+            .match(/--state-wash:\s*rgba\(\s*(\d+),\s*(\d+),\s*(\d+),/);
+        return found ? found.slice(1).map(Number) : [];
+    };
+    const partialRgb = washRgb('partial');
+    const fullRgb = washRgb('full');
+    assert.ok(partialRgb[0] > partialRgb[2],
+        `部分预约应保持暖色提示，实际 rgb(${partialRgb})`);
+    assert.ok(fullRgb[2] > fullRgb[0],
+        `已约满应保持冷色压暗，实际 rgb(${fullRgb})`);
 });
 
 test('6F 文字排版保持居中，不再改成左下角', () => {
