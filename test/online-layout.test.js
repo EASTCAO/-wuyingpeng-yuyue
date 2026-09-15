@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..');
+const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const appSource = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 const styles = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 const studioStyles = fs.readFileSync(path.join(root, 'studio-layout.css'), 'utf8');
@@ -57,4 +58,30 @@ test('日期条只将已过期日期置灰，未来锁定日期保留正常颜�
     );
     assert.ok(pastDetail, '没有找到已过期日期的数字样式');
     assert.match(pastDetail[1], /color:\s*#B6BDC7/);
+});
+
+test('日期条支持左右按周浏览整月', () => {
+    assert.match(html, /id="bookingDatePrevious"[\s\S]*?aria-label="上一周"[\s\S]*?aria-controls="bookingDateList"/);
+    assert.match(html, /id="bookingDateNext"[\s\S]*?aria-label="下一周"[\s\S]*?aria-controls="bookingDateList"/);
+    assert.match(appSource, /const BOOKING_DATE_PAGE_SIZE = 7;/);
+    assert.match(appSource, /let bookingDateStripStart = null;/);
+
+    const toolbarDates = appSource.match(
+        /function getToolbarDates\(\)\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(toolbarDates, '没有找到日期条数据函数');
+    assert.match(toolbarDates[1], /length:\s*BOOKING_DATE_PAGE_SIZE/);
+    assert.match(toolbarDates[1], /shiftDate\(bookingDateStripStart,\s*index\)/);
+    assert.match(toolbarDates[1], /getVisibleWeekDates\(\{\s*isAdmin:\s*false,\s*windowDays\s*\}\)\[0\]/);
+
+    const moveDateStrip = appSource.match(
+        /function moveBookingDateStrip\(weekOffset\)\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(moveDateStrip, '没有找到日期条翻周函数');
+    assert.match(moveDateStrip[1], /weekOffset\s*\*\s*BOOKING_DATE_PAGE_SIZE/);
+    assert.match(moveDateStrip[1], /renderBookingDateSwitcher\(\)/);
+
+    assert.match(styles, /\.booking-date-switcher\s*\{\s*display:\s*flex;/);
+
+    assert.match(styles, /\.booking-date-nav\s*\{[^}]*border-radius:\s*var\(--radius-pill\)/);
 });

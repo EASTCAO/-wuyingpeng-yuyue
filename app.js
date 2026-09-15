@@ -20,6 +20,9 @@ let selectedBookingId = null;
 let currentView = 'list'; // 'list' or 'stats'
 let currentDateRange = 'today'; // 'today', 'tomorrow', 'week'
 let selectedDate = null;
+const BOOKING_DATE_PAGE_SIZE = 7;
+let bookingDateStripStart = null;
+let bookingDateStripContext = '';
 
 let pendingCancelBookingId = null;
 let pendingCancelStudioId = null;
@@ -1294,11 +1297,29 @@ function getActiveBookingWindowDays() {
         : DEFAULT_BOOKING_WINDOW_DAYS;
 }
 
+function getBookingDateStripContext(isAdmin, windowDays) {
+    return [
+        currentStudioFloor || '',
+        currentStudioCategory || '',
+        isAdmin ? 'admin' : 'user',
+        windowDays
+    ].join('|');
+}
+
 function getToolbarDates() {
     const isAdmin = currentUser === 'admin';
     const windowDays = getActiveBookingWindowDays();
+    const context = getBookingDateStripContext(isAdmin, windowDays);
+    if (bookingDateStripContext !== context || !bookingDateStripStart) {
+        bookingDateStripContext = context;
+        bookingDateStripStart = getVisibleWeekDates({ isAdmin: false, windowDays })[0];
+    }
+
     const selectable = new Set(getSelectableDates({ isAdmin, windowDays }).map(item => item.date));
-    return getVisibleWeekDates({ isAdmin, windowDays }).map(date => ({
+    return Array.from(
+        { length: BOOKING_DATE_PAGE_SIZE },
+        (_, index) => shiftDate(bookingDateStripStart, index)
+    ).map(date => ({
         date,
         weekday: getWeekdayLabel(date),
         selectable: selectable.has(date),
@@ -1325,6 +1346,15 @@ function renderBookingDateSwitcher() {
             <small class="booking-date-detail">${Number(month)}.${Number(day)}</small>
         </button>`;
     }).join('');
+}
+
+function moveBookingDateStrip(weekOffset) {
+    getToolbarDates();
+    bookingDateStripStart = shiftDate(
+        bookingDateStripStart,
+        weekOffset * BOOKING_DATE_PAGE_SIZE
+    );
+    renderBookingDateSwitcher();
 }
 
 function selectBookingDate(date) {

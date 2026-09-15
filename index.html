@@ -17,7 +17,7 @@
     
     <title>影棚预约系统</title>
     <link rel="preload" href="assets/fonts/noto-sans-sc-subset.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="style.css?v=20260914-glass-card">
+    <link rel="stylesheet" href="style.css?v=20260915-date-week-nav">
     <link rel="stylesheet" href="studio-layout.css?v=20260914-glass-card">
 </head>
 <body class="studio-booking-page">
@@ -185,9 +185,37 @@
             <div class="content-area">
                 <!-- 顶部工具栏 -->
                 <div class="toolbar">
-                    <!-- 日期筛选：只列出真正可选的日期（今天 / 明天，管理员另有昨天） -->
+                    <!-- 日期筛选：每页 7 天，左右按钮按周浏览整月 -->
                     <div class="date-nav">
-                        <div id="bookingDateList" class="booking-date-list" role="group" aria-label="选择预约日期"></div>
+                        <div class="booking-date-switcher">
+                            <button
+                                id="bookingDatePrevious"
+                                class="booking-date-nav"
+                                type="button"
+                                aria-label="上一周"
+                                aria-controls="bookingDateList"
+                                title="上一周"
+                                onclick="moveBookingDateStrip(-1)"
+                            >
+                                <svg viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <div id="bookingDateList" class="booking-date-list" role="group" aria-label="选择预约日期"></div>
+                            <button
+                                id="bookingDateNext"
+                                class="booking-date-nav"
+                                type="button"
+                                aria-label="下一周"
+                                aria-controls="bookingDateList"
+                                title="下一周"
+                                onclick="moveBookingDateStrip(1)"
+                            >
+                                <svg viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
                         <div id="studioToolbarControls" class="studio-toolbar-controls" aria-label="影棚筛选"></div>
                     </div>
                 </div>
@@ -435,7 +463,7 @@
     </div>
 
     <script src="shared/booking-rules.js?v=20260914-scene-positions"></script>
-    <script src="app.js?v=20260914-scene-positions"></script>
+    <script src="app.js?v=20260915-date-week-nav"></script>
     <script src="studio-layout.js?v=20260914-6f-card-lighter"></script>
 
     <!-- PWA Service Worker 注册 -->
