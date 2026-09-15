@@ -60,11 +60,13 @@ test('日期条只将已过期日期置灰，未来锁定日期保留正常颜�
     assert.match(pastDetail[1], /color:\s*#B6BDC7/);
 });
 
-test('日期条支持左右按周浏览整月', () => {
+test('日期条固定周一起始并支持左右按周浏览', () => {
     assert.match(html, /id="bookingDatePrevious"[\s\S]*?aria-label="上一周"[\s\S]*?aria-controls="bookingDateList"/);
     assert.match(html, /id="bookingDateNext"[\s\S]*?aria-label="下一周"[\s\S]*?aria-controls="bookingDateList"/);
     assert.match(appSource, /const BOOKING_DATE_PAGE_SIZE = 7;/);
     assert.match(appSource, /let bookingDateStripStart = null;/);
+    assert.match(appSource, /function getMondayDate\(date = getChinaDate\(\)\)/);
+    assert.match(appSource, /return shiftDate\(date, -\(\(weekday \+ 6\) % 7\)\)/);
 
     const toolbarDates = appSource.match(
         /function getToolbarDates\(\)\s*\{([\s\S]*?)\n\}/
@@ -72,7 +74,7 @@ test('日期条支持左右按周浏览整月', () => {
     assert.ok(toolbarDates, '没有找到日期条数据函数');
     assert.match(toolbarDates[1], /length:\s*BOOKING_DATE_PAGE_SIZE/);
     assert.match(toolbarDates[1], /shiftDate\(bookingDateStripStart,\s*index\)/);
-    assert.match(toolbarDates[1], /getVisibleWeekDates\(\{\s*isAdmin:\s*false,\s*windowDays\s*\}\)\[0\]/);
+    assert.match(toolbarDates[1], /bookingDateStripStart = getMondayDate\(\)/);
 
     const moveDateStrip = appSource.match(
         /function moveBookingDateStrip\(weekOffset\)\s*\{([\s\S]*?)\n\}/

@@ -1297,6 +1297,12 @@ function getActiveBookingWindowDays() {
         : DEFAULT_BOOKING_WINDOW_DAYS;
 }
 
+function getMondayDate(date = getChinaDate()) {
+    const [year, month, day] = date.split('-').map(Number);
+    const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+    return shiftDate(date, -((weekday + 6) % 7));
+}
+
 function getBookingDateStripContext(isAdmin, windowDays) {
     return [
         currentStudioFloor || '',
@@ -1312,7 +1318,7 @@ function getToolbarDates() {
     const context = getBookingDateStripContext(isAdmin, windowDays);
     if (bookingDateStripContext !== context || !bookingDateStripStart) {
         bookingDateStripContext = context;
-        bookingDateStripStart = getVisibleWeekDates({ isAdmin: false, windowDays })[0];
+        bookingDateStripStart = getMondayDate();
     }
 
     const selectable = new Set(getSelectableDates({ isAdmin, windowDays }).map(item => item.date));
