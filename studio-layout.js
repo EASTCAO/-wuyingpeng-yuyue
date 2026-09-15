@@ -3,9 +3,8 @@ const baseRenderBookings = renderBookings;
 const baseInitStudioUI = initStudioUI;
 const STUDIO_OVERVIEW_SEGMENTS = 18;
 // 实拍封面。照片比抽象渐变更能说明"这是哪个景"，而且不会和预约状态的色块争语义。
-// cover 字段驱动卡面封面，6F 画布和 7F 网格共用同一套渲染。
+// cover 字段同时驱动卡面封面和 7F hover 弹层，避免弹层串用其他景别的照片。
 // 素材来自 assets/real-studio/source/，统一压成 900px 宽的 webp。
-// src 是 hover 弹层用的大图（历史字段，只有洗衣房景别有）。
 const SCENE_COVER_VERSION = '20260826-cover-available';
 const STUDIO_SCENE_REFERENCES = {
     // 7F 实景棚：11 个景全部有实拍素材
@@ -17,11 +16,7 @@ const STUDIO_SCENE_REFERENCES = {
     '工具台景': { cover: 'workbench.webp', alt: '工具台景场景示意图' },
     '木纹台面-厨房景': { cover: 'wood-kitchen.webp', alt: '木纹台面厨房景场景示意图' },
     '儿童房景/户外下午茶景': { cover: 'kids-room.webp', covers: ['kids-room.webp', 'garden.webp'], alt: '儿童房景与户外下午茶景场景示意图' },
-    '洗衣房景别': {
-        src: 'assets/real-studio/laundry.webp?v=20260804-laundry-reference',
-        cover: 'laundry-cover.webp',
-        alt: '洗衣房景别场景示意图'
-    },
+    '洗衣房景别': { cover: 'laundry-cover.webp', alt: '洗衣房景别场景示意图' },
     '浴室景': { cover: 'bathroom.webp', alt: '浴室景场景示意图' },
     '黑色台面-厨房景': { cover: 'black-kitchen.webp', alt: '黑色台面厨房景场景示意图' },
 
@@ -316,6 +311,7 @@ function getRealSceneState(studio, date) {
 }
 
 
+
 function renderRealSceneOverview() {
     const content = document.getElementById('studioPreviewContent');
     if (!content) return;
@@ -367,9 +363,10 @@ function renderRealSceneCard(studio, state, index, layout = null) {
     const isSeventhFloor = currentStudioFloor === '7F';
     const showCover = Boolean(reference?.coverSrc)
         && (isSeventhFloor || state.type === 'available' || state.type === 'partial');
+    const showSceneReference = isSeventhFloor && reference?.coverSrcs?.length > 0;
     return `
         <article
-            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${reference?.src ? ' has-scene-reference' : ''}${showCover ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}${verticalTitle ? ' is-vertical-title' : ''}"
+            class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${showSceneReference ? ' has-scene-reference' : ''}${showCover ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}${verticalTitle ? ' is-vertical-title' : ''}"
             data-map-area="${escapeHtml(studio.mapArea)}"
             data-studio-id="${escapeHtml(studio.id)}"
             ${position ? `style="--preview-index:${index};--card-x:${position.x}px;--card-y:${position.y}px;--card-width:${position.width}px;--card-height:${position.height}px"` : ''}
@@ -415,9 +412,11 @@ function renderRealSceneCard(studio, state, index, layout = null) {
                     </div>
                 ` : ''}
             </div>
-            ${reference?.src ? `
+            ${showSceneReference ? `
                 <figure class="preview-scene-reference-popover" aria-hidden="true">
-                    <img src="${escapeHtml(reference.src)}" alt="${escapeHtml(reference.alt)}" decoding="async">
+                    ${reference.coverSrcs.map(src => `
+                        <img src="${escapeHtml(src)}" alt="${escapeHtml(reference.alt)}" decoding="async">
+                    `).join('')}
                 </figure>
             ` : ''}
         </article>
@@ -483,6 +482,4 @@ function handleRealSceneCardKeydown(event, studioId) {
     event.preventDefault();
     openRealSceneCard(studioId);
 }
-
-
 

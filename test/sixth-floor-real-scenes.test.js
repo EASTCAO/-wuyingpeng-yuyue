@@ -587,6 +587,34 @@ test('实拍封面样式不绑定楼层，6F 和 7F 共用同一套观感', () =
     assert.match(layoutSource, /assets\/real-studio\/\$\{reference\.cover\}\?v=\$\{SCENE_COVER_VERSION\}/);
 });
 
+test('7F 悬停弹层使用当前卡片自己的封面图片', () => {
+    const render = layoutSource.slice(
+        layoutSource.indexOf('function renderRealSceneCard'),
+        layoutSource.indexOf('function handleSixthFloorCardClick')
+    );
+
+    assert.match(
+        render,
+        /const showSceneReference = isSeventhFloor && reference\?\.coverSrcs\?\.length > 0;/
+    );
+    assert.match(render, /\$\{showSceneReference \? ' has-scene-reference' : ''\}/);
+    assert.match(
+        render,
+        /\$\{showSceneReference \? `[\s\S]*?class="preview-scene-reference-popover"[\s\S]*?reference\.coverSrcs\.map/
+    );
+    assert.doesNotMatch(render, /reference\?\.src/);
+    assert.doesNotMatch(render, /laundry\.webp/);
+
+    const laundryStart = layoutSource.indexOf("'洗衣房景别':");
+    assert.notEqual(laundryStart, -1, '没有找到洗衣房素材配置');
+    const laundryEntry = layoutSource.slice(
+        laundryStart,
+        layoutSource.indexOf('}', laundryStart)
+    );
+    assert.match(laundryEntry, /cover:\s*'laundry-cover\.webp'/);
+    assert.doesNotMatch(laundryEntry, /src:/);
+});
+
 test('封面卡的景名不会被状态文字色覆盖', () => {
     // .full h4 / .ended h4 和 .has-scene-cover h4 特指度相同，后写的赢。
     // 顺序写反的话，满约卡的深蓝字会盖掉封面卡自己的景名色。

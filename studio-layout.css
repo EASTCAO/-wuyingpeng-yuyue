@@ -1419,9 +1419,11 @@
     top: 0;
     left: calc(100% + 12px);
     z-index: 20;
+    display: grid;
     width: clamp(220px, 21vw, 300px);
     margin: 0;
     padding: 5px;
+    gap: 5px;
     visibility: hidden;
     opacity: 0;
     border: 1px solid #D8E0E7;
