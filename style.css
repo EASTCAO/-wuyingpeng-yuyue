@@ -2591,7 +2591,7 @@ textarea:focus-visible,
 }
 
 /* 日期切换器：展示整周 7 天，只有今天/明天（管理员多一个昨天）可点。
-   置灰的 5 天不是摆设——它们给出"今天是星期几、在一周里的哪个位置"这个参照。 */
+   未开放日期仍提供整周参照，但只有已经过去的日期置灰。 */
 .booking-date-list {
     display: flex;
     align-items: center;
@@ -2621,10 +2621,13 @@ textarea:focus-visible,
     background: #F7F9FC;
 }
 
-/* 不可选的日期：保留可读性但明确不可交互，不要淡到看不见 */
+/* 不可选的未来日期仍保留正常文字色，只禁用交互。 */
 .booking-date-item.is-locked {
-    color: #A8B0BB;
     cursor: not-allowed;
+}
+
+.booking-date-item.is-past {
+    color: #A8B0BB;
 }
 
 .booking-date-name {
@@ -2639,7 +2642,7 @@ textarea:focus-visible,
     line-height: 1.2;
 }
 
-.booking-date-item.is-locked .booking-date-detail {
+.booking-date-item.is-past .booking-date-detail {
     color: #B6BDC7;
 }
 

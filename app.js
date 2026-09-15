@@ -1285,7 +1285,7 @@ function openSimpleVideoBooking(taskId, targetDate) {
 }
 
 // 顶部日期条：展示整周 7 天，但只有真正能选的（今天/明天，管理员多一个昨天）可点。
-// 其余日期置灰——它们提供"今天是星期几、在一周里的哪个位置"这个参照。
+// 未开放日期仍保留正常文字色；只有已经过去的日期置灰。
 // 日期条的可选范围跟着当前视图走：6F 实景棚能提前一周约，其余仍是今天/明天。
 // currentStudioFloor / currentStudioCategory 由 studio-layout.js 维护。
 function getActiveBookingWindowDays() {
@@ -1301,7 +1301,8 @@ function getToolbarDates() {
     return getVisibleWeekDates({ isAdmin, windowDays }).map(date => ({
         date,
         weekday: getWeekdayLabel(date),
-        selectable: selectable.has(date)
+        selectable: selectable.has(date),
+        isPast: date < getChinaDate()
     }));
 }
 
@@ -1315,6 +1316,7 @@ function renderBookingDateSwitcher() {
         const isActive = option.date === activeDate;
         const classes = ['booking-date-item'];
         if (isActive) classes.push('active');
+        if (option.isPast) classes.push('is-past');
         if (!option.selectable) classes.push('is-locked');
         // 日期条统一显示星期几（例如周五、周六）；title 里给完整信息避免歧义
         const title = `${option.weekday} ${Number(month)}月${Number(day)}日${option.selectable ? '' : '（不在可预约范围内）'}`;

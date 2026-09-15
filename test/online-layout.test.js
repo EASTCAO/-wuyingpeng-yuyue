@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..');
+const appSource = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 const styles = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 const studioStyles = fs.readFileSync(path.join(root, 'studio-layout.css'), 'utf8');
 
@@ -27,4 +28,33 @@ test('影棚选择器保留正式站视觉语言', () => {
     assert.match(styles, /\.studio-venue-option[\s\S]*border-radius: var\(--radius-xs\)/);
     assert.match(styles, /\.studio-venue-floor-row \.studio-venue-option\.active\s*\{[\s\S]*?background:\s*#FFFFFF;[\s\S]*?color:\s*var\(--accent-ink\);[\s\S]*?box-shadow:\s*0 1px 1px rgba\(15, 23, 42, 0\.025\);/);
     assert.match(styles, /\.studio-venue-category-row \.studio-venue-option\.active\s*\{[\s\S]*?color:\s*var\(--accent-ink\);[\s\S]*?box-shadow:\s*inset 0 -2px 0 var\(--accent-solid\);/);
+});
+
+test('日期条只将已过期日期置灰，未来锁定日期保留正常颜色', () => {
+    assert.match(appSource, /isPast:\s*date\s*<\s*getChinaDate\(\)/);
+
+    const renderer = appSource.match(
+        /function renderBookingDateSwitcher\(\)\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(renderer, '没有找到日期条渲染函数');
+    assert.match(renderer[1], /if \(option\.isPast\) classes\.push\('is-past'\)/);
+    assert.match(renderer[1], /if \(!option\.selectable\) classes\.push\('is-locked'\)/);
+
+    const locked = styles.match(
+        /\.booking-date-item\.is-locked\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(locked, '没有找到不可选日期样式');
+    assert.doesNotMatch(locked[1], /color\s*:/, '未来锁定日期不应被灰色文字覆盖');
+
+    const past = styles.match(
+        /\.booking-date-item\.is-past\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(past, '没有找到已过期日期样式');
+    assert.match(past[1], /color:\s*#A8B0BB/);
+
+    const pastDetail = styles.match(
+        /\.booking-date-item\.is-past \.booking-date-detail\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(pastDetail, '没有找到已过期日期的数字样式');
+    assert.match(pastDetail[1], /color:\s*#B6BDC7/);
 });
