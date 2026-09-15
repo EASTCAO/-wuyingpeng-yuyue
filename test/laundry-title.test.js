@@ -3,6 +3,16 @@ const vm = require('node:vm');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
+test('洗衣房标题移除卡片底，不影响进度条', () => {
+    const css = fs.readFileSync('studio-layout.css', 'utf8');
+    const rule = css.match(/([^{}]*has-progress\[data-map-area="service-laundry"\] h4)\s*\{([^}]+)\}/);
+    assert.ok(rule);
+    assert.doesNotMatch(rule[1], /preview-scene-progress/);
+    for (const property of ['border: none', 'border-radius: 0', 'background: transparent', 'box-shadow: none']) {
+        assert.ok(rule[2].includes(property), property);
+    }
+});
+
 test('洗衣房卡片只显示洗衣房，不显示景别第二行', () => {
     const source = fs.readFileSync('studio-layout.js', 'utf8');
     const start = source.indexOf('const STUDIO_SCENE_TITLE_LINES =');

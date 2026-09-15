@@ -1789,6 +1789,14 @@
     white-space: nowrap;
 }
 
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover[data-map-area="service-laundry"] h4,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover.has-progress[data-map-area="service-laundry"] h4 {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover .preview-scene-progress,
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-full-label,
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-expired-label {
