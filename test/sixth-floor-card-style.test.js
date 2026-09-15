@@ -165,8 +165,19 @@ test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色�
     const partialRule = rule(String.raw`${CARD}\.partial`)[1];
     assert.match(partialRule, /#FF716B[\s\S]*#FFA45D[\s\S]*#FFC154/,
         '部分预约应铺满场地总览那组珊瑚橙实色，不掺白');
-    assert.doesNotMatch(partialRule, /rgba\(/,
+    const partialWash = partialRule.match(/--state-wash:([\s\S]*?);/);
+    assert.ok(partialWash, '没有找到部分预约状态色');
+    assert.doesNotMatch(partialWash[1], /rgba\(/,
         '部分预约的状态色不应带透明度，否则会被玻璃白层冲淡');
+    assert.match(partialRule, /--card-border:\s*#FF805C;/,
+        '部分预约的描边应和图例使用同一暖珊瑚色，不能继承天青蓝灰边');
+    assert.match(partialRule, /border-color:\s*#FF805C;/,
+        '部分预约的最终边框色应直接落到暖珊瑚色，避免被后续状态变量污染');
+
+    const partialEdge = rule(String.raw`${CARD}\.partial::after`);
+    assert.ok(partialEdge, '没有找到部分预约的专属棱光规则');
+    assert.doesNotMatch(partialEdge[1], /116,\s*132,\s*154/,
+        '部分预约的底右棱光不能使用冷灰色，否则橙色边缘会发灰');
 
     const partialLegend = rule(String.raw`\.preview-legend-swatch\.partial`);
     assert.ok(partialLegend, '没有找到部分预约图例');
