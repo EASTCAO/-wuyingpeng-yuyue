@@ -126,7 +126,7 @@ test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色�
     for (const state of ['partial', 'full', 'ended']) {
         const stateRule = rule(String.raw`${CARD}\.${state}`);
         assert.ok(stateRule, `${state} 应有自己的状态色规则`);
-        assert.match(stateRule[1], /--state-wash:\s*rgba\(/,
+        assert.match(stateRule[1], /--state-wash:\s*(rgba\(|#)/,
             `${state} 应通过 --state-wash 叠一层状态色`);
         assert.doesNotMatch(stateRule[1], /background:/,
             `${state} 不该另写卡面背景，否则会盖掉毛玻璃`);
@@ -146,29 +146,27 @@ test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色�
             .match(/--state-wash:\s*rgba\([^)]*?([\d.]+)\s*\)/);
         return found ? Number(found[1]) : NaN;
     };
-    const partial = washAlpha('partial');
     const full = washAlpha('full');
     const ended = washAlpha('ended');
     assert.ok(full > ended, `已约满(${full})应比已过期(${ended})更重`);
-    assert.ok(partial > 0 && ended > 0, '部分预约和已过期都要有可见的状态色');
+    assert.ok(ended > 0, '已过期要有可见的状态色');
 
     const washRgb = state => {
         const found = rule(String.raw`${CARD}\.${state}`)[1]
             .match(/--state-wash:\s*rgba\(\s*(\d+),\s*(\d+),\s*(\d+),/);
         return found ? found.slice(1).map(Number) : [];
     };
-    const partialRgb = washRgb('partial');
     const fullRgb = washRgb('full');
-    assert.ok(partialRgb[0] > partialRgb[2],
-        `部分预约应保持暖色提示，实际 rgb(${partialRgb})`);
     assert.ok(fullRgb[2] > fullRgb[0],
         `已约满应保持冷色压暗，实际 rgb(${fullRgb})`);
 
+    // 部分预约是唯一实色铺满的状态：橙色一掺白就发粉发浊，跟参考稿差一整档明度，
+    // 所以这里刻意不留透明度，用和场地总览完全相同的那组珊瑚橙。
     const partialRule = rule(String.raw`${CARD}\.partial`)[1];
-    assert.match(partialRule, /rgba\(\s*255,\s*113,\s*107,/,
-        '部分预约渐变应从场地总览使用的珊瑚色开始');
-    assert.match(partialRule, /rgba\(\s*255,\s*193,\s*84,/,
-        '部分预约渐变应以场地总览使用的暖黄色收尾');
+    assert.match(partialRule, /#FF716B[\s\S]*#FFA45D[\s\S]*#FFC154/,
+        '部分预约应铺满场地总览那组珊瑚橙实色，不掺白');
+    assert.doesNotMatch(partialRule, /rgba\(/,
+        '部分预约的状态色不应带透明度，否则会被玻璃白层冲淡');
 
     const partialLegend = rule(String.raw`\.preview-legend-swatch\.partial`);
     assert.ok(partialLegend, '没有找到部分预约图例');

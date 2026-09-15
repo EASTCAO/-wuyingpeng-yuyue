@@ -721,12 +721,41 @@
 }
 
 /* 状态色调。只改 --state-wash，玻璃配方本身不动——四种状态共用同一套质感。 */
+/* 部分已约：满饱和的珊瑚橙渐变，不留透明度。
+   之前是 0.78 alpha 叠在玻璃白层上，实测合成出来只有 #FFB9B4 → #FEC47C，
+   比参考稿淡了一整档——橙色在高明度区本来就容易发粉发浊，一掺白就散。
+   参考的就是场地总览那张卡，色标本来就是同一组（#FF716B / #FFA45D / #FFC154，
+   采样得到的 #FF6F6B → #FEC757 只是 145deg 插值偏差）；差别只在它是实色铺满。
+   这里改成不透明的同一条线，玻璃质感由边框、棱光和投影继续撑住。 */
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.partial {
-    /* 复用场地总览的珊瑚橙配方，保留少量透明度让玻璃高光继续透出来。 */
     --state-wash:
-        rgba(255, 113, 107, 0.78) 0%,
-        rgba(255, 164, 93, 0.78) 62%,
-        rgba(255, 193, 84, 0.78) 100%;
+        #FF716B 0%,
+        #FFA45D 62%,
+        #FFC154 100%;
+}
+
+/* 满饱和橙底上，原来那套深色字和深蓝进度条（配浅雾橙调的）对比度全部掉档：
+   深墨 #252B33 只剩 3.9:1，深蓝 #14496F 更是 3.2:1，都过不了 AA。
+   参考稿的做法是全部走白：景名和已填充段纯白，底槽用一层压深的半透明橙棕。
+   白字压在最亮那段 #FEC757 上是 1.72:1 —— 单靠颜色不够，所以给一层
+   贴合橙底的暖色描边把字托起来（参考稿里也是这么处理的）。 */
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.partial h4 {
+    color: #FFFFFF;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(150, 62, 24, 0.42);
+}
+
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.partial .preview-scene-progress-track {
+    background: rgba(158, 71, 30, 0.30);
+}
+
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.partial .preview-scene-progress-track i {
+    background: #FFFFFF;
+}
+
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.partial .preview-scene-progress small {
+    color: #FFFFFF;
+    text-shadow: 0 1px 2px rgba(150, 62, 24, 0.42);
 }
 
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.full {
