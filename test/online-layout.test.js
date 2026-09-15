@@ -21,9 +21,10 @@ test('登录页保持正式站的卡片和按钮尺寸', () => {
 });
 
 test('影棚选择器保留正式站视觉语言', () => {
-    assert.match(styles, /\.studio-venue-picker\s*\{[\s\S]*?display:\s*grid;[\s\S]*?width:\s*124px;/);
-    assert.match(styles, /\.studio-venue-floor-row\s*\{[\s\S]*?border:\s*1px solid #EDF0F4;[\s\S]*?background:\s*#F8FAFC;/);
+    assert.match(styles, /\.studio-venue-picker\s*\{[\s\S]*?display:\s*grid;[\s\S]*?gap:\s*3px;[\s\S]*?width:\s*112px;/);
+    assert.match(styles, /\.studio-venue-floor-row\s*\{[\s\S]*?padding:\s*1px;[\s\S]*?border:\s*1px solid #F2F4F7;[\s\S]*?background:\s*#FAFBFC;/);
+    assert.match(styles, /\.studio-venue-options\s*\{[\s\S]*?gap:\s*1px;/);
     assert.match(styles, /\.studio-venue-option[\s\S]*border-radius: var\(--radius-xs\)/);
-    assert.match(styles, /\.studio-venue-floor-row \.studio-venue-option\.active\s*\{[\s\S]*?background:\s*#FFFFFF;[\s\S]*?color:\s*var\(--accent-ink\);[\s\S]*?box-shadow:\s*0 1px 2px rgba\(15, 23, 42, 0\.04\);/);
+    assert.match(styles, /\.studio-venue-floor-row \.studio-venue-option\.active\s*\{[\s\S]*?background:\s*#FFFFFF;[\s\S]*?color:\s*var\(--accent-ink\);[\s\S]*?box-shadow:\s*0 1px 1px rgba\(15, 23, 42, 0\.025\);/);
     assert.match(styles, /\.studio-venue-category-row \.studio-venue-option\.active\s*\{[\s\S]*?color:\s*var\(--accent-ink\);[\s\S]*?box-shadow:\s*inset 0 -2px 0 var\(--accent-solid\);/);
 });
