@@ -1973,6 +1973,7 @@ function renderAvailabilityPanel() {
     const studio = studioSelect.value;
     const selectedDate = dateInput.value;
     const studioInfo = getStudioById(studio);
+    const isSixthFloorRealScene = studioInfo?.groupKey === 'real-scene-sixth-floor';
     const existingBookings = allBookings
         .filter(booking => booking.id !== editingBookingId
             && booking.studio === studio
@@ -2070,7 +2071,7 @@ function renderAvailabilityPanel() {
             <span>${escapeHtml(booking.photographer)}</span>
             ${getBookingNote(booking) ? `<em>${escapeHtml(getBookingNote(booking))}</em>` : ''}
         `;
-        if (!canCancelBooking(booking)) {
+        if (isSixthFloorRealScene || !canCancelBooking(booking)) {
             return `<div class="availability-booking-item">${content}</div>`;
         }
         return `

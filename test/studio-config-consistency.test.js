@@ -81,3 +81,14 @@ test('新增登录账号同时加入前端本地模式和后端默认账号', ()
         assert.ok(backendUsers.includes(username), `后端默认用户缺少 ${username}`);
     }
 });
+
+test('6F 实景棚左侧摄影师预约时间段保持只读', () => {
+    const renderSource = readArraySource(
+        appSource,
+        'function renderAvailabilityPanel()',
+        '\nfunction openAvailabilityBooking'
+    );
+
+    assert.match(renderSource, /studioInfo\?\.groupKey === 'real-scene-sixth-floor'/);
+    assert.match(renderSource, /if \(isSixthFloorRealScene \|\| !canCancelBooking\(booking\)\)/);
+});
