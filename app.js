@@ -37,6 +37,7 @@ let bookingDeleteInFlight = false;
 let currentStudioCategory = 'cyclorama';
 let bookingsLoaded = false;
 let bookingHistoryLoaded = false;
+const loadedBookingHistoryDates = new Set();
 let simpleVideoBookingContext = null;
 const SIMPLE_VIDEO_ASSIGNMENTS = {
     '曹东': '涂萱',
@@ -1287,8 +1288,9 @@ function openSimpleVideoBooking(taskId, targetDate) {
     showAddBookingForm(undefined, null, { taskId, targetDate });
 }
 
-// 顶部日期条：展示整周 7 天，但只有真正能选的（今天/明天，管理员多一个昨天）可点。
-// 未开放日期仍保留正常文字色；只有已经过去的日期置灰。
+// 顶部日期条：展示整周 7 天。可预约日期按当前窗口开放；
+// 已经过去的日期保留灰色，但可以点击查看当天历史记录。
+// 尚未开放的未来日期仍保留正常文字色并禁止点击。
 // 日期条的可选范围跟着当前视图走：6F 实景棚能提前一周约，其余仍是今天/明天。
 // currentStudioFloor / currentStudioCategory 由 studio-layout.js 维护。
 function getActiveBookingWindowDays() {
@@ -1325,12 +1327,16 @@ function getToolbarDates() {
     return Array.from(
         { length: BOOKING_DATE_PAGE_SIZE },
         (_, index) => shiftDate(bookingDateStripStart, index)
-    ).map(date => ({
-        date,
-        weekday: getWeekdayLabel(date),
-        selectable: selectable.has(date),
-        isPast: date < getChinaDate()
-    }));
+    ).map(date => {
+        const isPast = date < getChinaDate();
+        return {
+            date,
+            weekday: getWeekdayLabel(date),
+            selectable: selectable.has(date),
+            isPast,
+            viewable: isPast || selectable.has(date)
+        };
+    });
 }
 
 function renderBookingDateSwitcher() {
@@ -1344,10 +1350,15 @@ function renderBookingDateSwitcher() {
         const classes = ['booking-date-item'];
         if (isActive) classes.push('active');
         if (option.isPast) classes.push('is-past');
-        if (!option.selectable) classes.push('is-locked');
+        if (!option.viewable) classes.push('is-locked');
         // 日期条统一显示星期几（例如周五、周六）；title 里给完整信息避免歧义
-        const title = `${option.weekday} ${Number(month)}月${Number(day)}日${option.selectable ? '' : '（不在可预约范围内）'}`;
-        return `<button type="button" class="${classes.join(' ')}" onclick="selectBookingDate('${option.date}')" aria-pressed="${isActive}" title="${escapeHtml(title)}"${option.selectable ? '' : ' disabled'}>
+        const rangeHint = option.isPast
+            ? '（查看历史记录）'
+            : option.selectable
+                ? ''
+                : '（不在可预约范围内）';
+        const title = `${option.weekday} ${Number(month)}月${Number(day)}日${rangeHint}`;
+        return `<button type="button" class="${classes.join(' ')}" onclick="selectBookingDate('${option.date}')" aria-pressed="${isActive}" title="${escapeHtml(title)}"${option.viewable ? '' : ' disabled'}>
             <span class="booking-date-name">${option.weekday}</span>
             <small class="booking-date-detail">${Number(month)}.${Number(day)}</small>
         </button>`;
@@ -1363,13 +1374,46 @@ function moveBookingDateStrip(weekOffset) {
     renderBookingDateSwitcher();
 }
 
-function selectBookingDate(date) {
+function isViewableBookingDate(date, options) {
+    const dateOnly = getDateOnly(date);
+    return dateOnly < getChinaDate() || isSelectableDate(dateOnly, options);
+}
+
+async function loadBookingHistoryForDate(date) {
+    const dateOnly = getDateOnly(date);
+    if (!isCloudMode() || bookingHistoryLoaded || loadedBookingHistoryDates.has(dateOnly)) return true;
+
+    try {
+        const response = await apiFetch(`/api/bookings?from=${dateOnly}&to=${dateOnly}`);
+        if (!response.ok) {
+            throw new Error(`加载历史记录失败: ${response.status}`);
+        }
+
+        const historicalBookings = (await response.json()).map(normalizeBookingRecord);
+        const mergedBookings = new Map(allBookings.map(booking => [booking.id, booking]));
+        historicalBookings.forEach(booking => mergedBookings.set(booking.id, booking));
+        allBookings = Array.from(mergedBookings.values());
+        sortBookings();
+        loadedBookingHistoryDates.add(dateOnly);
+        return true;
+    } catch (error) {
+        console.error('加载历史记录失败:', error);
+        showToast('加载历史记录失败，请检查网络', 'error');
+        return false;
+    }
+}
+
+async function selectBookingDate(date) {
     const options = { isAdmin: currentUser === 'admin', windowDays: getActiveBookingWindowDays() };
-    if (!isSelectableDate(date, options)) return;
-    selectedDate = date;
+    if (!isViewableBookingDate(date, options)) return;
+    selectedDate = getDateOnly(date);
     currentDateRange = 'custom';
     renderBookingDateSwitcher();
     if (currentView === 'list') renderBookings();
+    if (selectedDate < getChinaDate()) {
+        await loadBookingHistoryForDate(selectedDate);
+        if (currentView === 'list') renderBookings();
+    }
 }
 
 // 标签切换
@@ -1433,6 +1477,13 @@ async function loadBookings({ includeHistory = bookingHistoryLoaded } = {}) {
 
             // 标准化字段名：后端使用 notes，前端使用 note
             allBookings = allBookings.map(normalizeBookingRecord);
+            if (!includeHistory) {
+                // 常规刷新只取近期窗口，历史日期需要单独补回当前查看日期。
+                loadedBookingHistoryDates.clear();
+                if (selectedDate && selectedDate < getChinaDate()) {
+                    await loadBookingHistoryForDate(selectedDate);
+                }
+            }
             bookingsLoaded = true;
             if (includeHistory) bookingHistoryLoaded = true;
 
@@ -2467,7 +2518,7 @@ async function addBooking() {
     }
 }
 
-function showStudioDetail(studioId) {
+function showStudioDetail(studioId, { readOnly = false } = {}) {
     const normalizedStudioId = normalizeStudioName(studioId);
     const studio = getStudioById(normalizedStudioId);
     if (!studio) return;
@@ -2475,7 +2526,9 @@ function showStudioDetail(studioId) {
     selectedBookingId = null;
     const displayDates = getDisplayDates();
     const studioBookings = getStudioBookingsForDates(studio.id, displayDates);
-    const state = getStudioLiveState(studioBookings);
+    const state = readOnly
+        ? { type: 'free', label: '历史记录' }
+        : getStudioLiveState(studioBookings);
     const todayCount = getTodayBookingCount(studio.id);
 
     const bookingListHtml = studioBookings.length === 0
@@ -2503,9 +2556,9 @@ function showStudioDetail(studioId) {
         </div>
     `;
 
-    document.getElementById('detailActions').innerHTML = `
-        <button onclick="openAddBookingFromStudioDetail('${escapeHtml(studio.id)}')" class="btn ${studio.buttonClass}">预约</button>
-    `;
+    document.getElementById('detailActions').innerHTML = readOnly
+        ? ''
+        : `<button onclick="openAddBookingFromStudioDetail('${escapeHtml(studio.id)}')" class="btn ${studio.buttonClass}">预约</button>`;
 
     openAccessibleModal('bookingDetailModal', '.close-btn');
 }
@@ -3526,6 +3579,4 @@ function renderStatsView() {
         `;
     }).join('');
 }
-
-
 

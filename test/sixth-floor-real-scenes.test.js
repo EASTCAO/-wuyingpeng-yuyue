@@ -98,16 +98,21 @@ test('6F 户型图中的所有文字场景都作为可预约卡片', () => {
     expectedSceneIds.forEach(sceneId => assert.match(layoutSource, new RegExp(`'${sceneId}'`)));
 });
 
-test('点击已过期实景棚会自动切换到下一可预约日期并打开预约', () => {
+test('点击已过期实景棚会打开当天历史记录而不是进入预约', () => {
     const openCardSource = layoutSource.slice(
         layoutSource.indexOf('function openRealSceneCard(studioId)'),
         layoutSource.indexOf('function handleRealSceneCardKeydown')
     );
     assert.match(openCardSource, /getRealSceneState\(studio, overviewDate\)/);
     assert.match(openCardSource, /if \(state\?\.type === 'ended'\)/);
-    assert.match(openCardSource, /selectBookingDate\(targetDate\);/);
-    assert.match(openCardSource, /showToast\(`当前日期已过期，已为你切换到\$\{formatShortDate\(targetDate\)\}`/);
-    assert.match(openCardSource, /showAddBookingForm\(studioId\);/);
+    assert.match(openCardSource, /showStudioDetail\(studioId, \{ readOnly: true \}\);/);
+    assert.doesNotMatch(openCardSource, /selectBookingDate\(/);
+    const endedBranch = openCardSource.match(
+        /if \(state\?\.type === 'ended'\)\s*\{([\s\S]*?)\n\s*\}/
+    );
+    assert.ok(endedBranch, '没有找到已过期卡片分支');
+    assert.match(endedBranch[1], /return;/);
+    assert.doesNotMatch(endedBranch[1], /showAddBookingForm\(studioId\);/);
 });
 
 test('6F 不读取旧版个人布局', () => {

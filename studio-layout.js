@@ -181,7 +181,7 @@ function selectStudioView(floor, category) {
     localStorage.setItem(getStudioViewStorageKey(), JSON.stringify({ floor, category }));
     // 6F 实景棚能提前一周约，其余视图只有今天/明天。
     // 从 6F 实景棚切走时，原来选的日期可能已经超出新视图的范围，收回到今天。
-    if (selectedDate && !isSelectableDate(selectedDate, {
+    if (selectedDate && !isViewableBookingDate(selectedDate, {
         isAdmin: currentUser === 'admin',
         windowDays: getActiveBookingWindowDays()
     })) {
@@ -469,11 +469,8 @@ function openRealSceneCard(studioId) {
     const studio = getStudioById(studioId);
     const state = studio ? getRealSceneState(studio, overviewDate) : null;
     if (state?.type === 'ended') {
-        const targetDate = overviewDate < getChinaDate() && getChinaCurrentTime() <= BOOKING_END_TIME
-            ? getChinaDate()
-            : getChinaDate(1);
-        selectBookingDate(targetDate);
-        showToast(`当前日期已过期，已为你切换到${formatShortDate(targetDate)}`, 'success');
+        showStudioDetail(studioId, { readOnly: true });
+        return;
     }
     showAddBookingForm(studioId);
 }

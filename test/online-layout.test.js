@@ -42,14 +42,15 @@ test('用户菜单去掉外层圆角卡片', () => {
 });
 
 test('日期条只将已过期日期置灰，未来锁定日期保留正常颜色', () => {
-    assert.match(appSource, /isPast:\s*date\s*<\s*getChinaDate\(\)/);
+    assert.match(appSource, /const isPast = date < getChinaDate\(\);/);
 
     const renderer = appSource.match(
         /function renderBookingDateSwitcher\(\)\s*\{([\s\S]*?)\n\}/
     );
     assert.ok(renderer, '没有找到日期条渲染函数');
     assert.match(renderer[1], /if \(option\.isPast\) classes\.push\('is-past'\)/);
-    assert.match(renderer[1], /if \(!option\.selectable\) classes\.push\('is-locked'\)/);
+    assert.match(renderer[1], /if \(!option\.viewable\) classes\.push\('is-locked'\)/);
+    assert.match(renderer[1], /option\.viewable \? '' : ' disabled'/);
 
     const locked = styles.match(
         /\.booking-date-item\.is-locked\s*\{([\s\S]*?)\n\}/
@@ -68,6 +69,37 @@ test('日期条只将已过期日期置灰，未来锁定日期保留正常颜�
     );
     assert.ok(pastDetail, '没有找到已过期日期的数字样式');
     assert.match(pastDetail[1], /color:\s*#B6BDC7/);
+});
+
+test('过期日期保留灰色但可点击查看当天历史记录', () => {
+    const toolbarDates = appSource.match(
+        /function getToolbarDates\(\)\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(toolbarDates, '没有找到日期条数据函数');
+    assert.match(toolbarDates[1], /const isPast = date < getChinaDate\(\);/);
+    assert.match(toolbarDates[1], /viewable:\s*isPast \|\| selectable\.has\(date\)/);
+
+    const selectDate = appSource.match(
+        /async function selectBookingDate\(date\)\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(selectDate, '没有找到日期切换函数');
+    assert.match(selectDate[1], /isViewableBookingDate\(date, options\)/);
+    assert.match(selectDate[1], /await loadBookingHistoryForDate\(selectedDate\)/);
+
+    const loadHistory = appSource.match(
+        /async function loadBookingHistoryForDate\(date\)\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(loadHistory, '没有找到历史记录加载函数');
+    assert.match(loadHistory[1], /\/api\/bookings\?from=\$\{dateOnly\}&to=\$\{dateOnly\}/);
+    assert.match(loadHistory[1], /map\(normalizeBookingRecord\)/);
+    assert.match(loadHistory[1], /loadedBookingHistoryDates\.add\(dateOnly\)/);
+
+    const loadBookings = appSource.match(
+        /async function loadBookings\(\{ includeHistory = bookingHistoryLoaded \} = \{\}\)\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(loadBookings, '没有找到预约数据加载函数');
+    assert.match(loadBookings[1], /loadedBookingHistoryDates\.clear\(\);/);
+    assert.match(loadBookings[1], /await loadBookingHistoryForDate\(selectedDate\)/);
 });
 
 test('日期条固定周一起始并支持左右按周浏览', () => {
