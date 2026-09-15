@@ -218,6 +218,17 @@
         padding: 0 0 4px;
     }
 
+    /* 7F 实景卡片内容高度小于工作区时，向可用区域中线收拢，避免底部留白过重。 */
+    .studio-booking-page .list-view.real-scene-active .preview-workspace-7f {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .studio-booking-page .list-view.real-scene-active .preview-workspace-7f .preview-content {
+        flex: 0 1 auto;
+    }
+
     .studio-booking-page .list-view.real-scene-active .preview-content-6f {
         flex: 1;
         min-height: 0;
