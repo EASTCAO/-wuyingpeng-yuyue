@@ -41,14 +41,15 @@ function getSceneReference(studioId) {
 
 const STUDIO_SCENE_TITLE_LINES = {
     '洗衣房景别': ['洗衣房'],
-    '木纹台面-厨房景': ['木纹台面', '厨房景'],
-    '黑色台面-厨房景': ['黑色台面', '厨房景'],
-    '儿童房景/户外下午茶景': ['儿童房景', '户外下午茶景']
+    '木纹台面-厨房景': ['木纹台面', '厨房'],
+    '黑色台面-厨房景': ['黑色台面', '厨房'],
+    '儿童房景/户外下午茶景': ['儿童房', '户外下午茶']
 };
 
-function renderStudioSceneTitle(title) {
-    const lines = STUDIO_SCENE_TITLE_LINES[title] || [title];
-    return `<h4 aria-label="${escapeHtml(title)}">${lines
+function renderStudioSceneTitle(title, hideSceneSuffix = false) {
+    const displayTitle = hideSceneSuffix ? title.replace(/景$/, '') : title;
+    const lines = STUDIO_SCENE_TITLE_LINES[title] || [displayTitle];
+    return `<h4 aria-label="${escapeHtml(lines.join(''))}">${lines
         .map(line => `<span class="preview-scene-title-line" aria-hidden="true">${escapeHtml(line)}</span>`)
         .join('')}</h4>`;
 }
@@ -391,7 +392,7 @@ function renderRealSceneCard(studio, state, index, layout = null) {
             ` : ''}
             <div class="preview-scene-info">
                 <div class="preview-scene-card-top">
-                    ${renderStudioSceneTitle(studio.title)}
+                    ${renderStudioSceneTitle(studio.title, isSeventhFloor)}
                 </div>
                 ${state.type === 'ended' ? `
                     <span class="preview-scene-expired-label" role="status">已过期</span>
@@ -482,4 +483,3 @@ function handleRealSceneCardKeydown(event, studioId) {
     event.preventDefault();
     openRealSceneCard(studioId);
 }
-
