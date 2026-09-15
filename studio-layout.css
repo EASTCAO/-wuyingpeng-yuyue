@@ -1972,6 +1972,18 @@
     text-shadow: 0 1px 2px rgba(150, 62, 24, 0.42);
 }
 
+/* 7F 进度条直接落在卡面上，不再套一层圆角底板。 */
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover .preview-scene-progress {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.full.has-scene-cover h4,
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.full.has-scene-cover.has-progress h4 {
     color: #F7F7F8;

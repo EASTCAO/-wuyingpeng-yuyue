@@ -8,10 +8,16 @@ function rule(selector) {
     return styles.match(new RegExp(`(?:^|\\n)${selector}\\s*\\{([\\s\\S]*?)\\n\\}`));
 }
 
+function lastRule(selector) {
+    const matches = [...styles.matchAll(new RegExp(`(?:^|\\n)${selector}\\s*\\{([\\s\\S]*?)\\n\\}`, 'g'))];
+    return matches[matches.length - 1];
+}
+
 const sixthGlass = String.raw`\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card`;
 const seventhAvailable = String.raw`\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.available`;
 const seventhPartial = String.raw`\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.partial`;
 const seventhFull = String.raw`\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.full`;
+const seventhProgressShell = String.raw`\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.has-scene-cover \.preview-scene-progress`;
 
 function background(ruleBody) {
     const match = ruleBody.match(/background:([\s\S]*?);/);
@@ -75,6 +81,16 @@ test('7F 部分预约沿用 6F 的珊瑚橙卡面和状态色', () => {
     );
     assert.ok(count, '没有找到 7F 部分预约数量文字规则');
     assert.match(count[1], /color:\s*#FFFFFF;/);
+});
+
+test('7F 进度条不再显示外层圆角方框', () => {
+    const progressShell = lastRule(seventhProgressShell);
+    assert.ok(progressShell, '没有找到 7F 进度条容器最终规则');
+    assert.match(progressShell[1], /padding:\s*0;/);
+    assert.match(progressShell[1], /border:\s*0;/);
+    assert.match(progressShell[1], /border-radius:\s*0;/);
+    assert.match(progressShell[1], /background:\s*transparent;/);
+    assert.match(progressShell[1], /box-shadow:\s*none;/);
 });
 
 test('7F 已约满沿用 6F 的近黑卡面和状态色', () => {
