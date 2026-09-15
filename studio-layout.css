@@ -1884,3 +1884,63 @@
     margin-top: 4px;
     text-align: center;
 }
+
+/* 7F 的可预约和已约满状态复用 6F 的卡面配色。
+   实拍照片和 7F 的网格布局保持不变，只统一卡面、边框和状态文字颜色。 */
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.available {
+    --card-border: #7C8A9E;
+    border-color: var(--card-border);
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.full {
+    --state-wash: rgba(34, 34, 36, 1) 0%, rgba(25, 26, 29, 1) 100%;
+    --card-edge: #101113;
+    --card-border: #17181A;
+    --card-shadow: rgba(20, 21, 24, 0.22);
+    border-color: var(--card-border);
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.available,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.full {
+    background:
+        linear-gradient(145deg, var(--state-wash)),
+        linear-gradient(
+            126deg,
+            rgba(255, 255, 255, 0.88) 0%,
+            rgba(255, 255, 255, 0.42) 16%,
+            rgba(255, 255, 255, 0.08) 30%,
+            rgba(255, 255, 255, 0) 44%
+        ),
+        linear-gradient(
+            120deg,
+            rgba(255, 255, 255, 0.82) 0%,
+            rgba(251, 253, 255, 0.70) 50%,
+            rgba(243, 248, 255, 0.58) 100%
+        ),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23g)' opacity='0.5'/></svg>");
+    backdrop-filter: blur(26px) saturate(170%) brightness(1.05);
+    -webkit-backdrop-filter: blur(26px) saturate(170%) brightness(1.05);
+    box-shadow:
+        0 1px 2px rgba(38, 52, 68, 0.05),
+        0 5px 12px rgba(38, 52, 68, 0.08),
+        0 18px 34px rgba(38, 52, 68, 0.11),
+        0 36px 64px rgba(38, 52, 68, 0.07);
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.available.has-scene-cover h4,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.available.has-scene-cover.has-progress h4 {
+    color: #252B33;
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.full.has-scene-cover h4,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.full.has-scene-cover.has-progress h4 {
+    color: #F7F7F8;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.34);
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.full .preview-scene-full-label {
+    border-color: transparent;
+    background: #4A4D52;
+    color: #F0F1F3;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
