@@ -1264,7 +1264,9 @@ async function loadSimpleVideoTasks() {
 }
 
 function updateSimpleVideoTaskBadge() {
-    const count = simpleVideoTasks.filter(task => !task.simpleVideoCompleted).length;
+    const count = simpleVideoTasks.filter(task =>
+        !task.simpleVideoCompleted && !task.simpleVideoAcknowledged
+    ).length;
     const badge = document.getElementById('simpleVideoTaskBadge');
     if (badge) {
         badge.textContent = String(count);
@@ -1288,10 +1290,24 @@ function updateSimpleVideoTaskBadge() {
 function renderSimpleVideoTasks() {
     const container = document.getElementById('simpleVideoTasksContent');
     if (!container) return;
-    container.innerHTML = simpleVideoTasks.length ? simpleVideoTasks.map(booking => `
-        <article class="simple-video-task-card ${booking.simpleVideoCompleted ? 'is-booked' : 'is-pending'}">
+    container.innerHTML = simpleVideoTasks.length ? simpleVideoTasks.map(booking => {
+        const simpleVideoState = booking.simpleVideoCompleted
+            ? 'booked'
+            : booking.simpleVideoAcknowledged ? 'acknowledged' : 'pending';
+        const action = simpleVideoState === 'booked'
+            ? `<button class="btn btn-secondary simple-video-task-action" onclick="showBookingDetail(${inlineJsString(booking.simpleVideoBookingId)})">查看/取消预约</button>`
+            : simpleVideoState === 'acknowledged'
+                ? `<div class="simple-video-task-actions"><button class="btn btn-secondary simple-video-task-action" onclick="setSimpleVideoTaskAcknowledged(${inlineJsString(booking.id)}, false)">恢复提醒</button></div>`
+                : `<div class="simple-video-task-actions">
+                    <button class="btn btn-primary simple-video-task-action" onclick="openSimpleVideoBooking(${inlineJsString(booking.id)}, ${inlineJsString(booking.simpleVideoTargetDate)})">去预约${escapeHtml(formatShortDate(booking.simpleVideoTargetDate))}</button>
+                    <button class="btn btn-secondary simple-video-task-action" onclick="setSimpleVideoTaskAcknowledged(${inlineJsString(booking.id)}, true)">无位置，隐藏提醒</button>
+                </div>`;
+        return `
+        <article class="simple-video-task-card is-${simpleVideoState}">
             <div class="simple-video-task-info">
-                <div class="simple-video-task-status">${booking.simpleVideoCompleted ? '已预约' : '待预约'}</div>
+                <div class="simple-video-task-status">${simpleVideoState === 'booked'
+                    ? '已预约'
+                    : simpleVideoState === 'acknowledged' ? '已知晓' : '待预约'}</div>
                 <div class="simple-video-task-date">
                     <span class="simple-video-task-label">原预约</span>
                     <span>${escapeHtml(formatDate(booking.date))} ${escapeHtml(booking.startTime)}–${escapeHtml(booking.endTime)}</span>
@@ -1299,12 +1315,41 @@ function renderSimpleVideoTasks() {
                 </div>
                 <div class="simple-video-task-time">简易视频：${booking.simpleVideoCompleted
                     ? `${escapeHtml(formatDate(booking.simpleVideoTargetDate))} ${escapeHtml(booking.simpleVideoStartTime)}-${escapeHtml(booking.simpleVideoEndTime)}`
-                    : '未预约'}</div>
+                    : booking.simpleVideoAcknowledged ? '已无可用位置' : '未预约'}</div>
             </div>
-            ${booking.simpleVideoCompleted
-                ? `<button class="btn btn-secondary simple-video-task-action" onclick="showBookingDetail(${inlineJsString(booking.simpleVideoBookingId)})">查看/取消预约</button>`
-                : `<button class="btn btn-primary simple-video-task-action" onclick="openSimpleVideoBooking(${inlineJsString(booking.id)}, ${inlineJsString(booking.simpleVideoTargetDate)})">去预约${escapeHtml(formatShortDate(booking.simpleVideoTargetDate))}</button>`}
-        </article>`).join('') : '<p class="empty-message">暂无简易视频待办</p>';
+            ${action}
+        </article>`;
+    }).join('') : '<p class="empty-message">暂无简易视频待办</p>';
+}
+
+async function setSimpleVideoTaskAcknowledged(taskId, acknowledged) {
+    const task = simpleVideoTasks.find(item => item.id === taskId);
+    if (!task || task.simpleVideoCompleted) return;
+
+    try {
+        if (isCloudMode()) {
+            const response = await apiFetch(`/api/simple-video/tasks/${encodeURIComponent(taskId)}/acknowledged`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ acknowledged })
+            });
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.error || '更新待办状态失败');
+            }
+        } else {
+            const booking = allBookings.find(item => item.id === taskId);
+            if (!booking) throw new Error('待办不存在或已失效');
+            booking.simpleVideoAcknowledged = acknowledged;
+            saveBookings();
+        }
+
+        await loadSimpleVideoTasks();
+        showToast(acknowledged ? '已标记知晓，提醒已隐藏' : '已恢复简易视频提醒', 'success');
+    } catch (error) {
+        console.error('更新简易视频待办失败:', error);
+        showToast(error.message || '更新待办状态失败', 'error');
+    }
 }
 
 function openSimpleVideoBooking(taskId, targetDate) {
@@ -1566,6 +1611,7 @@ function normalizeBookingRecord(booking) {
         ...booking,
         studio: normalizeStudioName(booking.studio),
         needsSimpleVideo: booking.needsSimpleVideo === true || booking.needsSimpleVideo === 'true',
+        simpleVideoAcknowledged: booking.simpleVideoAcknowledged === true || booking.simpleVideoAcknowledged === 'true',
         note,
         notes: note
     };
@@ -3170,16 +3216,18 @@ function checkUpcomingBookings() {
     if (isSimpleVideoRecipient()) {
         loadSimpleVideoTasks().then(() => {
             const notified = JSON.parse(localStorage.getItem('simpleVideoNotified') || '{}');
-            simpleVideoTasks.forEach(task => {
-                const key = `${task.id}:${task.date}`;
-                if (notified[key]) return;
-                notified[key] = Date.now();
-                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-                    new Notification('简易视频待办', {
-                        body: `${task.photographer} ${formatShortDate(task.simpleVideoTargetDate)}需要预约无影棚`
-                    });
-                }
-            });
+            simpleVideoTasks
+                .filter(task => !task.simpleVideoCompleted && !task.simpleVideoAcknowledged)
+                .forEach(task => {
+                    const key = `${task.id}:${task.date}`;
+                    if (notified[key]) return;
+                    notified[key] = Date.now();
+                    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                        new Notification('简易视频待办', {
+                            body: `${task.photographer} ${formatShortDate(task.simpleVideoTargetDate)}需要预约无影棚`
+                        });
+                    }
+                });
             localStorage.setItem('simpleVideoNotified', JSON.stringify(notified));
         });
     }

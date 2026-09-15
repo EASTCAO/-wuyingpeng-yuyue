@@ -21,6 +21,7 @@ const PORT = process.env.PORT || 3000;
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const AUTH_SECRET = process.env.AUTH_SECRET;
 const DEFAULT_USER_PASSWORD = process.env.DEFAULT_USER_PASSWORD;
+const DATABASE_SSL = process.env.DATABASE_SSL === 'true';
 
 // AUTH_SECRET 以前会静默回退到 DATABASE_URL——数据库连接串出现在构建日志、错误堆栈
 // 和平台面板里的概率远高于专用密钥，一旦泄漏就能伪造任意用户（含 admin）的 token。
@@ -250,7 +251,9 @@ app.use((req, res, next) => {
 // Zeabur 会自动注入这些环境变量
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  // Zeabur 内网 PostgreSQL 不提供 SSL，不能仅凭 NODE_ENV 强制启用；
+  // 外部托管数据库需要 SSL 时显式设置 DATABASE_SSL=true。
+  ssl: DATABASE_SSL ? { rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false' } : false,
   max: 20, // 最大连接数
   idleTimeoutMillis: 30000, // 空闲连接超时
   connectionTimeoutMillis: 2000, // 连接超时
@@ -275,10 +278,12 @@ async function ensureDatabase() {
         contact TEXT NOT NULL,
         notes TEXT,
         "needsSimpleVideo" BOOLEAN NOT NULL DEFAULT FALSE,
+        "simpleVideoAcknowledged" BOOLEAN NOT NULL DEFAULT FALSE,
         "createdAt" TEXT NOT NULL
       )
     `);
     await client.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "needsSimpleVideo" BOOLEAN NOT NULL DEFAULT FALSE');
+    await client.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "simpleVideoAcknowledged" BOOLEAN NOT NULL DEFAULT FALSE');
     await client.query('CREATE INDEX IF NOT EXISTS bookings_date_start_idx ON bookings (date, "startTime")');
 
     const studioMigrations = [
@@ -428,6 +433,40 @@ app.get('/api/simple-video/tasks', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('获取简易视频待办失败:', error);
     res.status(500).json({ error: '获取简易视频待办失败' });
+  }
+});
+
+app.patch('/api/simple-video/tasks/:id/acknowledged', requireAuth, writeLimiter, async (req, res) => {
+  try {
+    const acknowledged = req.body?.acknowledged;
+    if (typeof acknowledged !== 'boolean') {
+      return res.status(400).json({ error: '待办状态格式不正确' });
+    }
+
+    const assignedPhotographers = Object.entries(SIMPLE_VIDEO_ASSIGNMENTS)
+      .filter(([, recipient]) => recipient === req.user.username)
+      .map(([photographer]) => photographer);
+    if (assignedPhotographers.length === 0) {
+      return res.status(403).json({ error: '没有简易视频待办权限' });
+    }
+
+    const result = await pool.query(
+      `UPDATE bookings
+       SET "simpleVideoAcknowledged" = $1
+       WHERE id = $2
+         AND "needsSimpleVideo" = TRUE
+         AND date IN ($3, $4)
+         AND photographer = ANY($5::text[])
+       RETURNING id, "simpleVideoAcknowledged"`,
+      [acknowledged, req.params.id, getChinaDate(), getChinaDate(1), assignedPhotographers]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: '待办不存在或已失效' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('更新简易视频待办失败:', error);
+    res.status(500).json({ error: '更新待办状态失败' });
   }
 });
 

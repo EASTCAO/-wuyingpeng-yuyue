@@ -1,6 +1,6 @@
 # 影棚预约系统
 
-面向摄影团队的影棚预约系统，覆盖 6F、7F 无影棚和 6F、7F 实景棚。正式前端部署在 Vercel，预约数据与账号由 Zeabur 上的 Node.js API 和 PostgreSQL 统一管理。
+面向摄影团队的影棚预约系统，覆盖 6F、7F 无影棚和 6F、7F 实景棚。正式前后端都部署在 Zeabur，预约数据与账号由 Node.js API 和 PostgreSQL 统一管理。
 
 ## 当前功能
 
@@ -125,11 +125,14 @@ NODE_ENV=production
 ```text
 ALLOWED_ORIGINS=https://photowhyy.zeabur.app,https://wuyingpeng-yuyue.vercel.app
 DEFAULT_USER_PASSWORD=首次创建默认账号时使用的密码
+DATABASE_SSL=false
 ```
 
 `ALLOWED_ORIGINS` 不配时使用上面两个正式域名，其他来源的跨域请求不会拿到 CORS 放行头。
 `DEFAULT_USER_PASSWORD` 不配时跳过默认账号初始化（不会再用内置的 `123456` 建号）；
 此时管理员新增用户，后端会随机生成初始密码并在界面上显示一次，需转告本人并尽快修改。
+Zeabur 内网 PostgreSQL 使用 `DATABASE_SSL=false`；外部数据库要求 SSL 时设为 `true`，
+只有证书无法通过系统信任链校验时才设置 `DATABASE_SSL_REJECT_UNAUTHORIZED=false`。
 
 ## 安全说明
 

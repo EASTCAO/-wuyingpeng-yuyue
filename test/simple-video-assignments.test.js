@@ -102,9 +102,20 @@ test('只有对应日期的7F无影棚预约才算完成简易视频待办', () 
 });
 
 test('完成对应预约后未读消息自动变成已读', () => {
-    assert.match(appSource, /const count = simpleVideoTasks\.filter\(task => !task\.simpleVideoCompleted\)\.length;/);
+    assert.match(appSource, /const count = simpleVideoTasks\.filter\(task =>[\s\S]*?!task\.simpleVideoCompleted && !task\.simpleVideoAcknowledged[\s\S]*?\)\.length;/);
     assert.match(appSource, /simpleVideoCompleted: Boolean\(simpleVideoBooking\)/);
     assert.match(appSource, /badge\.classList\.toggle\('hidden', count === 0\)/);
+});
+
+test('无可用位置时可以隐藏提醒并允许恢复', () => {
+    assert.match(appSource, /async function setSimpleVideoTaskAcknowledged\(taskId, acknowledged\)/);
+    assert.match(appSource, /method: 'PATCH'/);
+    assert.match(appSource, /无位置，隐藏提醒/);
+    assert.match(appSource, /恢复提醒/);
+    assert.match(appSource, /task => !task\.simpleVideoCompleted && !task\.simpleVideoAcknowledged/);
+    assert.match(serverSource, /app\.patch\('\/api\/simple-video\/tasks\/:id\/acknowledged', requireAuth, writeLimiter/);
+    assert.match(serverSource, /"simpleVideoAcknowledged" BOOLEAN NOT NULL DEFAULT FALSE/);
+    assert.match(serverSource, /"needsSimpleVideo" = TRUE[\s\S]*date IN \(\$3, \$4\)[\s\S]*photographer = ANY\(\$5::text\[\]\)/);
 });
 
 test('待办未完成时在用户名旁显示可直接进入的醒目提醒', () => {
@@ -148,12 +159,14 @@ test('影棚名称和括号位置保持在同一行', () => {
     assert.match(styles, /\.simple-video-task-studio::before\s*\{[\s\S]*content: "· ";/);
 });
 
-test('简易视频待办只用文字区分已预约与待预约并保持卡片原色', () => {
+test('简易视频待办用文字区分已预约、待预约与已知晓并保持卡片原色', () => {
     const styles = fs.readFileSync('style.css', 'utf8');
-    assert.match(appSource, /simple-video-task-card \$\{booking\.simpleVideoCompleted \? 'is-booked' : 'is-pending'\}/);
-    assert.match(appSource, /simple-video-task-status">\$\{booking\.simpleVideoCompleted \? '已预约' : '待预约'\}/);
+    assert.match(appSource, /const simpleVideoState = booking\.simpleVideoCompleted[\s\S]*?'booked'[\s\S]*?booking\.simpleVideoAcknowledged \? 'acknowledged' : 'pending'/);
+    assert.match(appSource, /simple-video-task-card is-\$\{simpleVideoState\}/);
+    assert.match(appSource, /simple-video-task-status">\$\{simpleVideoState === 'booked'[\s\S]*?'已预约'[\s\S]*?'已知晓' : '待预约'\}/);
     assert.match(styles, /\.simple-video-task-card\s*\{[\s\S]*border-left: 4px solid var\(--accent\);[\s\S]*background: #fff;/);
     assert.match(styles, /\.simple-video-task-card\.is-booked \.simple-video-task-status\s*\{[\s\S]*color: #15803d;/);
     assert.match(styles, /\.simple-video-task-card\.is-pending \.simple-video-task-status\s*\{[\s\S]*color: #c2410c;/);
+    assert.match(styles, /\.simple-video-task-card\.is-acknowledged \.simple-video-task-status\s*\{[\s\S]*color: #6b7280;/);
     assert.doesNotMatch(styles, /\.simple-video-task-card\.is-(?:booked|pending)\s*\{[\s\S]*background:/);
 });

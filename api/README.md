@@ -22,9 +22,12 @@ NODE_ENV=production
 PORT=3000
 ALLOWED_ORIGINS=https://photowhyy.zeabur.app,https://wuyingpeng-yuyue.vercel.app
 DEFAULT_USER_PASSWORD=首次创建默认账号时使用的密码
+DATABASE_SSL=false
 ```
 
 未配置 `DEFAULT_USER_PASSWORD` 时跳过默认账号初始化，管理员新增用户会随机生成初始密码并返回一次。
+Zeabur 内网 PostgreSQL 使用 `DATABASE_SSL=false`；连接外部托管数据库且其要求 SSL 时改为 `true`，
+如证书无法由系统信任链校验，再显式设置 `DATABASE_SSL_REJECT_UNAUTHORIZED=false`。
 
 ## 安全约束
 
