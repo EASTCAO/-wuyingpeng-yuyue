@@ -316,8 +316,8 @@
 }
 
 .preview-legend-swatch.partial {
-    border-color: #A6CDEA;
-    background: linear-gradient(145deg, #F4FAFE 0%, #D2E7F6 100%);
+    border-color: #FF805C;
+    background: linear-gradient(145deg, #FF716B 0%, #FFA45D 62%, #FFC154 100%);
 }
 
 .preview-legend-swatch.full {
@@ -687,7 +687,7 @@
    .has-scene-cover 系列，以及 .preview-scene-card.partial 那些实色状态卡。 */
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card {
     background:
-        linear-gradient(var(--state-wash), var(--state-wash)),
+        linear-gradient(145deg, var(--state-wash)),
         /* 高光扫过：从左上角斜着铺下来的一片柔白，模拟光源在玻璃面上的反射。
            只占左上约四成，不给满——铺满就成了"更白的卡"，反而不像玻璃。 */
         linear-gradient(
@@ -722,17 +722,20 @@
 
 /* 状态色调。只改 --state-wash，玻璃配方本身不动——四种状态共用同一套质感。 */
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.partial {
-    /* 柔和琥珀：用暖色提示“仍有余量”，比参考图更低饱和，避免直接照搬。 */
-    --state-wash: rgba(226, 168, 74, 0.42);
+    /* 复用场地总览的珊瑚橙配方，保留少量透明度让玻璃高光继续透出来。 */
+    --state-wash:
+        rgba(255, 113, 107, 0.78) 0%,
+        rgba(255, 164, 93, 0.78) 62%,
+        rgba(255, 193, 84, 0.78) 100%;
 }
 
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.full {
     /* 雾霾蓝：压低饱和度和亮度，和琥珀色形成清晰的冷暖层级。 */
-    --state-wash: rgba(59, 84, 132, 0.55);
+    --state-wash: rgba(59, 84, 132, 0.55) 0%, rgba(59, 84, 132, 0.55) 100%;
 }
 
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.ended {
-    --state-wash: rgba(150, 157, 173, 0.26);
+    --state-wash: rgba(150, 157, 173, 0.26) 0%, rgba(150, 157, 173, 0.26) 100%;
 }
 
 /* 悬停：光晕加深拉长，是"玻璃抬起来"，不是"卡片变厚"。
@@ -784,7 +787,7 @@
 
 .preview-scene-card {
     --scene-base: #F1F4F7;
-    --state-wash: rgba(255, 255, 255, 0);
+    --state-wash: rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 100%;
     --card-edge: color-mix(in srgb, var(--scene-base), #70808C 30%);
     /* 实色边框：对画布底 3.01:1、对卡片 3.51:1，达到 WCAG 对非文字 UI 边界的 3:1 要求。
        原来是半透明白，比背景还亮，边界完全靠投影撑。 */
@@ -807,7 +810,7 @@
     /* 卡片提到接近纯白，只在底部留一点场景固有色。
        原来顶部是 72% 白覆盖，画出来和画布底几乎同色。 */
     background:
-        linear-gradient(var(--state-wash), var(--state-wash)),
+        linear-gradient(145deg, var(--state-wash)),
         linear-gradient(
             138deg,
             #FFFFFF 0%,

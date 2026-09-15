@@ -137,10 +137,10 @@ test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色�
     // 那是画布规则不是基类。
     const base = styles.match(/^\.preview-scene-card\s*\{([\s\S]*?)\n\}/m);
     assert.ok(base, '没有找到卡片基类规则');
-    assert.match(base[1], /--state-wash:\s*rgba\(\s*255,\s*255,\s*255,\s*0\s*\)/,
+    assert.match(base[1], /--state-wash:\s*rgba\(\s*255,\s*255,\s*255,\s*0\s*\)\s*0%/,
         '可预约卡不应叠任何状态色，否则玻璃会被染上一层底灰');
 
-    // 状态之间必须有层次。已约满要明确比另外两种更重，否则三张卡看着一样。
+    // 状态之间必须有层次。部分预约靠暖色渐变、已约满靠深蓝、已过期靠浅灰区分。
     const washAlpha = state => {
         const found = rule(String.raw`${CARD}\.${state}`)[1]
             .match(/--state-wash:\s*rgba\([^)]*?([\d.]+)\s*\)/);
@@ -149,7 +149,6 @@ test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色�
     const partial = washAlpha('partial');
     const full = washAlpha('full');
     const ended = washAlpha('ended');
-    assert.ok(full > partial, `已约满(${full})应比部分预约(${partial})更重`);
     assert.ok(full > ended, `已约满(${full})应比已过期(${ended})更重`);
     assert.ok(partial > 0 && ended > 0, '部分预约和已过期都要有可见的状态色');
 
@@ -164,6 +163,17 @@ test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色�
         `部分预约应保持暖色提示，实际 rgb(${partialRgb})`);
     assert.ok(fullRgb[2] > fullRgb[0],
         `已约满应保持冷色压暗，实际 rgb(${fullRgb})`);
+
+    const partialRule = rule(String.raw`${CARD}\.partial`)[1];
+    assert.match(partialRule, /rgba\(\s*255,\s*113,\s*107,/,
+        '部分预约渐变应从场地总览使用的珊瑚色开始');
+    assert.match(partialRule, /rgba\(\s*255,\s*193,\s*84,/,
+        '部分预约渐变应以场地总览使用的暖黄色收尾');
+
+    const partialLegend = rule(String.raw`\.preview-legend-swatch\.partial`);
+    assert.ok(partialLegend, '没有找到部分预约图例');
+    assert.match(partialLegend[1], /#FF716B[\s\S]*#FFA45D[\s\S]*#FFC154/,
+        '部分预约图例应和卡片使用同一组珊瑚橙渐变');
 });
 
 test('6F 文字排版保持居中，不再改成左下角', () => {
