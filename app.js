@@ -1214,8 +1214,10 @@ function isSimpleVideoEligibleStudio(studioId) {
 }
 
 async function loadSimpleVideoConfig() {
-    document.querySelectorAll('.simple-video-link').forEach(el => el.classList.toggle('hidden', !isSimpleVideoRecipient()));
-    if (isSimpleVideoRecipient()) loadSimpleVideoTasks();
+    const isRecipient = isSimpleVideoRecipient();
+    document.querySelectorAll('.simple-video-link').forEach(el => el.classList.toggle('hidden', !isRecipient));
+    if (isRecipient) loadSimpleVideoTasks();
+    else updateSimpleVideoTaskBadge();
 }
 
 function getSimpleVideoPhotographers(recipient = currentUser) {
@@ -1268,11 +1270,18 @@ function updateSimpleVideoTaskBadge() {
         badge.textContent = String(count);
         badge.classList.toggle('hidden', count === 0);
     }
+    const shortcut = document.getElementById('simpleVideoShortcut');
+    const shortcutCount = document.getElementById('simpleVideoShortcutCount');
+    const showShortcut = isSimpleVideoRecipient() && count > 0;
+    if (shortcutCount) shortcutCount.textContent = String(count);
+    if (shortcut) {
+        shortcut.classList.toggle('hidden', !showShortcut);
+        shortcut.setAttribute('aria-label', `简易视频待办，${count} 条待预约`);
+    }
     document.querySelectorAll('.simple-video-link').forEach(el => {
         el.classList.toggle('hidden', !isSimpleVideoRecipient());
     });
-    // 待办入口收进了用户菜单，菜单收起时看不到角标，
-    // 所以在菜单按钮上补一个小红点，未读时才显示。
+    // 用户名旁直接显示待办数量，菜单按钮上的红点继续作为辅助提醒。
     document.getElementById('userMenuDot')?.classList.toggle('hidden', count === 0);
 }
 
@@ -3606,4 +3615,3 @@ function renderStatsView() {
         `;
     }).join('');
 }
-

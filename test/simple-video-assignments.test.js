@@ -107,6 +107,16 @@ test('完成对应预约后未读消息自动变成已读', () => {
     assert.match(appSource, /badge\.classList\.toggle\('hidden', count === 0\)/);
 });
 
+test('待办未完成时在用户名旁显示可直接进入的醒目提醒', () => {
+    const styles = fs.readFileSync('style.css', 'utf8');
+    assert.match(indexSource, /id="simpleVideoShortcut"[^>]*class="simple-video-shortcut hidden"[^>]*onclick="switchView\('simple-video'\)"/);
+    assert.match(appSource, /const showShortcut = isSimpleVideoRecipient\(\) && count > 0;/);
+    assert.match(appSource, /shortcut\.classList\.toggle\('hidden', !showShortcut\)/);
+    assert.match(appSource, /shortcut\.setAttribute\('aria-label', `简易视频待办，\$\{count\} 条待预约`\)/);
+    assert.match(styles, /\.user-info \.simple-video-shortcut\s*\{[\s\S]*background: #E5484D;[\s\S]*font-weight: 700;/);
+    assert.match(styles, /@media \(max-width: 768px\)[\s\S]*\.user-info \.simple-video-shortcut-label\s*\{[\s\S]*display: none;/);
+});
+
 test('已完成待办可以进入对应预约并取消', () => {
     assert.match(appSource, /simpleVideoBookingId: simpleVideoBooking\?\.id \|\| ''/);
     assert.match(serverSource, /AS "simpleVideoBookingId"/);

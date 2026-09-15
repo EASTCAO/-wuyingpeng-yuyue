@@ -17,7 +17,7 @@
     
     <title>影棚预约系统</title>
     <link rel="preload" href="assets/fonts/noto-sans-sc-subset.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="style.css?v=20260915-browse-all-dates">
+    <link rel="stylesheet" href="style.css?v=20260915-simple-video-reminder">
     <link rel="stylesheet" href="studio-layout.css?v=20260915-full-label">
 </head>
 <body class="studio-booking-page">
@@ -144,6 +144,11 @@
                 <h1>影棚预约</h1>
             </div>
             <div class="user-info">
+                <button type="button" id="simpleVideoShortcut" class="simple-video-shortcut hidden"
+                    onclick="switchView('simple-video')" aria-label="简易视频待办，0 条待预约">
+                    <span class="simple-video-shortcut-label">简易视频待办</span>
+                    <span id="simpleVideoShortcutCount" class="simple-video-shortcut-count">0</span>
+                </button>
                 <div class="user-menu">
                     <button type="button" id="userMenuButton" class="user-menu-button" onclick="toggleUserMenu()"
                         aria-haspopup="true" aria-expanded="false" aria-controls="userMenu">
@@ -463,7 +468,7 @@
     </div>
 
     <script src="shared/booking-rules.js?v=20260914-scene-positions"></script>
-    <script src="app.js?v=20260915-browse-all-dates"></script>
+    <script src="app.js?v=20260915-simple-video-reminder"></script>
     <script src="studio-layout.js?v=20260915-browse-all-dates"></script>
 
     <!-- PWA Service Worker 注册 -->
