@@ -192,6 +192,18 @@ test('毛玻璃配方对 22 张卡一视同仁，状态靠 --state-wash 叠色�
 });
 
 test('6F 已约满卡使用深色居中样式和胶囊状态', () => {
+    const state = rule(String.raw`${CARD}\.full`);
+    assert.ok(state, '没有找到已约满卡的状态规则');
+    assert.match(state[1], /--card-edge:\s*#101113;/,
+        '已约满卡的底部边缘应使用中性深黑色');
+    assert.match(state[1], /--card-border:\s*#17181A;/,
+        '已约满卡的描边应与黑色卡面融合，不能再出现灰边');
+
+    const fullEdge = rule(String.raw`${CARD}\.full::before,\s*\n${CARD}\.full::after`);
+    assert.ok(fullEdge, '没有找到已约满卡的中性边缘覆盖规则');
+    assert.match(fullEdge[1], /box-shadow:\s*none;/,
+        '已约满卡不应继续叠加带白色高光的冷灰内棱光');
+
     const info = rule(String.raw`${CARD}\.full \.preview-scene-info`);
     assert.ok(info, '没有找到已约满卡的信息区规则');
     assert.match(info[1], /display:\s*flex;/);

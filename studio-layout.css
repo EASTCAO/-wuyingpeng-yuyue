@@ -641,6 +641,13 @@
         inset 0 -30px 38px -24px rgba(96, 116, 142, 0.16);
 }
 
+/* 黑色满约卡不再叠冷灰内棱光，否则会在纯黑卡面四周形成一圈灰边。 */
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.full::before,
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.full::after {
+    background: none;
+    box-shadow: none;
+}
+
 .preview-floor-map-sixth-floor .preview-scene-card h4 {
     color: #252B33;
 }
@@ -782,8 +789,8 @@
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.full {
     /* 已约满使用近黑实色，和还能预约的浅色卡形成明确的不可选信号。 */
     --state-wash: rgba(34, 34, 36, 1) 0%, rgba(25, 26, 29, 1) 100%;
-    --card-edge: #17181A;
-    --card-border: #323438;
+    --card-edge: #101113;
+    --card-border: #17181A;
     --card-shadow: rgba(20, 21, 24, 0.22);
 }
 
