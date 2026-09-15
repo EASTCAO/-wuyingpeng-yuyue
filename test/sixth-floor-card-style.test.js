@@ -212,3 +212,25 @@ test('6F 卡片不带编号，也不带装饰标签', () => {
     // 7F 走同一套卡片渲染，同样不能多出编号。
     assert.doesNotMatch(source, /class="[^"]*preview-scene-(code|number)/);
 });
+
+test('6F 卡片悬停有可见反馈，且入场动画不会锁死位移', () => {
+    const base = styles.match(/^\.preview-scene-card\s*\{([\s\S]*?)\n\}/m);
+    assert.ok(base, '没有找到卡片基类规则');
+    assert.match(base[1], /animation:\s*preview-card-enter\s+320ms\s+ease\s+backwards;/,
+        '入场动画必须用 backwards，动画结束后才能应用悬停 transform');
+
+    const hover = styles.match(
+        /\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card:hover,\s*\n\s*\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card:focus\s*\{([\s\S]*?)\n\s*\}/
+    );
+    assert.ok(hover, '没有找到 6F 卡片悬停规则');
+    assert.match(hover[1], /z-index:\s*\d+;/, '悬停时应提升层级，避免抬升部分被相邻卡片遮住');
+    assert.match(hover[1], /border-color:\s*color-mix\(/, '悬停时应提亮边框');
+    assert.match(hover[1], /transform:\s*translateY\(-4px\)\s*scale\(1\.012\);/,
+        '悬停时应向上抬升并轻微放大');
+
+    const reducedMotion = styles.match(
+        /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card:hover,[\s\S]*?\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card:active\s*\{([\s\S]*?)\n\s*\}/
+    );
+    assert.ok(reducedMotion, '减少动态效果模式下应覆盖 6F 卡片位移');
+    assert.match(reducedMotion[1], /transform:\s*none;/);
+});

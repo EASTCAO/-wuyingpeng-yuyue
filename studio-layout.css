@@ -811,11 +811,14 @@
 @media (hover: hover) and (pointer: fine) {
     .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card:hover,
     .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card:focus {
+        z-index: 12;
+        border-color: color-mix(in srgb, var(--card-border), #FFFFFF 38%);
         box-shadow:
             0 2px 4px rgba(38, 52, 68, 0.06),
             0 9px 20px rgba(38, 52, 68, 0.10),
             0 28px 50px rgba(38, 52, 68, 0.15),
             0 50px 88px rgba(38, 52, 68, 0.10);
+        transform: translateY(-4px) scale(1.012);
     }
 }
 
@@ -892,7 +895,8 @@
         inset 1px 1px 0 rgba(255, 255, 255, 0.86),
         inset -1px -1px 0 rgba(74, 86, 94, 0.055);
     cursor: pointer;
-    animation: preview-card-enter 320ms ease both;
+    /* backwards 只保留入场前的初始态；动画结束后释放 transform，悬停位移才能生效。 */
+    animation: preview-card-enter 320ms ease backwards;
     animation-delay: calc(var(--preview-index) * 24ms);
     transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
@@ -1650,6 +1654,12 @@
     .preview-scene-card:hover,
     .preview-scene-card:focus,
     .preview-scene-card:active {
+        transform: none;
+    }
+
+    .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card:hover,
+    .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card:focus,
+    .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card:active {
         transform: none;
     }
 }
