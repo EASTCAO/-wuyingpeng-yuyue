@@ -318,24 +318,22 @@ textarea:focus-visible,
     align-items: center;
     gap: 6px;
     padding: 8px 14px;
-    border: 1px solid #E5E7EB;
-    border-radius: var(--radius-lg);
-    background: #F3F4F6;
+    border: 0;
+    background: transparent;
     color: #1F2937;
     font: inherit;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
+    transition: color 0.2s;
 }
 
 .user-menu-button:hover {
-    background: #E5E7EB;
+    color: var(--accent-ink);
 }
 
 .user-menu-button[aria-expanded="true"] {
-    border-color: var(--accent);
-    background: #EEF3FF;
+    color: var(--accent-ink);
 }
 
 .user-menu-caret {

@@ -31,6 +31,16 @@ test('影棚选择器保留正式站视觉语言', () => {
     assert.match(styles, /\.studio-venue-category-row \.studio-venue-option\.active\s*\{[\s\S]*?color:\s*var\(--accent-ink\);[\s\S]*?box-shadow:\s*inset 0 -2px 0 var\(--accent-solid\);/);
 });
 
+test('用户菜单去掉外层圆角卡片', () => {
+    const button = styles.match(
+        /\.user-menu-button\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(button, '没有找到用户菜单按钮样式');
+    assert.match(button[1], /border:\s*0;/);
+    assert.match(button[1], /background:\s*transparent;/);
+    assert.doesNotMatch(button[1], /border-radius:/);
+});
+
 test('日期条只将已过期日期置灰，未来锁定日期保留正常颜色', () => {
     assert.match(appSource, /isPast:\s*date\s*<\s*getChinaDate\(\)/);
 
