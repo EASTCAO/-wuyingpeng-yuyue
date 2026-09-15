@@ -148,10 +148,10 @@ function renderStudioVenuePicker() {
 
     return `
         <div class="studio-venue-picker" role="group" aria-label="选择楼层和影棚类型">
-            <div class="studio-venue-row" role="group" aria-label="楼层">
+            <div class="studio-venue-row studio-venue-floor-row" role="group" aria-label="楼层">
                 <div class="studio-venue-options">${floorOptions}</div>
             </div>
-            <div class="studio-venue-row" role="group" aria-label="棚型">
+            <div class="studio-venue-row studio-venue-category-row" role="group" aria-label="棚型">
                 <div class="studio-venue-options">${categoryOptions}</div>
             </div>
         </div>

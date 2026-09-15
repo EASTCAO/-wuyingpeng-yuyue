@@ -688,8 +688,8 @@ test('楼层和影棚类型以两排常驻选择器直接展示', () => {
     assert.match(layoutSource, /value: 'cyclorama', label: '无影棚'/);
     assert.match(layoutSource, /value: 'real-scene', label: '实景棚'/);
     assert.match(layoutSource, /class="studio-venue-picker" role="group" aria-label="选择楼层和影棚类型"/);
-    assert.match(layoutSource, /class="studio-venue-row" role="group" aria-label="楼层"/);
-    assert.match(layoutSource, /class="studio-venue-row" role="group" aria-label="棚型"/);
+    assert.match(layoutSource, /class="studio-venue-row studio-venue-floor-row" role="group" aria-label="楼层"/);
+    assert.match(layoutSource, /class="studio-venue-row studio-venue-category-row" role="group" aria-label="棚型"/);
     assert.doesNotMatch(layoutSource, /studio-venue-label/);
     assert.doesNotMatch(pageStyles, /\.studio-venue-label/);
     assert.match(layoutSource, /selectStudioView\('\$\{floor\}', currentStudioCategory\)/);
@@ -697,11 +697,11 @@ test('楼层和影棚类型以两排常驻选择器直接展示', () => {
     assert.match(layoutSource, /studio-view:\$\{currentUser \|\| '游客'\}/);
     assert.doesNotMatch(layoutSource, /studioVenueTrigger|studioVenuePanel|studioVenuePanelOpen|toggleStudioVenuePanel|closeStudioVenuePanel/);
     assert.match(pageStyles, /\.studio-toolbar-controls\s*\{[\s\S]*?display:\s*flex;[\s\S]*?justify-content:\s*flex-end;/);
-    assert.match(pageStyles, /\.studio-venue-picker\s*\{[\s\S]*?display:\s*grid;[\s\S]*?gap:\s*4px;/);
-    assert.match(pageStyles, /\.studio-venue-row\s*\{[\s\S]*?width:\s*116px;/);
+    assert.match(pageStyles, /\.studio-venue-picker\s*\{[\s\S]*?display:\s*grid;[\s\S]*?width:\s*124px;[\s\S]*?border:\s*1px solid #E1E6EF;/);
     assert.match(pageStyles, /\.studio-venue-options\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/);
     assert.match(pageStyles, /\.studio-venue-option\s*\{[\s\S]*?min-height:\s*26px;[\s\S]*?border-radius:\s*var\(--radius-xs\);/);
-    assert.match(pageStyles, /\.studio-venue-option\.active\s*\{[\s\S]*?background:\s*var\(--accent-solid\);[\s\S]*?color:\s*#FFFFFF;/);
+    assert.match(pageStyles, /\.studio-venue-floor-row \.studio-venue-option\.active\s*\{[\s\S]*?background:\s*#FFFFFF;/);
+    assert.match(pageStyles, /\.studio-venue-category-row \.studio-venue-option\.active\s*\{[\s\S]*?box-shadow:\s*inset 0 -2px 0 var\(--accent-solid\);/);
 });
 
 test('预约状态说明固定在实景棚预览右上角且不撑满整行', () => {
