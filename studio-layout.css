@@ -316,7 +316,7 @@
 }
 
 .preview-legend-swatch.partial {
-    border-color: #FF805C;
+    border-color: #B94A32;
     background: linear-gradient(145deg, #FF716B 0%, #FFA45D 62%, #FFC154 100%);
 }
 
@@ -733,26 +733,28 @@
         #FFA45D 62%,
         #FFC154 100%;
     /* 实色暖橙卡不能继续继承基类的天青蓝描边，否则缩放后会混成一圈灰边。 */
-    --card-edge: #E86B4E;
-    --card-border: #FF805C;
+    --card-edge: #9F3F2A;
+    --card-border: #B94A32;
     --card-shadow: rgba(180, 75, 43, 0.16);
-    border-color: #FF805C;
+    border-color: #B94A32;
     box-shadow:
+        0 0 0 1px #B94A32,
         0 1px 2px rgba(180, 75, 43, 0.04),
         0 5px 12px rgba(180, 75, 43, 0.07),
         0 18px 34px rgba(180, 75, 43, 0.10),
         0 36px 64px rgba(180, 75, 43, 0.06);
 }
 
-/* 顶/左保留玻璃高光，底/右改成低透明度暖色棱光，避免冷灰内描边污染橙色。 */
+/* 四周用暖深色内缘压出层次，顶/左只留很轻的高光；颜色由深到浅向卡面过渡。 */
 .preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.partial::after {
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.82),
-        inset 1px 0 0 rgba(255, 255, 255, 0.42),
-        inset 0 -1px 0 rgba(190, 76, 42, 0.14),
-        inset -1px 0 0 rgba(190, 76, 42, 0.08),
-        inset 0 24px 32px -20px rgba(255, 255, 255, 0.62),
-        inset 0 -30px 38px -24px rgba(166, 62, 32, 0.12);
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        inset 1px 0 0 rgba(255, 255, 255, 0.12),
+        inset 0 0 0 1px rgba(91, 42, 32, 0.34),
+        inset 0 0 12px rgba(91, 42, 32, 0.24),
+        inset 0 0 34px rgba(129, 67, 49, 0.14),
+        inset 0 -3px 8px rgba(76, 30, 20, 0.22),
+        inset -3px 0 8px rgba(76, 30, 20, 0.16);
 }
 
 /* 满饱和橙底上，原来那套深色字和深蓝进度条（配浅雾橙调的）对比度全部掉档：
