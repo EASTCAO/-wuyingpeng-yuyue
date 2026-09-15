@@ -219,7 +219,7 @@ test('6F 已约满卡使用深色居中样式和胶囊状态', () => {
     const label = rule(String.raw`${CARD}\.full \.preview-scene-full-label`);
     assert.ok(label, '没有找到已约满卡的胶囊规则');
     assert.match(label[1], /position:\s*static;/);
-    assert.match(label[1], /border-radius:\s*999px;/);
+    assert.match(label[1], /border-radius:\s*var\(--radius-pill\);/);
     assert.match(label[1], /background:\s*#4A4D52;/);
     assert.match(label[1], /color:\s*#F0F1F3;/);
 });

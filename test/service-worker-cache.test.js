@@ -18,6 +18,12 @@ test('带版本号的静态资源走缓存优先，首屏不必等网络往返',
     assert.match(serviceWorkerSource, /function isVersionedAsset\(request\)/);
     assert.match(serviceWorkerSource, /url\.searchParams\.has\('v'\)/);
     // 缓存命中直接返回，网络请求只在后台刷新。
+    assert.match(serviceWorkerSource, /caches\.match\(event\.request\)\.then\(cached =>/);
+    const versionedBranch = serviceWorkerSource.slice(
+        serviceWorkerSource.indexOf('if (isVersionedAsset(event.request))'),
+        serviceWorkerSource.indexOf("event.respondWith(\n    fetch(event.request)")
+    );
+    assert.doesNotMatch(versionedBranch, /ignoreSearch: true/);
     assert.match(serviceWorkerSource, /return cached \|\| network/);
 });
 

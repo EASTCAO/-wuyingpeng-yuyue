@@ -1,6 +1,6 @@
 // Service Worker：用于缓存资源，让应用即使在断网情况下也能打开（PWA 必须组件）
 // 提升版本号可强制客户端更新缓存（例如修改 API 域名后）
-const CACHE_NAME = 'studio-booking-v253-browse-all-dates';
+const CACHE_NAME = 'studio-booking-v254-precise-assets';
 const urlsToCache = [
   './',
   './index.html',
@@ -77,7 +77,7 @@ self.addEventListener('fetch', event => {
   // 版本化静态资源：命中缓存直接返回，同时后台静默刷新一次。
   if (isVersionedAsset(event.request)) {
     event.respondWith(
-      caches.match(event.request, { ignoreSearch: true }).then(cached => {
+      caches.match(event.request).then(cached => {
         const network = fetch(event.request)
           .then(async response => {
             if (response.ok) await putInCache(event.request, response.clone());
