@@ -1303,14 +1303,18 @@ function openSimpleVideoBooking(taskId, targetDate) {
 }
 
 // 顶部日期条：展示整周 7 天。可预约日期按当前窗口开放；
-// 已经过去的日期保留灰色，但可以点击查看当天历史记录。
-// 尚未开放的未来日期仍保留正常文字色并禁止点击。
+// 7F 实景棚可以点击任意日期查看，但只有今天、明天能预约；
+// 其他视图的已过期日期保留灰色但可查看历史，尚未开放的未来日期禁止点击。
 // 日期条的可选范围跟着当前视图走：6F 实景棚能提前一周约，其余仍是今天/明天。
 // currentStudioFloor / currentStudioCategory 由 studio-layout.js 维护。
 function getActiveBookingWindowDays() {
     return currentStudioFloor === '6F' && currentStudioCategory === 'real-scene'
         ? EXTENDED_BOOKING_WINDOW_DAYS
         : DEFAULT_BOOKING_WINDOW_DAYS;
+}
+
+function canBrowseAllBookingDates() {
+    return currentStudioFloor === '7F' && currentStudioCategory === 'real-scene';
 }
 
 function getMondayDate(date = getChinaDate()) {
@@ -1348,7 +1352,7 @@ function getToolbarDates() {
             weekday: getWeekdayLabel(date),
             selectable: selectable.has(date),
             isPast,
-            viewable: isPast || selectable.has(date)
+            viewable: isPast || selectable.has(date) || canBrowseAllBookingDates()
         };
     });
 }
@@ -1370,7 +1374,9 @@ function renderBookingDateSwitcher() {
             ? '（查看历史记录）'
             : option.selectable
                 ? ''
-                : '（不在可预约范围内）';
+                : option.viewable
+                    ? '（仅查看，不可预约）'
+                    : '（不在可预约范围内）';
         const title = `${option.weekday} ${Number(month)}月${Number(day)}日${rangeHint}`;
         return `<button type="button" class="${classes.join(' ')}" onclick="selectBookingDate('${option.date}')" aria-pressed="${isActive}" title="${escapeHtml(title)}"${option.viewable ? '' : ' disabled'}>
             <span class="booking-date-name">${option.weekday}</span>
@@ -1390,7 +1396,9 @@ function moveBookingDateStrip(weekOffset) {
 
 function isViewableBookingDate(date, options) {
     const dateOnly = getDateOnly(date);
-    return dateOnly < getChinaDate() || isSelectableDate(dateOnly, options);
+    return canBrowseAllBookingDates()
+        || dateOnly < getChinaDate()
+        || isSelectableDate(dateOnly, options);
 }
 
 async function loadBookingHistoryForDate(date) {
@@ -1424,7 +1432,8 @@ async function selectBookingDate(date) {
     currentDateRange = 'custom';
     renderBookingDateSwitcher();
     if (currentView === 'list') renderBookings();
-    if (selectedDate < getChinaDate()) {
+    const isOutsideBookingWindow = !isSelectableDate(selectedDate, options);
+    if (selectedDate < getChinaDate() || isOutsideBookingWindow) {
         await loadBookingHistoryForDate(selectedDate);
         if (currentView === 'list') renderBookings();
     }
@@ -2533,7 +2542,7 @@ async function addBooking() {
     }
 }
 
-function showStudioDetail(studioId, { readOnly = false } = {}) {
+function showStudioDetail(studioId, { readOnly = false, readOnlyLabel = '' } = {}) {
     const normalizedStudioId = normalizeStudioName(studioId);
     const studio = getStudioById(normalizedStudioId);
     if (!studio) return;
@@ -2542,7 +2551,10 @@ function showStudioDetail(studioId, { readOnly = false } = {}) {
     const displayDates = getDisplayDates();
     const studioBookings = getStudioBookingsForDates(studio.id, displayDates);
     const state = readOnly
-        ? { type: 'free', label: '历史记录' }
+        ? {
+            type: 'free',
+            label: readOnlyLabel || (displayDates[0] > getChinaDate() ? '仅查看' : '历史记录')
+        }
         : getStudioLiveState(studioBookings);
     const todayCount = getTodayBookingCount(studio.id);
 

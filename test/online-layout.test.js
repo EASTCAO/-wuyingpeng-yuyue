@@ -77,7 +77,10 @@ test('过期日期保留灰色但可点击查看当天历史记录', () => {
     );
     assert.ok(toolbarDates, '没有找到日期条数据函数');
     assert.match(toolbarDates[1], /const isPast = date < getChinaDate\(\);/);
-    assert.match(toolbarDates[1], /viewable:\s*isPast \|\| selectable\.has\(date\)/);
+    assert.match(
+        toolbarDates[1],
+        /viewable:\s*isPast \|\| selectable\.has\(date\) \|\| canBrowseAllBookingDates\(\)/
+    );
 
     const selectDate = appSource.match(
         /async function selectBookingDate\(date\)\s*\{([\s\S]*?)\n\}/
@@ -100,6 +103,24 @@ test('过期日期保留灰色但可点击查看当天历史记录', () => {
     assert.ok(loadBookings, '没有找到预约数据加载函数');
     assert.match(loadBookings[1], /loadedBookingHistoryDates\.clear\(\);/);
     assert.match(loadBookings[1], /await loadBookingHistoryForDate\(selectedDate\)/);
+});
+
+test('7F 实景棚可以查看任意日期，但预约窗口仍只有今天和明天', () => {
+    const browseAllDates = appSource.match(
+        /function canBrowseAllBookingDates\(\)\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(browseAllDates, '没有找到可浏览全部日期的判断函数');
+    assert.match(browseAllDates[1], /currentStudioFloor === '7F'/);
+    assert.match(browseAllDates[1], /currentStudioCategory === 'real-scene'/);
+
+    const viewableDate = appSource.match(
+        /function isViewableBookingDate\(date, options\)\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(viewableDate, '没有找到日期可查看判断函数');
+    assert.match(viewableDate[1], /canBrowseAllBookingDates\(\)/);
+    assert.match(viewableDate[1], /isSelectableDate\(dateOnly, options\)/);
+
+    assert.match(appSource, /function getActiveBookingWindowDays\(\)\s*\{[\s\S]*?'6F'[\s\S]*?EXTENDED_BOOKING_WINDOW_DAYS[\s\S]*?: DEFAULT_BOOKING_WINDOW_DAYS/);
 });
 
 test('日期条固定周一起始并支持左右按周浏览', () => {

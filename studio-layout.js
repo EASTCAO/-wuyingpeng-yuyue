@@ -467,8 +467,9 @@ function bindSixthFloorCanvas() {
 function openRealSceneCard(studioId) {
     const overviewDate = getStudioOverviewDate();
     const studio = getStudioById(studioId);
-    const state = studio ? getRealSceneState(studio, overviewDate) : null;
-    if (state?.type === 'ended') {
+    if (!studio) return;
+    const state = getRealSceneState(studio, overviewDate);
+    if (state.type === 'ended' || !isBookableDate(overviewDate, studioId)) {
         showStudioDetail(studioId, { readOnly: true });
         return;
     }
