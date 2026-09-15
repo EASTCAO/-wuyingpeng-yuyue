@@ -64,6 +64,14 @@ test('细高竖列卡片的景名改成竖排，并沿用统一字号', () => {
     assert.doesNotMatch(rule[1], /font-size:/);
 });
 
+test('满约的细高卡片保留已约满标签', () => {
+    const rule = styles.match(
+        /\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card\.full\.is-vertical-title h4\s*\{([\s\S]*?)\n\}/
+    );
+    assert.ok(rule, '没有找到满约竖排景名的布局覆盖');
+    assert.match(rule[1], /height:\s*auto/);
+});
+
 test('竖排只落在真正细高的三张卡片上', () => {
     const context = vm.createContext({});
     vm.runInContext(source.match(/const SIXTH_FLOOR_DEFAULT_LAYOUT = \{[\s\S]*?\n\};/)[0], context);

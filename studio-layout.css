@@ -878,6 +878,12 @@
     /* 字号沿用上面统一的固定值，竖排卡片不再单独放大。 */
 }
 
+/* 满约卡的竖排景名如果继续撑满卡高，会把后面的"已约满"胶囊挤出卡片。
+   这里只覆盖满约状态，让景名按内容取高，和标签一起完整居中。 */
+.preview-floor-map-sixth-floor .sixth-floor-layout-card.preview-scene-card.full.is-vertical-title h4 {
+    height: auto;
+}
+
 .preview-floor-map-sixth-floor .preview-scene-progress-track {
     height: 14px;
     border-radius: var(--radius-xs);
