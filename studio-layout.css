@@ -1887,10 +1887,21 @@
     text-align: center;
 }
 
-/* 7F 的可预约和已约满状态复用 6F 的卡面配色。
+/* 7F 的可预约、部分预约和已约满状态复用 6F 的卡面配色。
    实拍照片和 7F 的网格布局保持不变，只统一卡面、边框和状态文字颜色。 */
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.available {
     --card-border: #7C8A9E;
+    border-color: var(--card-border);
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.partial {
+    --state-wash:
+        #FF716B 0%,
+        #FFA45D 62%,
+        #FFC154 100%;
+    --card-edge: #E86B4E;
+    --card-border: #FF805C;
+    --card-shadow: rgba(180, 75, 43, 0.16);
     border-color: var(--card-border);
 }
 
@@ -1903,6 +1914,7 @@
 }
 
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.available,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.partial,
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.full {
     background:
         linear-gradient(145deg, var(--state-wash)),
@@ -1932,6 +1944,32 @@
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.available.has-scene-cover h4,
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.available.has-scene-cover.has-progress h4 {
     color: #252B33;
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.partial.has-scene-cover h4,
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.partial.has-scene-cover.has-progress h4 {
+    color: #FFFFFF;
+    text-shadow: 0 1px 2px rgba(150, 62, 24, 0.42);
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.partial .preview-scene-progress {
+    background: rgba(158, 71, 30, 0.18);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 1px 2px rgba(148, 63, 30, 0.10);
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.partial .preview-scene-progress-track {
+    background: rgba(158, 71, 30, 0.30);
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.partial .preview-scene-progress-track i {
+    background: #FFFFFF;
+}
+
+.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.partial .preview-scene-progress small {
+    color: #FFFFFF;
+    text-shadow: 0 1px 2px rgba(150, 62, 24, 0.42);
 }
 
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.full.has-scene-cover h4,

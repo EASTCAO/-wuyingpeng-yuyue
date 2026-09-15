@@ -10,6 +10,7 @@ function rule(selector) {
 
 const sixthGlass = String.raw`\.preview-floor-map-sixth-floor \.sixth-floor-layout-card\.preview-scene-card`;
 const seventhAvailable = String.raw`\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.available`;
+const seventhPartial = String.raw`\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.partial`;
 const seventhFull = String.raw`\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.full`;
 
 function background(ruleBody) {
@@ -21,10 +22,10 @@ function background(ruleBody) {
         .trim();
 }
 
-test('7F 可预约和已约满卡面复用 6F 的玻璃配色', () => {
+test('7F 可预约、部分预约和已约满卡面复用 6F 的玻璃配色', () => {
     const reference = rule(sixthGlass);
     const sharedSeventhFloor = styles.match(
-        new RegExp(`${seventhAvailable},\\s*\\n${seventhFull}\\s*\\{([\\s\\S]*?)\\n\\}`)
+        new RegExp(`${seventhAvailable},\\s*\\n${seventhPartial},\\s*\\n${seventhFull}\\s*\\{([\\s\\S]*?)\\n\\}`)
     );
 
     assert.ok(reference, '没有找到 6F 卡面规则');
@@ -32,7 +33,7 @@ test('7F 可预约和已约满卡面复用 6F 的玻璃配色', () => {
     assert.equal(
         background(sharedSeventhFloor[1]),
         background(reference[1]),
-        '7F 可预约和已约满必须使用与 6F 相同的卡面配色'
+        '7F 可预约、部分预约和已约满必须使用与 6F 相同的卡面配色'
     );
     assert.match(sharedSeventhFloor[1], /backdrop-filter:\s*blur\(26px\) saturate\(170%\) brightness\(1\.05\);/);
 });
@@ -42,6 +43,38 @@ test('7F 可预约沿用 6F 的冷灰边框', () => {
     assert.ok(available, '没有找到 7F 可预约卡规则');
     assert.match(available[1], /--card-border:\s*#7C8A9E;/);
     assert.match(available[1], /border-color:\s*var\(--card-border\);/);
+});
+
+test('7F 部分预约沿用 6F 的珊瑚橙卡面和状态色', () => {
+    const partial = rule(seventhPartial);
+    assert.ok(partial, '没有找到 7F 部分预约卡规则');
+    assert.match(partial[1], /--state-wash:\s*#FF716B 0%,\s*#FFA45D 62%,\s*#FFC154 100%;/);
+    assert.match(partial[1], /--card-edge:\s*#E86B4E;/);
+    assert.match(partial[1], /--card-border:\s*#FF805C;/);
+
+    const title = rule(
+        String.raw`\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.partial\.has-scene-cover h4,\s*\n\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.partial\.has-scene-cover\.has-progress h4`
+    );
+    assert.ok(title, '没有找到 7F 部分预约景名规则');
+    assert.match(title[1], /color:\s*#FFFFFF;/);
+
+    const track = rule(
+        String.raw`\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.partial \.preview-scene-progress-track`
+    );
+    assert.ok(track, '没有找到 7F 部分预约进度轨道规则');
+    assert.match(track[1], /background:\s*rgba\(158, 71, 30, 0\.30\);/);
+
+    const progress = rule(
+        String.raw`\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.partial \.preview-scene-progress-track i`
+    );
+    assert.ok(progress, '没有找到 7F 部分预约进度填充规则');
+    assert.match(progress[1], /background:\s*#FFFFFF;/);
+
+    const count = rule(
+        String.raw`\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) \.preview-scene-card\.partial \.preview-scene-progress small`
+    );
+    assert.ok(count, '没有找到 7F 部分预约数量文字规则');
+    assert.match(count[1], /color:\s*#FFFFFF;/);
 });
 
 test('7F 已约满沿用 6F 的近黑卡面和状态色', () => {
