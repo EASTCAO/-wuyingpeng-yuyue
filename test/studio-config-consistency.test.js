@@ -65,7 +65,10 @@ test('放宽到 7 天的棚位清单和 6F 实景棚配置完全一致', () => {
 });
 
 test('新增登录账号同时加入前端本地模式和后端默认账号', () => {
-    const expectedUsers = ['陈洋', '罗暄', '汤诗槐', '刘家其', '孙焱林', '曾雪萍'];
+    const expectedUsers = [
+        '陈洋', '罗暄', '汤诗槐', '刘家其', '孙焱林', '曾雪萍',
+        '刘朝洋', '王子一', '何丽源', '郭海英', '张玉洁', '胡敏雯', '郭卢彤', '吴语琳'
+    ];
     const frontendUsers = readQuotedValues(
         readArraySource(appSource, 'const DEFAULT_USERS = {', '\n};')
     );
