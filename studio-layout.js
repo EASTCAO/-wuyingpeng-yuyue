@@ -45,7 +45,7 @@ function getSceneReference(studioId) {
 }
 
 const STUDIO_SCENE_TITLE_LINES = {
-    '洗衣房景别': ['洗衣房', '景别'],
+    '洗衣房景别': ['洗衣房'],
     '木纹台面-厨房景': ['木纹台面', '厨房景'],
     '黑色台面-厨房景': ['黑色台面', '厨房景'],
     '儿童房景/户外下午茶景': ['儿童房景', '户外下午茶景']
@@ -483,7 +483,6 @@ function handleRealSceneCardKeydown(event, studioId) {
     event.preventDefault();
     openRealSceneCard(studioId);
 }
-
 
 
 
