@@ -5010,7 +5010,7 @@ textarea:focus-visible,
 }
 
 /* 影棚选择沿用正式站的蓝灰控件风格。
-   仅 6F/7F 使用浅灰分段容器，棚型作为下方的独立标签页。 */
+   6F/7F 保持在同一个轻量分段容器中，棚型作为下方的独立标签页。 */
 .studio-venue-picker {
     display: grid;
     gap: 4px;
@@ -5022,17 +5022,16 @@ textarea:focus-visible,
 }
 
 .studio-venue-floor-row {
-    padding: 3px;
-    border: 1px solid #E1E6EF;
+    padding: 2px;
+    border: 1px solid #EDF0F4;
     border-radius: var(--radius-md);
-    background: #F4F6F9;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    background: #F8FAFC;
 }
 
 .studio-venue-options {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 3px;
+    gap: 2px;
 }
 
 .studio-venue-option {
@@ -5053,7 +5052,7 @@ textarea:focus-visible,
 }
 
 .studio-venue-option:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.56);
     color: var(--accent-ink);
 }
 
@@ -5067,10 +5066,10 @@ textarea:focus-visible,
 }
 
 .studio-venue-floor-row .studio-venue-option.active {
-    border-color: #DCE2EB;
+    border-color: transparent;
     background: #FFFFFF;
     color: var(--accent-ink);
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 #FFFFFF;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .studio-venue-category-row .studio-venue-option {

@@ -698,7 +698,7 @@ test('楼层和影棚类型以两排常驻选择器直接展示', () => {
     assert.doesNotMatch(layoutSource, /studioVenueTrigger|studioVenuePanel|studioVenuePanelOpen|toggleStudioVenuePanel|closeStudioVenuePanel/);
     assert.match(pageStyles, /\.studio-toolbar-controls\s*\{[\s\S]*?display:\s*flex;[\s\S]*?justify-content:\s*flex-end;/);
     assert.match(pageStyles, /\.studio-venue-picker\s*\{[\s\S]*?display:\s*grid;[\s\S]*?width:\s*124px;/);
-    assert.match(pageStyles, /\.studio-venue-floor-row\s*\{[\s\S]*?border:\s*1px solid #E1E6EF;[\s\S]*?background:\s*#F4F6F9;/);
+    assert.match(pageStyles, /\.studio-venue-floor-row\s*\{[\s\S]*?border:\s*1px solid #EDF0F4;[\s\S]*?background:\s*#F8FAFC;/);
     assert.match(pageStyles, /\.studio-venue-options\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/);
     assert.match(pageStyles, /\.studio-venue-option\s*\{[\s\S]*?min-height:\s*26px;[\s\S]*?border-radius:\s*var\(--radius-xs\);/);
     assert.match(pageStyles, /\.studio-venue-floor-row \.studio-venue-option\.active\s*\{[\s\S]*?background:\s*#FFFFFF;/);
