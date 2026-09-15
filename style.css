@@ -5010,84 +5010,28 @@ textarea:focus-visible,
 }
 
 /* 影棚选择沿用正式站的蓝灰控件风格。
-   四个组合平铺出来要占满一整行，把日期挤到第二行，所以平时只留一个触发器，
-   楼层和棚型收进浮层面板——工具栏的状态一眼可见，选项仍然两次点击可达。
+   楼层和棚型各占一行，常驻显示，点击一项只切换对应维度。
    尺寸按导航控件收紧，它们是入口，不该抢主内容的视觉分量。 */
 .studio-venue-picker {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.studio-venue-trigger {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 26px;
-    padding: 3px 9px;
-    border: 1px solid #D8DEE8;
-    border-radius: var(--radius-xs);
-    background: #FFFFFF;
-    color: #4B5563;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.studio-venue-trigger:hover,
-.studio-venue-trigger[aria-expanded="true"] {
-    border-color: var(--accent);
-    color: var(--accent);
-}
-
-.studio-venue-trigger[aria-expanded="true"] {
-    background: var(--accent-soft);
-}
-
-.studio-venue-caret {
-    color: var(--ink-muted);
-    font-size: 10px;
-    line-height: 1;
-}
-
-/* 面板脱离文档流：展开时日期和日历不会往下跳，选完立刻收起。 */
-.studio-venue-panel {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    z-index: 1200;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 8px;
-    border-radius: var(--radius-md);
-    background: #FFFFFF;
-    box-shadow: var(--shadow-overlay);
+    display: grid;
+    gap: 4px;
 }
 
 .studio-venue-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.studio-venue-row-label {
-    width: 30px;
-    color: var(--ink-muted);
-    font-size: 12px;
+    width: 116px;
 }
 
 .studio-venue-options {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
 }
 
 .studio-venue-option {
-    min-width: 56px;
+    width: 100%;
+    min-width: 0;
     min-height: 26px;
-    padding: 3px 10px;
+    padding: 3px 8px;
     border: 1px solid transparent;
     border-radius: var(--radius-xs);
     background: transparent;
@@ -5095,24 +5039,38 @@ textarea:focus-visible,
     font: inherit;
     font-size: 12px;
     font-weight: 500;
+    line-height: 1.2;
     cursor: pointer;
+    transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.12s ease;
 }
 
 .studio-venue-option:hover:not(.active) {
-    border-color: #B8C3D3;
-    background: #F7F9FC;
+    border-color: var(--accent-soft);
+    background: var(--accent-soft);
     color: var(--accent);
 }
 
+.studio-venue-option:active {
+    transform: scale(0.98);
+}
+
+.studio-venue-option:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
 .studio-venue-option.active {
-    border-color: var(--accent);
+    border-color: var(--accent-solid);
     background: var(--accent-solid);
     color: #FFFFFF;
 }
 
 @media (max-width: 768px) {
-    /* 手机上这行本来是两行两列的大按钮；触发器由父级靠右对齐，这里只把点击区域加高 */
-    .studio-venue-trigger {
+    .studio-venue-row {
+        width: 124px;
+    }
+
+    .studio-venue-option {
         min-height: 34px;
     }
 }

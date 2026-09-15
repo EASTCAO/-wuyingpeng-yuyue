@@ -680,34 +680,27 @@ test('6F 卡片点击直接打开预约', () => {
     assert.match(layoutSource, /function handleSixthFloorCardClick\(event, studioId\) \{\s*openRealSceneCard\(studioId\);/);
 });
 
-// 四个组合平铺出来要占满一整行，把日期挤到第二行；收成一个触发器之后，
-// 工具栏只剩当前场地这一处宽度很窄的信息块，浮层展开也不占布局。
-test('楼层和影棚类型收进当前场地浮层选择器', () => {
+// 两排常驻选择器各自切换一个维度，不再需要先打开浮层再选择。
+test('楼层和影棚类型以两排常驻选择器直接展示', () => {
     assert.match(layoutSource, /studioToolbarControls/);
     assert.match(layoutSource, /renderStudioVenuePicker\(\)/);
     assert.match(layoutSource, /const STUDIO_FLOORS = \['6F', '7F'\]/);
     assert.match(layoutSource, /value: 'cyclorama', label: '无影棚'/);
     assert.match(layoutSource, /value: 'real-scene', label: '实景棚'/);
-    // 触发器上只写当前场地，展开状态同步到 aria-expanded
-    assert.match(layoutSource, /id="studioVenueTrigger"[\s\S]*?aria-haspopup="true" aria-expanded="\$\{studioVenuePanelOpen\}"[\s\S]*?aria-controls="studioVenuePanel"/);
-    assert.match(layoutSource, /studio-venue-current">\$\{currentStudioFloor\} · \$\{getStudioCategoryLabel\(currentStudioCategory\)\}/);
-    // 触发器自己说明白了，旁边不再挂"当前场地"标签
+    assert.match(layoutSource, /class="studio-venue-picker" role="group" aria-label="选择楼层和影棚类型"/);
+    assert.match(layoutSource, /class="studio-venue-row" role="group" aria-label="楼层"/);
+    assert.match(layoutSource, /class="studio-venue-row" role="group" aria-label="棚型"/);
     assert.doesNotMatch(layoutSource, /studio-venue-label/);
     assert.doesNotMatch(pageStyles, /\.studio-venue-label/);
-    // 面板两行：一行楼层、一行棚型
-    assert.match(layoutSource, /id="studioVenuePanel"[\s\S]*?role="group" aria-label="选择楼层和影棚类型"/);
-    assert.match(layoutSource, /studio-venue-row-label">楼层</);
-    assert.match(layoutSource, /studio-venue-row-label">棚型</);
     assert.match(layoutSource, /selectStudioView\('\$\{floor\}', currentStudioCategory\)/);
     assert.match(layoutSource, /selectStudioView\(currentStudioFloor, '\$\{category\.value\}'\)/);
     assert.match(layoutSource, /studio-view:\$\{currentUser \|\| '游客'\}/);
-    // 浮层要能收起来：选完、点外部、按 Escape 三条路
-    assert.match(layoutSource, /if \(event\.target\.closest\('\.studio-venue-picker'\)\) return;/);
-    assert.match(layoutSource, /event\.key === 'Escape' && isStudioVenuePanelOpen\(\)/);
-    assert.match(layoutSource, /closeStudioVenuePanel\(\);/);
+    assert.doesNotMatch(layoutSource, /studioVenueTrigger|studioVenuePanel|studioVenuePanelOpen|toggleStudioVenuePanel|closeStudioVenuePanel/);
     assert.match(pageStyles, /\.studio-toolbar-controls\s*\{[\s\S]*?display:\s*flex;[\s\S]*?justify-content:\s*flex-end;/);
-    assert.match(pageStyles, /\.studio-venue-trigger\s*\{[\s\S]*?min-height:\s*26px;[\s\S]*?border-radius:\s*var\(--radius-xs\);/);
-    assert.match(pageStyles, /\.studio-venue-panel\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?z-index:\s*1200;/);
+    assert.match(pageStyles, /\.studio-venue-picker\s*\{[\s\S]*?display:\s*grid;[\s\S]*?gap:\s*4px;/);
+    assert.match(pageStyles, /\.studio-venue-row\s*\{[\s\S]*?width:\s*116px;/);
+    assert.match(pageStyles, /\.studio-venue-options\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/);
+    assert.match(pageStyles, /\.studio-venue-option\s*\{[\s\S]*?min-height:\s*26px;[\s\S]*?border-radius:\s*var\(--radius-xs\);/);
     assert.match(pageStyles, /\.studio-venue-option\.active\s*\{[\s\S]*?background:\s*var\(--accent-solid\);[\s\S]*?color:\s*#FFFFFF;/);
 });
 
