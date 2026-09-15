@@ -1749,12 +1749,10 @@
     align-items: center;
     justify-content: center;
     gap: 1px;
-    border: 1px solid #C7D1DD;
-    border-radius: var(--radius-md);
-    background: #FFFFFF;
-    box-shadow:
-        0 2px 5px rgba(31, 45, 61, 0.14),
-        inset 0 1px 0 rgba(255, 255, 255, 0.96);
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
     color: #111827;
     font-size: 14px;
     font-weight: 700;
@@ -1792,14 +1790,6 @@
     display: block;
     max-width: 100%;
     white-space: nowrap;
-}
-
-.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover[data-map-area="service-laundry"] h4,
-.preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover.has-progress[data-map-area="service-laundry"] h4 {
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
 }
 
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover .preview-scene-progress,
@@ -1856,9 +1846,6 @@
 .preview-floor-map:not(.preview-floor-map-sixth-floor) .preview-scene-card.has-scene-cover.has-progress h4 {
     min-height: 38px;
     padding: 6px 7px;
-    border-color: #B8C6D6;
-    border-radius: var(--radius-md);
-    box-shadow: 0 2px 5px rgba(31, 45, 61, .10), inset 0 1px 0 rgba(255,255,255,.98);
     font-size: 13px;
     line-height: 1.25;
 }

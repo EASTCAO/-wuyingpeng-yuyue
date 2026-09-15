@@ -3,13 +3,32 @@ const vm = require('node:vm');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-test('洗衣房标题移除卡片底，不影响进度条', () => {
+test('7F场景标题统一移除卡片底，不影响进度条', () => {
     const css = fs.readFileSync('studio-layout.css', 'utf8');
-    const rule = css.match(/([^{}]*has-progress\[data-map-area="service-laundry"\] h4)\s*\{([^}]+)\}/);
+    const rule = css.match(/(\.preview-floor-map:not\(\.preview-floor-map-sixth-floor\) .preview-scene-card\.has-scene-cover h4,[\s\S]*?has-scene-cover\.has-progress h4)\s*\{([^}]+)\}/);
     assert.ok(rule);
-    assert.doesNotMatch(rule[1], /preview-scene-progress/);
+    assert.doesNotMatch(rule[1], /data-map-area|preview-scene-progress/);
     for (const property of ['border: none', 'border-radius: 0', 'background: transparent', 'box-shadow: none']) {
         assert.ok(rule[2].includes(property), property);
+    }
+
+    const titleRules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+        .filter(([, selector]) => (
+            selector.includes('.preview-floor-map:not(.preview-floor-map-sixth-floor)')
+            && selector.includes('.preview-scene-card.has-scene-cover')
+            && selector.includes('h4')
+        ))
+        .map(([, , declarations]) => declarations)
+        .join('\n');
+    const allowedTitleValues = {
+        background: 'transparent',
+        border: 'none',
+        'border-color': 'none',
+        'border-radius': '0',
+        'box-shadow': 'none',
+    };
+    for (const [, property, value] of titleRules.matchAll(/\b(background|border|border-color|border-radius|box-shadow)\s*:\s*([^;]+);/g)) {
+        assert.equal(value.trim(), allowedTitleValues[property], property);
     }
 });
 
