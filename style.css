@@ -5010,17 +5010,11 @@ textarea:focus-visible,
 }
 
 /* 影棚选择沿用正式站的蓝灰控件风格。
-   两排共用一个浅灰容器：楼层像分段开关，棚型像带下划线的标签页，
-   既保留两层的区分，又不让按钮像两组互不相关的控件。 */
+   仅 6F/7F 使用浅灰分段容器，棚型作为下方的独立标签页。 */
 .studio-venue-picker {
     display: grid;
-    gap: 3px;
+    gap: 4px;
     width: 124px;
-    padding: 4px;
-    border: 1px solid #E1E6EF;
-    border-radius: var(--radius-md);
-    background: #F4F6F9;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .studio-venue-row {
@@ -5028,8 +5022,11 @@ textarea:focus-visible,
 }
 
 .studio-venue-floor-row {
-    padding-bottom: 3px;
-    border-bottom: 1px solid #E2E7EE;
+    padding: 3px;
+    border: 1px solid #E1E6EF;
+    border-radius: var(--radius-md);
+    background: #F4F6F9;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .studio-venue-options {
