@@ -584,11 +584,7 @@ function startBookingAvailabilityRefresh() {
         if (!studioSelect || !dateInput) return;
         const startTimeSelect = document.getElementById('startTime');
         const endTimeSelect = document.getElementById('endTime');
-        const existingBookings = allBookings.filter(booking =>
-            booking.id !== editingBookingId
-            && booking.studio === studioSelect.value
-            && getDateOnly(booking.date) === dateInput.value
-        );
+        const existingBookings = getOccupiedBlocks(studioSelect.value, dateInput.value);
         const today = getChinaDate();
         const currentTime = getChinaCurrentTime();
         startTimeSelect?.querySelectorAll('option').forEach(option => {
@@ -1768,6 +1764,27 @@ function getStudioBookingsForDates(studioId, dates, bookingsToUse = allBookings)
         .sort(compareBookingsByTime);
 }
 
+// 某棚位某天被占用的时段：真实预约（修改时排除自己）+ 临时停约时段。
+// 停约块伪装成预约对象，这样时段禁用、空档计算、冲突判断都不用单独处理。
+function getOccupiedBlocks(studioId, date) {
+    const bookings = allBookings.filter(booking =>
+        booking.id !== editingBookingId
+        && booking.studio === studioId
+        && getDateOnly(booking.date) === date
+    );
+    const closures = getStudioClosuresForDate(studioId, date).map(closure => ({
+        id: `closure:${closure.date}:${closure.startTime}`,
+        studio: studioId,
+        date,
+        startTime: closure.startTime,
+        endTime: closure.endTime,
+        photographer: '培训停约',
+        notes: closure.reason,
+        closure: true
+    }));
+    return [...bookings, ...closures].sort(compareBookingsByTime);
+}
+
 function compareBookingsByTime(a, b) {
     const aDate = getDateOnly(a.date);
     const bDate = getDateOnly(b.date);
@@ -1856,7 +1873,10 @@ function hasAvailableBookingSlot(studioId, date) {
 
     const today = getBookableStartDate();
     const currentTime = getChinaCurrentTime();
-    const existingBookings = getStudioBookingsForDates(studioId, [date]);
+    const existingBookings = [
+        ...getStudioBookingsForDates(studioId, [date]),
+        ...getStudioClosuresForDate(studioId, date)
+    ];
     const startTimes = getBookingStartTimes();
 
     return startTimes.some(startTime => {
@@ -2038,11 +2058,7 @@ function renderAvailabilityPanel() {
     const selectedDate = dateInput.value;
     const studioInfo = getStudioById(studio);
     const isSixthFloorRealScene = studioInfo?.groupKey === 'real-scene-sixth-floor';
-    const existingBookings = allBookings
-        .filter(booking => booking.id !== editingBookingId
-            && booking.studio === studio
-            && getDateOnly(booking.date) === selectedDate)
-        .sort(compareBookingsByTime);
+    const existingBookings = getOccupiedBlocks(studio, selectedDate);
 
     subtitle.textContent = studioInfo
         ? `${studioInfo.title} · ${formatDate(selectedDate)}`
@@ -2161,11 +2177,7 @@ function selectAvailabilityTime(time) {
     const endTimeSelect = document.getElementById('endTime');
     const studio = document.getElementById('studioSelect').value;
     const date = document.getElementById('bookingDate').value;
-    const existingBookings = allBookings
-        .filter(booking => booking.id !== editingBookingId
-            && booking.studio === studio
-            && getDateOnly(booking.date) === date)
-        .sort(compareBookingsByTime);
+    const existingBookings = getOccupiedBlocks(studio, date);
 
     if (endTimeSelect.value === time) {
         endTimeSelect.value = '';
@@ -2358,9 +2370,7 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask
         const studio = document.getElementById('studioSelect').value;
 
         // 获取该影棚该日期的已有预约
-        const existingBookings = allBookings.filter(b =>
-            b.id !== editingBookingId && b.studio === studio && getDateOnly(b.date) === selectedDate
-        );
+        const existingBookings = getOccupiedBlocks(studio, selectedDate);
 
         const startOptions = startTimeSelect.querySelectorAll('option');
 
@@ -2416,9 +2426,7 @@ function showAddBookingForm(defaultStudio, bookingToEdit = null, simpleVideoTask
         const date = dateInput.value;
 
         // 获取该影棚该日期的已有预约
-        const existingBookings = allBookings.filter(b =>
-            b.id !== editingBookingId && b.studio === studio && getDateOnly(b.date) === date
-        );
+        const existingBookings = getOccupiedBlocks(studio, date);
 
         updateEndTimeOptions(startTime, endTimeSelect, existingBookings);
 
@@ -2509,6 +2517,12 @@ async function addBooking() {
     }
 
     // 检查时间冲突
+    const closure = getStudioClosure(studio, date, startTime, endTime);
+    if (closure) {
+        showToast(closure.reason, 'error');
+        return;
+    }
+
     const hasConflict = allBookings.some(booking => {
         if (booking.id === editingBookingId) return false;
         if (booking.studio !== studio || getDateOnly(booking.date) !== date) {
@@ -2682,6 +2696,7 @@ function handleStudioDetailBookingKeydown(event, bookingId) {
 function canCancelBooking(booking) {
     return Boolean(
         booking
+        && !booking.closure
         && currentUser
         && isBookingEditable(booking)
         && (booking.photographer === currentUser || currentUser === 'admin')

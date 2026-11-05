@@ -12,6 +12,7 @@ const {
   isValidBookingRange,
   isValidBookingDate,
   getBookingWindowDays,
+  getStudioClosure,
   isBookingStartAvailable,
   isBookingEditable
 } = require('./booking-rules');
@@ -586,6 +587,8 @@ app.post('/api/bookings', requireAuth, writeLimiter, async (req, res) => {
     }
     if (!isValidBookingRange(startTime, endTime)) return res.status(400).json({ error: '时间必须在营业时段内，且按15分钟预约' });
     if (!isBookingStartAvailable(date, startTime)) return res.status(400).json({ error: '今天的开始时间已过期，请选择当前时间之后的时段' });
+    const closure = getStudioClosure(studio, date, startTime, endTime);
+    if (closure) return res.status(400).json({ error: closure.reason });
 
     const client = await pool.connect();
     let transactionStarted = false;
@@ -654,6 +657,8 @@ app.put('/api/bookings/:id', requireAuth, writeLimiter, async (req, res) => {
     if (!isBookingStartAvailable(date, startTime)) {
       return res.status(400).json({ error: '今天的开始时间已过期，请选择当前时间之后的时段' });
     }
+    const closure = getStudioClosure(studio, date, startTime, endTime);
+    if (closure) return res.status(400).json({ error: closure.reason });
 
     const client = await pool.connect();
     let transactionStarted = false;

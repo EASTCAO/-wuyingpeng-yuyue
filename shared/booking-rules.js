@@ -158,6 +158,54 @@
         return getBookableDates(studio, now).includes(getDateOnly(date));
     }
 
+    // 按日期临时停约（培训、活动等）。只在 date 当天生效，过了当天自动恢复，无需再改代码。
+    // 新增停约时往这里加一条即可；过期的条目可以随手清理，不影响逻辑。
+    const SEVENTH_FLOOR_REAL_SCENE_IDS = Object.freeze([
+        '小木屋景',
+        '卧室景',
+        '酒吧景',
+        '书房景',
+        '客厅景',
+        '工具台景',
+        '木纹台面-厨房景',
+        '儿童房景/户外下午茶景',
+        '洗衣房景别',
+        '浴室景',
+        '黑色台面-厨房景'
+    ]);
+    // startTime / endTime 是停约时段（半开区间），与它重叠的预约都会被拒绝。
+    const STUDIO_CLOSURES = Object.freeze([
+        Object.freeze({
+            date: '2026-11-05',
+            startTime: '14:00',
+            endTime: '18:30',
+            studios: SEVENTH_FLOOR_REAL_SCENE_IDS,
+            reason: '7F 实景棚今天 14:00 后有培训，暂停预约'
+        })
+    ]);
+
+    // 返回与该预约时段重叠的停约信息，没有时返回 null。
+    // 省略 startTime / endTime 时，只要当天有停约就返回。
+    function getStudioClosure(studio, date, startTime, endTime) {
+        const day = getDateOnly(date);
+        return STUDIO_CLOSURES.find(closure =>
+            closure.date === day
+            && closure.studios.includes(studio)
+            && (!startTime || !endTime
+                || hasTimeOverlap(startTime, endTime, closure.startTime, closure.endTime))
+        ) || null;
+    }
+
+    function isStudioClosedAt(studio, date, startTime, endTime) {
+        return getStudioClosure(studio, date, startTime, endTime) !== null;
+    }
+
+    // 该棚位当天全部停约时段，前端把它们当作占用块参与时段禁用和冲突判断。
+    function getStudioClosuresForDate(studio, date) {
+        const day = getDateOnly(date);
+        return STUDIO_CLOSURES.filter(closure => closure.date === day && closure.studios.includes(studio));
+    }
+
     function isBookingStartAvailable(date, startTime, now = Date.now()) {
         return getDateOnly(date) !== getChinaDate(0, now) || startTime > getChinaCurrentTime(now);
     }
@@ -287,6 +335,11 @@
         getBookingWindowDays,
         getBookableDates,
         isValidBookingDate,
+        SEVENTH_FLOOR_REAL_SCENE_IDS,
+        STUDIO_CLOSURES,
+        getStudioClosure,
+        isStudioClosedAt,
+        getStudioClosuresForDate,
         isBookingStartAvailable,
         isBookingEditable,
         getBookingStatus,

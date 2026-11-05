@@ -363,3 +363,20 @@ test('6F 实景棚日期条第三天起用星期几做标签', () => {
     assert.deepEqual(dates.slice(0, 2).map(d => d.label), ['今天', '明天']);
     assert.deepEqual(dates.slice(2).map(d => d.label), ['周三', '周四', '周五', '周六', '周日']);
 });
+
+test('7F 实景棚 2026-11-05 下午培训停约，上午和其他棚位不受影响', () => {
+    // 下午时段被拒绝
+    assert.ok(rules.getStudioClosure('小木屋景', '2026-11-05', '14:00', '15:00'));
+    assert.ok(rules.isStudioClosedAt('黑色台面-厨房景', '2026-11-05', '17:00', '18:30'));
+    // 跨进停约时段也被拒绝（半开区间）
+    assert.ok(rules.isStudioClosedAt('卧室景', '2026-11-05T00:00:00.000Z', '14:00', '14:15'));
+    // 上午正常
+    assert.equal(rules.getStudioClosure('小木屋景', '2026-11-05', '08:30', '12:30'), null);
+    // 无影棚和 6F 实景棚不受影响
+    assert.equal(rules.getStudioClosure('大无影棚1（工位对面）', '2026-11-05', '14:00', '18:30'), null);
+    assert.equal(rules.getStudioClosure('6F·卧室景', '2026-11-05', '14:00', '18:30'), null);
+    // 第二天自动恢复
+    assert.equal(rules.getStudioClosure('小木屋景', '2026-11-06', '14:00', '18:30'), null);
+    assert.deepEqual(rules.getStudioClosuresForDate('小木屋景', '2026-11-06'), []);
+    assert.equal(rules.getStudioClosuresForDate('小木屋景', '2026-11-05').length, 1);
+});
