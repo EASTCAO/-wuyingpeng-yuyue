@@ -324,8 +324,34 @@ function renderRealSceneOverview() {
     }));
 
     content.className = `preview-content preview-content-${currentStudioFloor.toLowerCase()}`;
-    content.innerHTML = renderRealSceneMap(scenes);
+    content.innerHTML = renderClosureNotice(scenes, date) + renderRealSceneMap(scenes);
     if (currentStudioFloor === '6F') bindSixthFloorCanvas();
+}
+
+// 临时停约（培训等）在总览上直接告知，不用点进预约表单才发现下午约不了。
+// 同一条停约只提示一次；停约规则本身在 shared/booking-rules.js。
+function renderClosureNotice(scenes, date) {
+    const closures = [];
+    scenes.forEach(({ studio }) => {
+        getStudioClosuresForDate(studio.id, date).forEach(closure => {
+            if (!closures.includes(closure)) closures.push(closure);
+        });
+    });
+    if (closures.length === 0) return '';
+
+    const dayLabel = date === getChinaDate() ? '今天' : formatDate(date);
+    return closures.map(closure => `
+        <div class="studio-closure-notice" role="status">
+            <strong>${escapeHtml(closure.reason)}</strong>
+            <span>${escapeHtml(dayLabel)} ${escapeHtml(closure.startTime)}-${escapeHtml(closure.endTime)} 不可预约，其余时段可正常预约</span>
+        </div>
+    `).join('');
+}
+
+function getClosureTagText(studioId, date) {
+    const closures = getStudioClosuresForDate(studioId, date);
+    if (closures.length === 0) return '';
+    return closures.map(closure => `${closure.startTime}后停约`).join('、');
 }
 
 function renderRealSceneMap(scenes) {
@@ -365,6 +391,7 @@ function renderRealSceneCard(studio, state, index, layout = null) {
     const showCover = Boolean(reference?.coverSrc)
         && (isSeventhFloor || state.type === 'available' || state.type === 'partial');
     const showSceneReference = isSeventhFloor && reference?.coverSrcs?.length > 0;
+    const closureTag = state.type === 'ended' ? '' : getClosureTagText(studio.id, getStudioOverviewDate());
     return `
         <article
             class="preview-scene-card ${state.type}${state.bookings.length > 0 ? ' has-progress' : ''}${showSceneReference ? ' has-scene-reference' : ''}${showCover ? ' has-scene-cover' : ''}${position ? ' sixth-floor-layout-card' : ''}${verticalTitle ? ' is-vertical-title' : ''}"
@@ -394,6 +421,7 @@ function renderRealSceneCard(studio, state, index, layout = null) {
                 <div class="preview-scene-card-top">
                     ${renderStudioSceneTitle(studio.title, isSeventhFloor)}
                 </div>
+                ${closureTag ? `<span class="preview-scene-closure-label">${escapeHtml(closureTag)}</span>` : ''}
                 ${state.type === 'ended' ? `
                     <span class="preview-scene-expired-label" role="status">已过期</span>
                 ` : state.bookings.length > 0 && state.type === 'full' ? `
