@@ -13,6 +13,7 @@ const {
   isValidBookingDate,
   getBookingWindowDays,
   getStudioClosure,
+  isWithinMaxBookingDuration,
   isBookingStartAvailable,
   isBookingEditable
 } = require('./booking-rules');
@@ -587,6 +588,7 @@ app.post('/api/bookings', requireAuth, writeLimiter, async (req, res) => {
     }
     if (!isValidBookingRange(startTime, endTime)) return res.status(400).json({ error: '时间必须在营业时段内，且按15分钟预约' });
     if (!isBookingStartAvailable(date, startTime)) return res.status(400).json({ error: '今天的开始时间已过期，请选择当前时间之后的时段' });
+    if (!isWithinMaxBookingDuration(studio, startTime, endTime)) return res.status(400).json({ error: '无影棚单次预约最长 1.5 小时' });
     const closure = getStudioClosure(studio, date, startTime, endTime);
     if (closure) return res.status(400).json({ error: closure.reason });
 
@@ -656,6 +658,9 @@ app.put('/api/bookings/:id', requireAuth, writeLimiter, async (req, res) => {
     }
     if (!isBookingStartAvailable(date, startTime)) {
       return res.status(400).json({ error: '今天的开始时间已过期，请选择当前时间之后的时段' });
+    }
+    if (!isWithinMaxBookingDuration(studio, startTime, endTime)) {
+      return res.status(400).json({ error: '无影棚单次预约最长 1.5 小时' });
     }
     const closure = getStudioClosure(studio, date, startTime, endTime);
     if (closure) return res.status(400).json({ error: closure.reason });

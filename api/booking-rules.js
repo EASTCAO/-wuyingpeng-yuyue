@@ -109,6 +109,31 @@
         return !(endA <= startB || startA >= endB);
     }
 
+    // 无影棚单次预约最长 1.5 小时；实景棚不限时长（仍受营业时段约束）。
+    // 清单必须和 app.js 里 category 为 cyclorama 的棚位一致，
+    // test/studio-config-consistency.test.js 会校验。
+    const CYCLORAMA_STUDIO_IDS = Object.freeze([
+        '大无影棚1（工位对面）',
+        '大无影棚2（鄢军隔壁）',
+        '小无影棚1',
+        '小无影棚2',
+        '小无影棚3',
+        '小无影棚4',
+        '6F无影棚'
+    ]);
+    const CYCLORAMA_MAX_BOOKING_MINUTES = 90;
+
+    // 返回该棚位单次预约的最长分钟数；不限时长时返回 null。
+    function getMaxBookingMinutes(studio) {
+        return CYCLORAMA_STUDIO_IDS.includes(studio) ? CYCLORAMA_MAX_BOOKING_MINUTES : null;
+    }
+
+    function isWithinMaxBookingDuration(studio, startTime, endTime) {
+        const maxMinutes = getMaxBookingMinutes(studio);
+        if (maxMinutes === null) return true;
+        return timeToMinutes(endTime) - timeToMinutes(startTime) <= maxMinutes;
+    }
+
     // 6F 实景棚可以提前一周预约，其余棚位仍然只能约今天和明天。
     // 这份清单是预约规则的一部分，必须和 app.js / api/server.js 的棚位配置保持一致，
     // test/studio-config-consistency.test.js 会校验。
@@ -329,6 +354,10 @@
         getBookingStartTimes,
         isValidBookingRange,
         hasTimeOverlap,
+        CYCLORAMA_STUDIO_IDS,
+        CYCLORAMA_MAX_BOOKING_MINUTES,
+        getMaxBookingMinutes,
+        isWithinMaxBookingDuration,
         EXTENDED_WINDOW_STUDIO_IDS,
         EXTENDED_BOOKING_WINDOW_DAYS,
         DEFAULT_BOOKING_WINDOW_DAYS,

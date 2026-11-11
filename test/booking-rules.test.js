@@ -380,3 +380,19 @@ test('7F 实景棚 2026-11-05 下午培训停约，上午和其他棚位不受�
     assert.deepEqual(rules.getStudioClosuresForDate('小木屋景', '2026-11-06'), []);
     assert.equal(rules.getStudioClosuresForDate('小木屋景', '2026-11-05').length, 1);
 });
+
+test('无影棚单次预约最长 1.5 小时，实景棚不限时长', () => {
+    assert.equal(rules.CYCLORAMA_MAX_BOOKING_MINUTES, 90);
+    assert.equal(rules.getMaxBookingMinutes('大无影棚1（工位对面）'), 90);
+    assert.equal(rules.getMaxBookingMinutes('6F无影棚'), 90);
+    assert.equal(rules.getMaxBookingMinutes('小木屋景'), null);
+    assert.equal(rules.getMaxBookingMinutes('6F·卧室景'), null);
+
+    // 正好 1.5 小时可以，多 15 分钟就不行
+    assert.ok(rules.isWithinMaxBookingDuration('小无影棚3', '08:30', '10:00'));
+    assert.ok(!rules.isWithinMaxBookingDuration('小无影棚3', '08:30', '10:15'));
+    assert.ok(!rules.isWithinMaxBookingDuration('大无影棚2（鄢军隔壁）', '14:00', '16:00'));
+    // 实景棚 2 小时以上照常
+    assert.ok(rules.isWithinMaxBookingDuration('小木屋景', '14:00', '18:30'));
+    assert.ok(rules.isWithinMaxBookingDuration('6F·走廊景', '08:30', '12:30'));
+});

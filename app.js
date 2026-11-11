@@ -2024,6 +2024,7 @@ function findNextBlockedTime(startTime, existingBookings) {
 function updateEndTimeOptions(startTime, endTimeSelect, existingBookings) {
     const blockedFrom = findNextBlockedTime(startTime, existingBookings);
     const selectedPeriod = getBookablePeriod(startTime);
+    const studio = document.getElementById('studioSelect')?.value || '';
     const endOptions = endTimeSelect.querySelectorAll('option');
 
     endOptions.forEach(option => {
@@ -2035,7 +2036,8 @@ function updateEndTimeOptions(startTime, endTimeSelect, existingBookings) {
         const tooEarly = option.value <= startTime;
         const tooLate = option.value > blockedFrom;
         const wrongPeriod = !selectedPeriod || getBookablePeriod(option.value) !== selectedPeriod;
-        option.disabled = tooEarly || tooLate || wrongPeriod;
+        const tooLong = !tooEarly && !isWithinMaxBookingDuration(studio, startTime, option.value);
+        option.disabled = tooEarly || tooLate || wrongPeriod || tooLong;
     });
 
     const selectedEndOption = Array.from(endOptions).find(option => option.value === endTimeSelect.value);
@@ -2513,6 +2515,11 @@ async function addBooking() {
 
     if (!isBookingStartAvailable(date, startTime)) {
         showToast('该开始时间已过期，请选择当前时间之后的时段', 'error');
+        return;
+    }
+
+    if (!isWithinMaxBookingDuration(studio, startTime, endTime)) {
+        showToast('无影棚单次预约最长 1.5 小时', 'error');
         return;
     }
 

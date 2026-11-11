@@ -92,3 +92,20 @@ test('6F 实景棚左侧摄影师预约时间段保持只读', () => {
     assert.match(renderSource, /studioInfo\?\.groupKey === 'real-scene-sixth-floor'/);
     assert.match(renderSource, /if \(isSixthFloorRealScene \|\| !canCancelBooking\(booking\)\)/);
 });
+
+test('限时 1.5 小时的无影棚清单和 app.js 的无影棚配置完全一致', () => {
+    const rules = require('../shared/booking-rules');
+    const frontendConfig = readArraySource(appSource, 'const STUDIO_GROUPS = [', '\n];\n\nfunction getAllStudios');
+    // 没写 category 的分组默认是无影棚（见 getAllStudios）
+    const groups = frontendConfig.split(/\n    \{\n/).slice(1);
+    const cycloramaIds = groups
+        .filter(group => !/category: 'real-scene'/.test(group))
+        .flatMap(group => [...group.matchAll(/\{ id: '([^']+)'/g)].map(match => match[1]));
+
+    assert.equal(cycloramaIds.length, 7);
+    assert.deepEqual(
+        [...rules.CYCLORAMA_STUDIO_IDS].sort(),
+        [...cycloramaIds].sort(),
+        '限时名单必须和 app.js 里的无影棚逐个对应，否则新增的无影棚不受 1.5 小时限制'
+    );
+});
